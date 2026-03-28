@@ -5,8 +5,9 @@ import ollama from 'ollama';
 export class AiService {
   async generateSchdule(prompt: string, onChunk: (chunk: string) => void) {
     try {
+      console.log('request recieved: ', prompt);
       const stream = await ollama.chat({
-        model: 'smart-alarm:latest',
+        model: 'briqon',
         messages: [{ role: 'user', content: prompt }],
         stream: true,
       });
