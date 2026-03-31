@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { ScheduleItem } from "../type/responseType";
+import { ScheduleItem } from "../type/MessageTypes";
 import { AiService } from "@/services/ai/ai.service";
 import { useAiStreamResponse } from "@/hooks/prompt/useAiStreamResponse";
 import { ScheduleItemParser } from "@/utils/scheduleParser";
@@ -37,11 +37,13 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     mode,
     setMode,
   } = useAiStreamResponse(); // global
-  const [sample, setSample] = useState<ScheduleItem[] | undefined>([]);
-  const parserRef = useRef<ScheduleItemParser | null>(null);
+  const [sample, setSample] = useState<ScheduleItem[]>([]);
+  const [sample2, setSample2] = useState(""); // general chat
+  const scheduleParserRef = useRef<ScheduleItemParser | null>(null);
+  const currentModeRef = useRef<number | null>(null);
 
-  if (!parserRef.current) {
-    parserRef.current = new ScheduleItemParser({
+  if (!scheduleParserRef.current) {
+    scheduleParserRef.current = new ScheduleItemParser({
       onNewItem: (item) => {
         console.log("adding new item: ", item);
         setSample((prev) => [...(prev || []), item]);
@@ -62,18 +64,17 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  useEffect(() => {
-    console.log("sample response; ", sample);
-  }, [sample]);
+  const handleResponseChunkBasedOnMode = (chunk: string) => {
+    if (currentModeRef.current === 0) {
+      // general chat
 
-  useEffect(() => {
-    console.log("mode: ", mode);
-    9;
-  }, [mode]);
+      setSample2((prev) => prev + chunk);
+    } else if (currentModeRef.current === 1) {
+      // schdule response
 
-  // useEffect(() => {
-  //   console.log("response: ", response);
-  // }, [response]);
+      scheduleParserRef.current?.handleChunk(chunk);
+    }
+  };
 
   const generate = useCallback(
     async (prompt: string) => {
@@ -84,13 +85,7 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         await AiService.streamAi(
           prompt,
           (chunk) => {
-            console.log(
-              "===============================================Chunk: ",
-              chunk,
-            );
-            setResponse((prev) => prev + chunk);
-
-            parserRef.current?.handleChunk(chunk);
+            handleResponseChunkBasedOnMode(chunk);
 
             if (!hasStartedStreaming) {
               setLoading(false);
@@ -98,7 +93,10 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
               hasStartedStreaming = true;
             }
           },
-          (mode) => setMode(mode),
+          (mode) => {
+            currentModeRef.current = mode;
+            setMode(mode);
+          },
         );
 
         hasStartedStreaming = false;

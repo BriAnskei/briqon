@@ -15,7 +15,7 @@ import { Colors, Radius, Shadow } from "../type/theme";
 
 import { useTextInput } from "@/hooks/useInput";
 import { duration } from "@/utils/parseSchedule";
-import { ScheduleItem } from "@/type/responseType";
+import { MessageTypes, ScheduleItem } from "@/type/MessageTypes";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -75,12 +75,7 @@ const MOCK_SCHEDULE_B: ScheduleItem[] = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ChatTurn =
-  | { id: string; role: "user"; text: string }
-  | { id: string; role: "ai"; type: "chat"; text: string }
-  | { id: string; role: "ai"; type: "schedule"; items: ScheduleItem[] };
-
-const MOCK_CONVERSATION: ChatTurn[] = [
+const MOCK_CONVERSATION: MessageTypes[] = [
   {
     id: "t1",
     role: "user",
@@ -161,7 +156,7 @@ function ScheduleBlock({
   isSelected,
   onSelect,
 }: {
-  turn: Extract<ChatTurn, { type: "schedule" }>;
+  turn: Extract<MessageTypes, { type: "schedule" }>;
   isSelected: boolean;
   onSelect: () => void;
 }) {
@@ -204,14 +199,14 @@ function ChatBubble({
   turn,
 }: {
   turn:
-    | Extract<ChatTurn, { role: "user" }>
-    | Extract<ChatTurn, { type: "chat" }>;
+    | Extract<MessageTypes, { role: "user" }>
+    | Extract<MessageTypes, { type: "chat" }>;
 }) {
   const isUser = turn.role === "user";
   const text =
     turn.role === "user"
       ? turn.text
-      : (turn as Extract<ChatTurn, { type: "chat" }>).text;
+      : (turn as Extract<MessageTypes, { type: "chat" }>).text;
   return (
     <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleAi]}>
       {!isUser && <View style={s.bubbleAiDot} />}
@@ -317,7 +312,7 @@ export default function ScheduleScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const [conversation, setConversation] =
-    useState<ChatTurn[]>(MOCK_CONVERSATION);
+    useState<MessageTypes[]>(MOCK_CONVERSATION);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
@@ -332,7 +327,7 @@ export default function ScheduleScreen() {
         t.id === selectedScheduleId &&
         t.role === "ai" &&
         (t as any).type === "schedule",
-    ) as Extract<ChatTurn, { type: "schedule" }> | undefined;
+    ) as Extract<MessageTypes, { type: "schedule" }> | undefined;
     return turn?.items ?? [];
   })();
 

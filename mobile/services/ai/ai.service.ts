@@ -15,7 +15,7 @@ export class AiService {
 
       const modes = ["MODE 1", "MODE 2"];
       let mode = "";
-      let modeFired = false; // guard — fire onMode exactly once
+      let hasBodcastedMode = false;
 
       xhr.onprogress = () => {
         const newText = xhr.responseText.slice(lastIndex);
@@ -27,23 +27,13 @@ export class AiService {
           if (line.startsWith("data: ")) {
             const chunk = line.slice(6);
 
-            if (mode.length < 6) {
+            if (mode.length < 7) {
               mode += chunk;
 
               // Check if mode just became complete
-              if (mode.length >= 6) {
-                if (mode.length !== 6) {
-                  reject(new Error("Invalid mode format"));
-                  return;
-                }
-
-                if (!modeFired) {
-                  modeFired = true;
-                  onMode(modes.findIndex((m) => m === mode));
-                }
-              }
+              mode.includes("MODE 1") ? onMode(0) : onMode(1);
             } else {
-              if (chunk) onChunk(chunk + "\n");
+              if (chunk) onChunk(chunk);
             }
           }
         }

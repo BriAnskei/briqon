@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Colors, Radius, Shadow } from "../type/theme";
-import { ScheduleItem } from "../type/responseType";
+import { ScheduleItem } from "../type/MessageTypes";
 import { useSchedule } from "../context/ScheduleContext";
 
 const TONE: Record<string, string> = {

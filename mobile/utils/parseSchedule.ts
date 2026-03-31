@@ -1,4 +1,4 @@
-import { ScheduleItem } from "@/type/responseType";
+import { ScheduleItem } from "@/type/MessageTypes";
 import { useRef } from "react";
 
 export function duration(start: string, end: string): string {

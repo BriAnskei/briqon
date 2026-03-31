@@ -1,4 +1,4 @@
-import { ScheduleItem } from "@/type/responseType";
+import { ScheduleItem } from "@/type/MessageTypes";
 
 type ScheduleField = keyof Omit<ScheduleItem, "id">;
 
@@ -55,11 +55,6 @@ export class ScheduleItemParser {
 
   private endReadingKey() {
     this.isReadingKey = false;
-
-    console.log(
-      "-----------------------------------------------------CURRENT KEY: ",
-      this.currentKey,
-    );
 
     const normalizedKey = this.currentKey
       .replace(/\s+/g, "") // remove ALL whitespace/newlines
