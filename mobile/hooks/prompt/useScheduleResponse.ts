@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 
 export const useAiStreamResponse = () => {
   const [response, setResponse] = useState("");

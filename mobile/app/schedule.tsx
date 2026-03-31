@@ -16,6 +16,7 @@ import { Colors, Radius, Shadow } from "../type/theme";
 import { useTextInput } from "@/hooks/useInput";
 import { duration } from "@/utils/parseSchedule";
 import { MessageTypes, ScheduleItem } from "@/type/MessageTypes";
+import { useScheduleScreen } from "@/hooks/useScheduleScreen";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -40,76 +41,76 @@ function alarmForIndex(index: number): boolean {
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const MOCK_SCHEDULE_A: ScheduleItem[] = [
-  {
-    startTime: "6:00 AM",
-    endTime: "6:30 AM",
-    activity: "Wake Up & Morning Routine",
-  },
-  { startTime: "6:30 AM", endTime: "7:30 AM", activity: "Morning Workout" },
-  { startTime: "7:30 AM", endTime: "8:00 AM", activity: "Breakfast" },
-  { startTime: "8:00 AM", endTime: "12:00 PM", activity: "Deep Work Block" },
-  { startTime: "12:00 PM", endTime: "12:45 PM", activity: "Lunch" },
-  { startTime: "1:00 PM", endTime: "3:00 PM", activity: "Study / Upskilling" },
-  { startTime: "3:00 PM", endTime: "3:30 PM", activity: "Rest & Recharge" },
-  { startTime: "3:30 PM", endTime: "6:00 PM", activity: "Evening Work" },
-  { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
-  { startTime: "9:00 PM", endTime: "10:00 PM", activity: "Wind Down" },
-];
+// const MOCK_SCHEDULE_A: ScheduleItem[] = [
+//   {
+//     startTime: "6:00 AM",
+//     endTime: "6:30 AM",
+//     activity: "Wake Up & Morning Routine",
+//   },
+//   { startTime: "6:30 AM", endTime: "7:30 AM", activity: "Morning Workout" },
+//   { startTime: "7:30 AM", endTime: "8:00 AM", activity: "Breakfast" },
+//   { startTime: "8:00 AM", endTime: "12:00 PM", activity: "Deep Work Block" },
+//   { startTime: "12:00 PM", endTime: "12:45 PM", activity: "Lunch" },
+//   { startTime: "1:00 PM", endTime: "3:00 PM", activity: "Study / Upskilling" },
+//   { startTime: "3:00 PM", endTime: "3:30 PM", activity: "Rest & Recharge" },
+//   { startTime: "3:30 PM", endTime: "6:00 PM", activity: "Evening Work" },
+//   { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
+//   { startTime: "9:00 PM", endTime: "10:00 PM", activity: "Wind Down" },
+// ];
 
-const MOCK_SCHEDULE_B: ScheduleItem[] = [
-  { startTime: "6:30 AM", endTime: "7:00 AM", activity: "Wake Up" },
-  { startTime: "7:00 AM", endTime: "7:45 AM", activity: "Morning Run" },
-  { startTime: "7:45 AM", endTime: "8:15 AM", activity: "Breakfast" },
-  { startTime: "8:30 AM", endTime: "12:00 PM", activity: "Work Block 1" },
-  { startTime: "12:00 PM", endTime: "1:00 PM", activity: "Lunch Break" },
-  { startTime: "1:00 PM", endTime: "2:30 PM", activity: "Study Block" },
-  { startTime: "2:30 PM", endTime: "5:30 PM", activity: "Work Block 2" },
-  { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
-  {
-    startTime: "7:00 PM",
-    endTime: "10:00 PM",
-    activity: "Leisure & Wind Down",
-  },
-];
+// const MOCK_SCHEDULE_B: ScheduleItem[] = [
+//   { startTime: "6:30 AM", endTime: "7:00 AM", activity: "Wake Up" },
+//   { startTime: "7:00 AM", endTime: "7:45 AM", activity: "Morning Run" },
+//   { startTime: "7:45 AM", endTime: "8:15 AM", activity: "Breakfast" },
+//   { startTime: "8:30 AM", endTime: "12:00 PM", activity: "Work Block 1" },
+//   { startTime: "12:00 PM", endTime: "1:00 PM", activity: "Lunch Break" },
+//   { startTime: "1:00 PM", endTime: "2:30 PM", activity: "Study Block" },
+//   { startTime: "2:30 PM", endTime: "5:30 PM", activity: "Work Block 2" },
+//   { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
+//   {
+//     startTime: "7:00 PM",
+//     endTime: "10:00 PM",
+//     activity: "Leisure & Wind Down",
+//   },
+// ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-const MOCK_CONVERSATION: MessageTypes[] = [
-  {
-    id: "t1",
-    role: "user",
-    text: "I wake up at 6am and work from 8 to 6. I want to fit in a workout, study time, and proper meals.",
-  },
-  {
-    id: "t2",
-    role: "ai",
-    type: "schedule",
-    items: MOCK_SCHEDULE_A,
-  },
-  {
-    id: "t3",
-    role: "user",
-    text: "Looks good! Can you push the wake up 30 minutes later and make the morning workout a run instead?",
-  },
-  {
-    id: "t4",
-    role: "ai",
-    type: "schedule",
-    items: MOCK_SCHEDULE_B,
-  },
-  {
-    id: "t5",
-    role: "user",
-    text: "How many hours of deep work is that per day?",
-  },
-  {
-    id: "t6",
-    role: "ai",
-    type: "chat",
-    text: "Based on the latest schedule, you have about 7 hours of focused work time split across two blocks — 8:30 AM to 12:00 PM (3.5h) and 2:30 PM to 5:30 PM (3h). That's a solid productive day with a proper midday break built in.",
-  },
-];
+// const MOCK_CONVERSATION: MessageTypes[] = [
+//   {
+//     id: "t1",
+//     role: "user",
+//     text: "I wake up at 6am and work from 8 to 6. I want to fit in a workout, study time, and proper meals.",
+//   },
+//   {
+//     id: "t2",
+//     role: "ai",
+//     type: "schedule",
+//     items: MOCK_SCHEDULE_A,
+//   },
+//   {
+//     id: "t3",
+//     role: "user",
+//     text: "Looks good! Can you push the wake up 30 minutes later and make the morning workout a run instead?",
+//   },
+//   {
+//     id: "t4",
+//     role: "ai",
+//     type: "schedule",
+//     items: MOCK_SCHEDULE_B,
+//   },
+//   {
+//     id: "t5",
+//     role: "user",
+//     text: "How many hours of deep work is that per day?",
+//   },
+//   {
+//     id: "t6",
+//     role: "ai",
+//     type: "chat",
+//     text: "Based on the latest schedule, you have about 7 hours of focused work time split across two blocks — 8:30 AM to 12:00 PM (3.5h) and 2:30 PM to 5:30 PM (3h). That's a solid productive day with a proper midday break built in.",
+//   },
+// ];
 
 // ─── TimelineItem ─────────────────────────────────────────────────────────────
 
@@ -307,12 +308,12 @@ function ReviewModal({
 export default function ScheduleScreen() {
   const router = useRouter();
 
+  const { conversation } = useScheduleScreen();
+
   const { prompt, setPrompt } = useTextInput();
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const [conversation, setConversation] =
-    useState<MessageTypes[]>(MOCK_CONVERSATION);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
@@ -341,16 +342,16 @@ export default function ScheduleScreen() {
     router.push("/confirmation");
   };
 
-  const handleSend = () => {
-    if (!prompt.trim()) return;
-    const text = prompt.trim();
-    setPrompt("");
-    setConversation((prev) => [
-      ...prev,
-      { id: `user-${Date.now()}`, role: "user", text },
-    ]);
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  };
+  // const handleSend = () => {
+  //   if (!prompt.trim()) return;
+  //   const text = prompt.trim();
+  //   setPrompt("");
+  //   setConversation((prev) => [
+  //     ...prev,
+  //     { id: `user-${Date.now()}`, role: "user", text },
+  //   ]);
+  //   setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+  // };
 
   return (
     <View style={s.root}>
@@ -415,12 +416,12 @@ export default function ScheduleScreen() {
             placeholderTextColor={Colors.textMuted}
             value={prompt}
             onChangeText={setPrompt}
-            onSubmitEditing={handleSend}
+            // onSubmitEditing={handleSend}
             returnKeyType="send"
           />
           <TouchableOpacity
             style={[s.sendBtn, !prompt.trim() && s.sendBtnOff]}
-            onPress={handleSend}
+            // onPress={handleSend}
             disabled={!prompt.trim()}
             activeOpacity={0.85}
           >

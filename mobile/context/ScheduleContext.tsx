@@ -7,13 +7,11 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { ScheduleItem } from "../type/MessageTypes";
+import { MessageTypes, ScheduleItem } from "../type/MessageTypes";
 import { AiService } from "@/services/ai/ai.service";
-import { useAiStreamResponse } from "@/hooks/prompt/useAiStreamResponse";
-import { ScheduleItemParser } from "@/utils/scheduleParser";
 
-type ChunkHandler = (chunk: string) => void;
-type ModeHandler = (mode: number) => void;
+import { ScheduleItemParser } from "@/utils/scheduleParser";
+import { useAiStreamResponse } from "@/hooks/prompt/useScheduleResponse";
 
 type ScheduleContextType = {
   generate: (prompt: string) => Promise<void>;
@@ -21,7 +19,8 @@ type ScheduleContextType = {
   responseLoading: boolean;
   isStreaming: boolean;
 
-  mode?: number;
+  currentModeRef: React.RefObject<number | null>;
+  conversation: MessageTypes[];
 };
 
 const ScheduleContext = createContext<ScheduleContextType | null>(null);
@@ -37,47 +36,57 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     mode,
     setMode,
   } = useAiStreamResponse(); // global
-  const [sample, setSample] = useState<ScheduleItem[]>([]);
-  const [sample2, setSample2] = useState(""); // general chat
+
   const scheduleParserRef = useRef<ScheduleItemParser | null>(null);
   const currentModeRef = useRef<number | null>(null);
 
-  if (!scheduleParserRef.current) {
-    scheduleParserRef.current = new ScheduleItemParser({
-      onNewItem: (item) => {
-        console.log("adding new item: ", item);
-        setSample((prev) => [...(prev || []), item]);
-      },
-      onUpdateItem: (id, field, char) => {
-        console.log("updating item ", id, field, char);
-        setSample((prev) =>
-          prev?.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  [field]: (item[field] || "") + char,
-                }
-              : item,
-          ),
-        );
-      },
-    });
-  }
+  const [conversation, setConversation] = useState<MessageTypes[]>([]);
 
-  const handleResponseChunkBasedOnMode = (chunk: string) => {
-    if (currentModeRef.current === 0) {
-      // general chat
-
-      setSample2((prev) => prev + chunk);
-    } else if (currentModeRef.current === 1) {
-      // schdule response
-
-      scheduleParserRef.current?.handleChunk(chunk);
-    }
-  };
+  const aiMessageIdRef = useRef<string | null>(null);
 
   const generate = useCallback(
     async (prompt: string) => {
+      // 1. Push the user message immediately
+      const userMessage: MessageTypes = {
+        id: Date.now().toString(),
+        role: "user",
+        text: prompt,
+      };
+      setConversation((prev) => [...prev, userMessage]);
+
+      // 2. Reset parser state for new stream
+      scheduleParserRef.current = new ScheduleItemParser({
+        onNewItem: (item) => {
+          setConversation((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageIdRef.current &&
+              msg.role === "ai" &&
+              msg.type === "schedule"
+                ? { ...msg, items: [...msg.items, item] }
+                : msg,
+            ),
+          );
+        },
+        onUpdateItem: (id, field, char) => {
+          setConversation((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageIdRef.current &&
+              msg.role === "ai" &&
+              msg.type === "schedule"
+                ? {
+                    ...msg,
+                    items: msg.items.map((item) =>
+                      item.id === id
+                        ? { ...item, [field]: (item[field] || "") + char }
+                        : item,
+                    ),
+                  }
+                : msg,
+            ),
+          );
+        },
+      });
+
       try {
         let hasStartedStreaming = false;
         setLoading(true);
@@ -85,12 +94,37 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         await AiService.streamAi(
           prompt,
           (chunk) => {
-            handleResponseChunkBasedOnMode(chunk);
-
+            // 3. On first chunk, now we know the mode — push the AI message shell
             if (!hasStartedStreaming) {
+              hasStartedStreaming = true;
               setLoading(false);
               setIsStreaming(true);
-              hasStartedStreaming = true;
+
+              const aiMessageId = Date.now().toString();
+              aiMessageIdRef.current = aiMessageId;
+
+              // Push the correct message shape based on mode
+              const aiMessage: MessageTypes =
+                currentModeRef.current === 1
+                  ? { id: aiMessageId, role: "ai", type: "schedule", items: [] }
+                  : { id: aiMessageId, role: "ai", type: "chat", text: "" };
+
+              setConversation((prev) => [...prev, aiMessage]);
+            }
+
+            // 4. Route chunk to the right updater
+            if (currentModeRef.current === 0) {
+              setConversation((prev) =>
+                prev.map((msg) =>
+                  msg.id === aiMessageIdRef.current &&
+                  msg.role === "ai" &&
+                  msg.type === "chat"
+                    ? { ...msg, text: msg.text + chunk }
+                    : msg,
+                ),
+              );
+            } else if (currentModeRef.current === 1) {
+              scheduleParserRef.current?.handleChunk(chunk);
             }
           },
           (mode) => {
@@ -99,12 +133,14 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
           },
         );
 
+        setIsStreaming(false);
         hasStartedStreaming = false;
       } catch (error) {
         console.error("Failed to generate response: ", error);
+        setIsStreaming(false);
       }
     },
-    [setResponse, setLoading, setIsStreaming, setMode],
+    [setLoading, setIsStreaming, setMode],
   );
 
   return (
@@ -114,7 +150,8 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         response,
         responseLoading: loading,
         isStreaming,
-        mode,
+        currentModeRef,
+        conversation,
       }}
     >
       {children}

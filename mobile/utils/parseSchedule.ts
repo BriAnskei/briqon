@@ -1,14 +1,11 @@
-import { ScheduleItem } from "@/type/MessageTypes";
-import { useRef } from "react";
-
 export function duration(start: string, end: string): string {
+  if (!start || !end) return "";
+
   const parse = (t: string) => {
-    const [time, period] = t.split(" ");
-    let [h, m] = time.split(":").map(Number);
-    if (period === "PM" && h !== 12) h += 12;
-    if (period === "AM" && h === 12) h = 0;
+    const [h, m] = t.split(":").map(Number);
     return h * 60 + m;
   };
+
   const diff = parse(end) - parse(start);
   if (diff <= 0) return "";
   const h = Math.floor(diff / 60);

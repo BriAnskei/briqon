@@ -1,17 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTextInput } from "./useInput";
 import { MessageTypes } from "@/type/MessageTypes";
 import { useSchedule } from "@/context/ScheduleContext";
 
 export const useScheduleScreen = () => {
-  const { generate } = useSchedule();
+  const { generate, currentModeRef, conversation } = useSchedule();
 
-  const [conversation, setConversation] = useState<MessageTypes[]>([]);
   const { prompt, setPrompt } = useTextInput();
 
-  const addNewMessage = (newMessage: MessageTypes) => {
-    setConversation((prev) => [...prev, newMessage]);
-  };
+  const addNewMessage = (newMessage: MessageTypes) => {};
 
   const handleSend = async (text: string) => {
     const newMessage: Extract<MessageTypes, { role: "user" }> = {
