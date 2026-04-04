@@ -1,27 +1,20 @@
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { Colors } from "../type/theme";
-import { ScheduleProvider } from "../context/ScheduleContext";
-
-import { useRouter, useRootNavigationState } from "expo-router";
-import { useEffect } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   return (
-    <ScheduleProvider>
-      <StatusBar style="light" />
-      <Stack
-        // initialRouteName="schedule"
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.bg },
-          animation: "slide_from_right",
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="schedule" />
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="schedule/add"
+          options={{
+            presentation: "card", // or "modal" if you prefer sheet behaviour
+            animation: "slide_from_right",
+          }}
+        />
         <Stack.Screen name="confirmation" />
       </Stack>
-    </ScheduleProvider>
+    </SafeAreaProvider>
   );
 }

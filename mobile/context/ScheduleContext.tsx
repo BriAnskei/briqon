@@ -52,40 +52,14 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         role: "user",
         text: prompt,
       };
-      setConversation((prev) => [...prev, userMessage]);
+      addNewMessage(userMessage);
 
       // 2. Reset parser state for new stream
-      scheduleParserRef.current = new ScheduleItemParser({
-        onNewItem: (item) => {
-          setConversation((prev) =>
-            prev.map((msg) =>
-              msg.id === aiMessageIdRef.current &&
-              msg.role === "ai" &&
-              msg.type === "schedule"
-                ? { ...msg, items: [...msg.items, item] }
-                : msg,
-            ),
-          );
-        },
-        onUpdateItem: (id, field, char) => {
-          setConversation((prev) =>
-            prev.map((msg) =>
-              msg.id === aiMessageIdRef.current &&
-              msg.role === "ai" &&
-              msg.type === "schedule"
-                ? {
-                    ...msg,
-                    items: msg.items.map((item) =>
-                      item.id === id
-                        ? { ...item, [field]: (item[field] || "") + char }
-                        : item,
-                    ),
-                  }
-                : msg,
-            ),
-          );
-        },
-      });
+      InitializeScheduleParser(
+        scheduleParserRef,
+        setConversation,
+        aiMessageIdRef,
+      );
 
       try {
         let hasStartedStreaming = false;
@@ -95,37 +69,10 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
           prompt,
           (chunk) => {
             // 3. On first chunk, now we know the mode — push the AI message shell
-            if (!hasStartedStreaming) {
-              hasStartedStreaming = true;
-              setLoading(false);
-              setIsStreaming(true);
-
-              const aiMessageId = Date.now().toString();
-              aiMessageIdRef.current = aiMessageId;
-
-              // Push the correct message shape based on mode
-              const aiMessage: MessageTypes =
-                currentModeRef.current === 1
-                  ? { id: aiMessageId, role: "ai", type: "schedule", items: [] }
-                  : { id: aiMessageId, role: "ai", type: "chat", text: "" };
-
-              setConversation((prev) => [...prev, aiMessage]);
-            }
+            hasStartedStreaming = addNewMessageOnStream(hasStartedStreaming);
 
             // 4. Route chunk to the right updater
-            if (currentModeRef.current === 0) {
-              setConversation((prev) =>
-                prev.map((msg) =>
-                  msg.id === aiMessageIdRef.current &&
-                  msg.role === "ai" &&
-                  msg.type === "chat"
-                    ? { ...msg, text: msg.text + chunk }
-                    : msg,
-                ),
-              );
-            } else if (currentModeRef.current === 1) {
-              scheduleParserRef.current?.handleChunk(chunk);
-            }
+            handleResponseChunkBasedOnMode(chunk);
           },
           (mode) => {
             currentModeRef.current = mode;
@@ -143,6 +90,10 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     [setLoading, setIsStreaming, setMode],
   );
 
+  const addNewMessage = (message: MessageTypes) => {
+    setConversation((prev) => [...prev, message]);
+  };
+
   return (
     <ScheduleContext.Provider
       value={{
@@ -157,6 +108,83 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       {children}
     </ScheduleContext.Provider>
   );
+
+  function handleResponseChunkBasedOnMode(chunk: string) {
+    // General response
+    if (currentModeRef.current === 0) {
+      setConversation((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageIdRef.current &&
+          msg.role === "ai" &&
+          msg.type === "chat"
+            ? { ...msg, text: msg.text + chunk }
+            : msg,
+        ),
+      );
+    }
+    // Schedule response
+    else if (currentModeRef.current === 1) {
+      scheduleParserRef.current?.handleChunk(chunk);
+    }
+  }
+
+  function addNewMessageOnStream(hasStartedStreaming: boolean) {
+    if (!hasStartedStreaming) {
+      hasStartedStreaming = true;
+      setLoading(false);
+      setIsStreaming(true);
+
+      const aiMessageId = Date.now().toString();
+      aiMessageIdRef.current = aiMessageId;
+
+      // Push the correct message shape based on mode
+      const aiMessage: MessageTypes =
+        currentModeRef.current === 1
+          ? { id: aiMessageId, role: "ai", type: "schedule", items: [] }
+          : { id: aiMessageId, role: "ai", type: "chat", text: "" };
+
+      addNewMessage(aiMessage);
+    }
+    return hasStartedStreaming;
+  }
+}
+
+function InitializeScheduleParser(
+  scheduleParserRef: React.RefObject<ScheduleItemParser | null>,
+  setConversation: React.Dispatch<React.SetStateAction<MessageTypes[]>>,
+  aiMessageIdRef: React.RefObject<string | null>,
+) {
+  scheduleParserRef.current = new ScheduleItemParser({
+    onNewItem: (item) => {
+      setConversation((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageIdRef.current &&
+          msg.role === "ai" &&
+          msg.type === "schedule"
+            ? { ...msg, items: [...msg.items, item] }
+            : msg,
+        ),
+      );
+    },
+    onUpdateItem: (id, field, char) => {
+      setConversation((prev) =>
+        prev.map((msg) =>
+          msg.role === "ai" &&
+          msg.id === aiMessageIdRef.current &&
+          msg.type === "schedule"
+            ? {
+                ...msg,
+                items: msg.items.map((item) =>
+                  item.id === id
+                    ? { ...item, [field]: (item[field] || "") + char }
+                    : item,
+                ),
+              }
+            : msg,
+        ),
+      );
+    },
+  });
 }
 
 export function useSchedule() {

@@ -21,11 +21,8 @@ export class AiController {
     await this.aiService.generateSchdule(prompt, (chunk) => {
       response += chunk;
 
-      console.log('response chunk: ', chunk);
       res.write(`data: ${chunk}\n\n`);
     });
-
-    console.log('full response: ', response);
 
     res.end();
   }

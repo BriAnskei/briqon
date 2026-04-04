@@ -39,79 +39,6 @@ function alarmForIndex(index: number): boolean {
   return index % 3 !== 2;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-// const MOCK_SCHEDULE_A: ScheduleItem[] = [
-//   {
-//     startTime: "6:00 AM",
-//     endTime: "6:30 AM",
-//     activity: "Wake Up & Morning Routine",
-//   },
-//   { startTime: "6:30 AM", endTime: "7:30 AM", activity: "Morning Workout" },
-//   { startTime: "7:30 AM", endTime: "8:00 AM", activity: "Breakfast" },
-//   { startTime: "8:00 AM", endTime: "12:00 PM", activity: "Deep Work Block" },
-//   { startTime: "12:00 PM", endTime: "12:45 PM", activity: "Lunch" },
-//   { startTime: "1:00 PM", endTime: "3:00 PM", activity: "Study / Upskilling" },
-//   { startTime: "3:00 PM", endTime: "3:30 PM", activity: "Rest & Recharge" },
-//   { startTime: "3:30 PM", endTime: "6:00 PM", activity: "Evening Work" },
-//   { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
-//   { startTime: "9:00 PM", endTime: "10:00 PM", activity: "Wind Down" },
-// ];
-
-// const MOCK_SCHEDULE_B: ScheduleItem[] = [
-//   { startTime: "6:30 AM", endTime: "7:00 AM", activity: "Wake Up" },
-//   { startTime: "7:00 AM", endTime: "7:45 AM", activity: "Morning Run" },
-//   { startTime: "7:45 AM", endTime: "8:15 AM", activity: "Breakfast" },
-//   { startTime: "8:30 AM", endTime: "12:00 PM", activity: "Work Block 1" },
-//   { startTime: "12:00 PM", endTime: "1:00 PM", activity: "Lunch Break" },
-//   { startTime: "1:00 PM", endTime: "2:30 PM", activity: "Study Block" },
-//   { startTime: "2:30 PM", endTime: "5:30 PM", activity: "Work Block 2" },
-//   { startTime: "6:00 PM", endTime: "7:00 PM", activity: "Dinner" },
-//   {
-//     startTime: "7:00 PM",
-//     endTime: "10:00 PM",
-//     activity: "Leisure & Wind Down",
-//   },
-// ];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-// const MOCK_CONVERSATION: MessageTypes[] = [
-//   {
-//     id: "t1",
-//     role: "user",
-//     text: "I wake up at 6am and work from 8 to 6. I want to fit in a workout, study time, and proper meals.",
-//   },
-//   {
-//     id: "t2",
-//     role: "ai",
-//     type: "schedule",
-//     items: MOCK_SCHEDULE_A,
-//   },
-//   {
-//     id: "t3",
-//     role: "user",
-//     text: "Looks good! Can you push the wake up 30 minutes later and make the morning workout a run instead?",
-//   },
-//   {
-//     id: "t4",
-//     role: "ai",
-//     type: "schedule",
-//     items: MOCK_SCHEDULE_B,
-//   },
-//   {
-//     id: "t5",
-//     role: "user",
-//     text: "How many hours of deep work is that per day?",
-//   },
-//   {
-//     id: "t6",
-//     role: "ai",
-//     type: "chat",
-//     text: "Based on the latest schedule, you have about 7 hours of focused work time split across two blocks — 8:30 AM to 12:00 PM (3.5h) and 2:30 PM to 5:30 PM (3h). That's a solid productive day with a proper midday break built in.",
-//   },
-// ];
-
 // ─── TimelineItem ─────────────────────────────────────────────────────────────
 
 function TimelineItem({
@@ -156,10 +83,12 @@ function ScheduleBlock({
   turn,
   isSelected,
   onSelect,
+  isStreaming,
 }: {
   turn: Extract<MessageTypes, { type: "schedule" }>;
   isSelected: boolean;
   onSelect: () => void;
+  isStreaming: boolean;
 }) {
   return (
     <View style={[s.scheduleBlock, isSelected && s.scheduleBlockSelected]}>
@@ -177,17 +106,28 @@ function ScheduleBlock({
 
       {/* Select button */}
       <TouchableOpacity
-        style={[s.selectBtn, isSelected && s.selectBtnActive]}
+        style={[
+          s.selectBtn,
+          isSelected && s.selectBtnActive,
+          isStreaming && s.selectBtnDisabled,
+        ]}
         onPress={onSelect}
         activeOpacity={0.8}
+        disabled={isStreaming}
       >
         {isSelected ? (
           <>
             <Text style={s.selectBtnCheckmark}>✓</Text>
-            <Text style={s.selectBtnTextActive}>Selected</Text>
+            <Text
+              style={[s.selectBtnTextActive, isStreaming && s.textDisabled]}
+            >
+              Selected
+            </Text>
           </>
         ) : (
-          <Text style={s.selectBtnText}>Select this schedule</Text>
+          <Text style={[s.selectBtnText, isStreaming && s.textDisabled]}>
+            Select this schedule
+          </Text>
         )}
       </TouchableOpacity>
     </View>
@@ -306,66 +246,46 @@ function ReviewModal({
 // ─── ScheduleScreen ───────────────────────────────────────────────────────────
 
 export default function ScheduleScreen() {
-  const router = useRouter();
-
-  const { conversation } = useScheduleScreen();
-
-  const { prompt, setPrompt } = useTextInput();
-
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
-    null,
-  );
-
-  const scrollRef = useRef<ScrollView>(null);
-
-  // Derive the items for the currently selected schedule
-  const selectedItems: ScheduleItem[] = (() => {
-    if (!selectedScheduleId) return [];
-    const turn = conversation.find(
-      (t) =>
-        t.id === selectedScheduleId &&
-        t.role === "ai" &&
-        (t as any).type === "schedule",
-    ) as Extract<MessageTypes, { type: "schedule" }> | undefined;
-    return turn?.items ?? [];
-  })();
-
-  const handleReview = () => {
-    if (!selectedScheduleId) return;
-    setModalVisible(true);
-  };
-
-  const handleConfirm = () => {
-    setModalVisible(false);
-    router.push("/confirmation");
-  };
-
-  // const handleSend = () => {
-  //   if (!prompt.trim()) return;
-  //   const text = prompt.trim();
-  //   setPrompt("");
-  //   setConversation((prev) => [
-  //     ...prev,
-  //     { id: `user-${Date.now()}`, role: "user", text },
-  //   ]);
-  //   setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-  // };
+  const {
+    router,
+    conversation,
+    handleSend,
+    isStreaming,
+    prompt,
+    setPrompt,
+    modalVisible,
+    setModalVisible,
+    selectedScheduleId,
+    setSelectedScheduleId,
+    scrollRef,
+    selectedItems,
+    handleReview,
+    handleAddNewMessage,
+    handleConfirm,
+  } = useScheduleScreen();
 
   return (
     <View style={s.root}>
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+          disabled={isStreaming}
+          style={isStreaming && s.disabledOpacity}
+        >
           <Text style={s.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={s.headerTitle}>Your Schedule</Text>
         <TouchableOpacity
-          style={[s.reviewBtn, !selectedScheduleId && s.reviewBtnDisabled]}
+          style={[
+            s.reviewBtn,
+            (!selectedScheduleId || isStreaming) && s.reviewBtnDisabled,
+            isStreaming && s.disabledOpacity,
+          ]}
           onPress={handleReview}
           activeOpacity={0.85}
-          disabled={!selectedScheduleId}
+          disabled={!selectedScheduleId || isStreaming}
         >
           <Text style={s.reviewBtnText}>Review</Text>
         </TouchableOpacity>
@@ -396,6 +316,7 @@ export default function ScheduleScreen() {
                     prev === turn.id ? null : turn.id,
                   )
                 }
+                isStreaming={isStreaming}
               />
             );
           }
@@ -416,16 +337,16 @@ export default function ScheduleScreen() {
             placeholderTextColor={Colors.textMuted}
             value={prompt}
             onChangeText={setPrompt}
-            // onSubmitEditing={handleSend}
+            onSubmitEditing={handleAddNewMessage}
             returnKeyType="send"
           />
           <TouchableOpacity
-            style={[s.sendBtn, !prompt.trim() && s.sendBtnOff]}
-            // onPress={handleSend}
-            disabled={!prompt.trim()}
+            style={[s.sendBtn, (!prompt.trim() || isStreaming) && s.sendBtnOff]}
+            onPress={handleAddNewMessage}
+            disabled={!prompt.trim() || isStreaming}
             activeOpacity={0.85}
           >
-            <Text style={s.sendBtnIcon}>↑</Text>
+            <Text style={s.sendBtnIcon}>{isStreaming ? "■" : "↑"}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -445,6 +366,10 @@ export default function ScheduleScreen() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
+
+  // Streaming disabled state
+  disabledOpacity: { opacity: 0.4 },
+  textDisabled: { opacity: 0.4 },
 
   // Header
   header: {
@@ -555,6 +480,9 @@ const s = StyleSheet.create({
   selectBtnActive: {
     backgroundColor: Colors.accent,
     borderColor: Colors.accent,
+  },
+  selectBtnDisabled: {
+    opacity: 0.4,
   },
   selectBtnText: {
     fontSize: 13,
