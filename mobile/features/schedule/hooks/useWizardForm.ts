@@ -11,14 +11,19 @@ import {
   defaultForm,
   defaultAppointmentDraft,
   defaultEventItemDraft,
+  buildPrompt,
 } from "../utils/wizardHelpers";
 import {
   EVENT_TOTAL_STEPS,
   PERSONAL_TOTAL_STEPS,
 } from "../contants/wizardOptions";
+import { AiService } from "@/services/ai/ai.service";
+import { useSchedule } from "@/context/ScheduleContext";
 
 export function useWizardForm() {
   const router = useRouter();
+  const { generateScheduleJson } = useSchedule();
+
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(defaultForm());
   const [apptDraft, setApptDraft] = useState<AppointmentDraft>(
@@ -97,9 +102,10 @@ export function useWizardForm() {
     if (eventItemDraft.visible)
       setEventItemDraft((d) => ({ ...d, visible: false }));
     if (isLastStep()) {
-      // router.push("/schedule");
+      const generatedPromp = buildPrompt(form);
+      generateScheduleJson(generatedPromp);
 
-      console.log("output form: ", form);
+      router.push("/schedule/schedule-conversation");
     } else setStep((s) => s + 1);
   };
 

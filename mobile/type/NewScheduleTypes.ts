@@ -1,5 +1,9 @@
 export type ScheduleType = "personal" | "event" | null;
-export type PriorityFocus = "productivity" | "socializing" | "rest" | null;
+export type PriorityFocus =
+  | "productivity"
+  | "socializing"
+  | "rest and recovery"
+  | null;
 export type BreakFrequency = "few-long" | "balanced" | "many-short" | null;
 export type AppointmentType = "work" | "school" | "medical" | "custom";
 export type EventType =

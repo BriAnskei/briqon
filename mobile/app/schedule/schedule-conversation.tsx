@@ -11,7 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Colors, Radius, Shadow } from "../type/theme";
+import { Colors, Radius, Shadow } from "../../type/theme";
 
 import { useTextInput } from "@/hooks/useInput";
 import { duration } from "@/utils/parseSchedule";
@@ -29,7 +29,6 @@ const TONE: string[] = [
   "#C084FC",
   "#64748B",
 ];
-
 function toneForIndex(index: number): string {
   return TONE[index % TONE.length];
 }

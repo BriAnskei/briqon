@@ -1,14 +1,15 @@
-import { API_URL } from "../api.client";
+import { ScheduleItem } from "@/type/MessageTypes";
+import { API_URL, apiFetch } from "../api.client";
 
 export class AiService {
-  static streamAi(
+  static generateGeneralMessageSteam(
     prompt: string,
     onChunk: (chunk: string) => void,
     onMode: (mode: number) => void, // 0 = general chat, 1 = generate schedule
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_URL}/ai`, true);
+      xhr.open("POST", `${API_URL}/ai/stream`, true);
       xhr.setRequestHeader("Content-Type", "application/json");
 
       let lastIndex = 0;
@@ -52,5 +53,26 @@ export class AiService {
 
       xhr.send(JSON.stringify({ prompt }));
     });
+  }
+
+  static async generateScheduleJson(prompt: string): Promise<ScheduleItem[]> {
+    try {
+      const res = await apiFetch("/ai/schedule", {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to generate schedule");
+      }
+
+      const scheduleJson = await res.json();
+
+      return scheduleJson;
+    } catch (error) {
+      console.error(error);
+
+      throw error;
+    }
   }
 }

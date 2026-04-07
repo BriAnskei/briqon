@@ -58,7 +58,7 @@ export const PRIORITY_OPTIONS: {
     color: "#5BB8FF",
   },
   {
-    key: "rest",
+    key: "rest and recovery",
     label: "Rest & Recovery",
     icon: "moon-outline",
     desc: "Recharge, unwind & restore energy",
