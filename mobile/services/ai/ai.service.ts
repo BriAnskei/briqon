@@ -2,10 +2,9 @@ import { ScheduleItem } from "@/type/MessageTypes";
 import { API_URL, apiFetch } from "../api.client";
 
 export class AiService {
-  static generateGeneralMessageSteam(
+  static generateGeneralMessageStream(
     prompt: string,
     onChunk: (chunk: string) => void,
-    onMode: (mode: number) => void, // 0 = general chat, 1 = generate schedule
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -13,10 +12,6 @@ export class AiService {
       xhr.setRequestHeader("Content-Type", "application/json");
 
       let lastIndex = 0;
-
-      const modes = ["MODE 1", "MODE 2"];
-      let mode = "";
-      let hasBodcastedMode = false;
 
       xhr.onprogress = () => {
         const newText = xhr.responseText.slice(lastIndex);
@@ -28,14 +23,8 @@ export class AiService {
           if (line.startsWith("data: ")) {
             const chunk = line.slice(6);
 
-            if (mode.length < 7) {
-              mode += chunk;
-
-              // Check if mode just became complete
-              mode.includes("MODE 1") ? onMode(0) : onMode(1);
-            } else {
-              if (chunk) onChunk(chunk);
-            }
+            const normalizedChunk = chunk === "\\n" ? "\n" : chunk;
+            onChunk(normalizedChunk);
           }
         }
       };

@@ -1,10 +1,9 @@
 import { use, useState } from "react";
 
 export const useAiStreamResponse = () => {
-  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [mode, setMode] = useState<number | undefined>(undefined);
+  const [response, setResponse] = useState("");
 
   return {
     response,
@@ -13,7 +12,5 @@ export const useAiStreamResponse = () => {
     setIsStreaming,
     loading,
     setLoading,
-    mode,
-    setMode,
   };
 };

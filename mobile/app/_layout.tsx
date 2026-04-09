@@ -6,7 +6,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ScheduleProvider>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{ headerShown: false }}
+          // initialRouteName="schedule/schedule-conversation"
+        >
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="schedule/add"
@@ -15,6 +18,7 @@ export default function RootLayout() {
               animation: "slide_from_right",
             }}
           />
+
           <Stack.Screen name="confirmation" />
         </Stack>
       </ScheduleProvider>

@@ -18,9 +18,16 @@ export class AiController {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Transfer-Encoding', 'chunked');
 
+    let response = '';
     await this.aiService.generateGeneralMessage(prompt, (chunk) => {
-      res.write(`data: ${chunk}\n\n`);
+      response += chunk;
+      console.log('chunk response: ', chunk);
+
+      const normalizedChunk = chunk === '' ? '\\n' : chunk;
+      res.write(`data: ${normalizedChunk}\n\n`);
     });
+
+    console.log('Response chunk: ', response);
 
     res.end();
   }

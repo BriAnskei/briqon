@@ -14,3 +14,17 @@ export function duration(start: string, end: string): string {
   if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
 }
+
+export function formatTime(time?: string): string {
+  if (!time) return "";
+
+  const [hourStr, minuteStr] = time.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = minuteStr ?? "00";
+  const ampm = hour >= 12 ? " PM" : " AM";
+
+  if (hour === 0) hour = 12;
+  else if (hour > 12) hour -= 12;
+
+  return `${hour}:${minute}${ampm}`;
+}

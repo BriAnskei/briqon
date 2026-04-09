@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTextInput } from "./useInput";
 import { MessageTypes } from "@/type/MessageTypes";
 import { useSchedule } from "@/context/ScheduleContext";
@@ -10,7 +10,7 @@ export const useScheduleScreen = () => {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
-  const { generate, currentModeRef, conversation, isStreaming } = useSchedule();
+  const { generateMessageResponse, conversation, isStreaming } = useSchedule();
   const { prompt, setPrompt } = useTextInput();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -19,10 +19,18 @@ export const useScheduleScreen = () => {
     null,
   );
 
-  const handleSend = async (text: string) => {
-    await generate(text);
+  useEffect(() => {
+    if (conversation.length === 0) return;
+    const timeout = setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [conversation]);
+
+  const handleSend = useCallback(async (text: string) => {
     setPrompt("");
-  };
+    await generateMessageResponse(text);
+  }, []);
 
   const handleReview = () => {
     if (!selectedScheduleId) return;

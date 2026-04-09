@@ -81,6 +81,7 @@ export function useWizardForm() {
   const isLastStep = () => step === totalSteps - 1;
 
   const canProceed = (): boolean => {
+    'Generate a schedule based on this event:Start: 10:00End: 03:00Event type: weddingActivities:STRICT RULES:- Follow the appointments or activities if specify.- Output ONLY JSON- No explanation- Follow this schema EXACTLY:{  "start_time": "HH:MM",  "end_time": "HH:MM",  "activity": "string"}  ';
     if (step === 0) return form.scheduleType !== null;
     if (isEvent) {
       if (step === 1)
@@ -103,6 +104,8 @@ export function useWizardForm() {
       setEventItemDraft((d) => ({ ...d, visible: false }));
     if (isLastStep()) {
       const generatedPromp = buildPrompt(form);
+
+      console.log("Genrated prompt: ", generatedPromp);
       generateScheduleJson(generatedPromp);
 
       router.push("/schedule/schedule-conversation");

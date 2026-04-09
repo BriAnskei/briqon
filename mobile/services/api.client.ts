@@ -1,5 +1,4 @@
-export const API_URL = "http://192.168.1.5:3000";
-
+export const API_URL = process.env.MY_SERVER_URL;
 export async function apiFetch(path: string, option?: RequestInit) {
   const res = await fetch(`${API_URL}${path}`, {
     ...option,

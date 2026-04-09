@@ -25,7 +25,8 @@
       },
       "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.briqon"
+      "package": "com.anonymous.briqon",
+      "softwareKeyboardLayoutMode": "adjustNothing"
     },
     "web": {
       "output": "static",
