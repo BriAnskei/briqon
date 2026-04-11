@@ -33,9 +33,10 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     setIsStreaming,
   } = useAiStreamResponse(); // global
 
-  const aiLastMessageIndex = useRef<number | null>(null);
-
   const [conversation, setConversation] = useState<MessageTypes[]>([]);
+
+  // general message response flase
+  const hasStreamStartedRef = useRef(false);
 
   const addNewMessage = (message: MessageTypes) => {
     setConversation((prev) => [...prev, message]);
@@ -46,62 +47,34 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   }, [conversation]);
 
   const generateMessageResponse = async (promptMessage: string) => {
-    const userMessagePrompt: Extract<MessageTypes, { role: "user" }> = {
-      id: Date.now().toString(),
-      role: "user",
-      text: promptMessage,
-    };
-
-    addNewMessage(userMessagePrompt);
-
-    setLoading(true);
+    insertUserMessagePrompt(promptMessage);
 
     try {
-      let hasStartedStreaming = false;
+      let newMessageId = Date.now().toString();
+
+      addNewMessage({
+        id: newMessageId,
+        role: "ai",
+        type: "loading",
+        messageType: "message",
+      });
 
       let responseFormat = "";
       await AiService.generateGeneralMessageStream(promptMessage, (chunk) => {
         responseFormat += chunk;
 
-        if (!hasStartedStreaming) {
-          const responseMessage: MessageTypes = {
-            id: Date.now().toString(),
-            role: "ai",
-            type: "chat",
-            text: "",
-          };
-
-          setConversation((prev) => {
-            const newConversation = [...prev, responseMessage];
-
-            aiLastMessageIndex.current = newConversation.length - 1;
-            return newConversation;
-          });
-
-          hasStartedStreaming = true;
-          setIsStreaming(true);
-          setLoading(false);
+        if (hasStreamStartedRef.current) {
+          setLoadingBlockToMessageType();
+          hasStreamStartedRef.current = true;
         }
 
         // update message chunk on the last conversation index ref
-        setConversation((prev) => {
-          const index = aiLastMessageIndex.current;
-          if (index === null) return prev;
-
-          const updated = [...prev];
-          const msg = updated[index];
-
-          if (msg.role === "ai" && msg.type === "chat")
-            if (msg.role === "ai" && msg.type === "chat") {
-              const normalizedChunk = chunk === "" ? "\n" : chunk;
-              updated[index] = { ...msg, text: msg.text + normalizedChunk };
-            }
-
-          return updated;
-        });
+        updateMessageResponseChunk(chunk);
       });
 
-      console.log("response format", responseFormat);
+      // end of the stream
+      hasStreamStartedRef.current = false;
+
       setIsStreaming(false);
     } catch (error) {
       console.error(error);
@@ -112,7 +85,13 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     const loadingId = Date.now().toString();
 
     // push skeleton into conversation immediately
-    addNewMessage({ id: loadingId, role: "ai", type: "loading" });
+    addNewMessage({
+      id: loadingId,
+      role: "ai",
+      type: "loading",
+      messageType: "schedule",
+    });
+
     try {
       setLoading(true);
       const responseJson = await AiService.generateScheduleJson(prompt);
@@ -150,6 +129,56 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       {children}
     </ScheduleContext.Provider>
   );
+
+  function setLoadingBlockToMessageType() {
+    const responseMessage: MessageTypes = {
+      id: Date.now().toString(),
+      role: "ai",
+      type: "chat",
+      text: "",
+    };
+
+    setConversation((prev) => {
+      const newConversation = [...prev];
+
+      newConversation[newConversation.length - 1] = { ...responseMessage };
+      return newConversation;
+    });
+
+    setIsStreaming(true);
+    setLoading(false);
+  }
+
+  function insertUserMessagePrompt(promptMessage: string) {
+    const userMessagePrompt: Extract<MessageTypes, { role: "user" }> = {
+      id: Date.now().toString(),
+      role: "user",
+      text: promptMessage,
+    };
+
+    addNewMessage(userMessagePrompt);
+
+    setLoading(true);
+  }
+
+  function updateMessageResponseChunk(chunk: string) {
+    setConversation((prev) => {
+      const updated = [...prev];
+
+      const messageBlock = updated[updated.length - 1] as Extract<
+        MessageTypes,
+        { type: "chat" }
+      >;
+
+      // message response will always be the last index
+      updated[updated.length - 1] = {
+        ...messageBlock,
+        text: messageBlock.text + chunk,
+      };
+
+      return updated;
+    });
+  }
 }
 export function useSchedule() {
   const ctx = useContext(ScheduleContext);

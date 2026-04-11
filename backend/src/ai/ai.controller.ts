@@ -22,11 +22,9 @@ export class AiController {
     await this.aiService.generateGeneralMessage(prompt, (chunk) => {
       response += chunk;
       console.log('chunk response: ', chunk);
-
-      const normalizedChunk = chunk === '' ? '\\n' : chunk;
-      res.write(`data: ${normalizedChunk}\n\n`);
+      const escapedChunk = chunk.replace(/\n/g, '\\n'); // escape real newlines
+      res.write(`data: ${escapedChunk}\n`);
     });
-
     console.log('Response chunk: ', response);
 
     res.end();

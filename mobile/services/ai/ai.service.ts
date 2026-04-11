@@ -12,6 +12,7 @@ export class AiService {
       xhr.setRequestHeader("Content-Type", "application/json");
 
       let lastIndex = 0;
+      let response = "";
 
       xhr.onprogress = () => {
         const newText = xhr.responseText.slice(lastIndex);
@@ -22,8 +23,7 @@ export class AiService {
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const chunk = line.slice(6);
-
-            const normalizedChunk = chunk === "\\n" ? "\n" : chunk;
+            const normalizedChunk = chunk.replace(/\\n/g, "\n"); // unescape \\n → real \n
             onChunk(normalizedChunk);
           }
         }
@@ -32,6 +32,7 @@ export class AiService {
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           resolve();
+          console.log("model response: ", response);
         } else {
           reject(new Error(`Request failed with status ${xhr.status}`));
         }
@@ -46,6 +47,7 @@ export class AiService {
 
   static async generateScheduleJson(prompt: string): Promise<ScheduleItem[]> {
     try {
+      console.log("generetd promp: ", prompt);
       const res = await apiFetch("/ai/schedule", {
         method: "POST",
         body: JSON.stringify({ prompt }),

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import Markdown from "react-native-markdown-display";
 import { Colors, Radius } from "@/type/theme";
 import { MessageTypes } from "@/type/MessageTypes";
 
@@ -19,7 +20,13 @@ export function ChatBubble({ turn }: Props) {
   return (
     <View style={[s.bubble, isUser ? s.bubbleUser : s.bubbleAi]}>
       {!isUser && <View style={s.aiDot} />}
-      <Text style={[s.text, isUser ? s.textUser : s.textAi]}>{text}</Text>
+      {isUser ? (
+        <Text style={[s.text, s.textUser]}>{text}</Text>
+      ) : (
+        <View style={s.aiTextContainer}>
+          <Markdown style={markdownStyles}>{text}</Markdown>
+        </View>
+      )}
     </View>
   );
 }
@@ -54,10 +61,36 @@ const s = StyleSheet.create({
     color: Colors.white,
     fontWeight: "500",
   },
-  textAi: {
+  aiTextContainer: {
     backgroundColor: Colors.bgCard,
-    color: Colors.textPrimary,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flex: 1,
   },
 });
+
+// Markdown styles mirror your existing AI text style
+const markdownStyles = {
+  body: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+  },
+  bullet_list: {
+    marginVertical: 4,
+  },
+  list_item: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+  },
+  paragraph: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.textPrimary,
+    marginVertical: 2,
+  },
+};

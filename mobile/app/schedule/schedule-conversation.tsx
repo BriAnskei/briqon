@@ -19,6 +19,7 @@ import { ChatBubble } from "@/features/schedule-conversation/components/ChatBubb
 import { ReviewModal } from "@/features/schedule-conversation/components/ReviewModel";
 import { ScheduleBlock } from "@/features/schedule-conversation/components/ScheduleBlock";
 import { ScheduleSkeletonBlock } from "@/features/schedule-conversation/components/ScheduleSkeletonBlock";
+import { MessageLoadingIndicator } from "@/features/schedule-conversation/components/MessageLoadingIndicator";
 
 const MAX_INPUT_HEIGHT = 120;
 
@@ -93,8 +94,19 @@ export default function ScheduleConversation() {
           keyboardShouldPersistTaps="handled"
         >
           {conversation.map((turn) => {
-            if (turn.role === "ai" && turn.type === "loading")
+            if (
+              turn.role === "ai" &&
+              turn.type === "loading" &&
+              turn.messageType === "schedule"
+            )
               return <ScheduleSkeletonBlock key={turn.id} />;
+            if (
+              turn.role === "ai" &&
+              turn.type === "loading" &&
+              turn.messageType === "message"
+            )
+              // this shold be loading ui for general message
+              return <MessageLoadingIndicator key={turn.id} />;
             if (turn.role === "user")
               return <ChatBubble key={turn.id} turn={turn} />;
             if (turn.role === "ai" && turn.type === "chat")

@@ -7,4 +7,9 @@ export type MessageTypes =
   | { id: string; role: "user"; text: string }
   | { id: string; role: "ai"; type: "chat"; text: string }
   | { id: string; role: "ai"; type: "schedule"; items: ScheduleItem[] }
-  | { id: string; role: "ai"; type: "loading" };
+  | {
+      id: string;
+      role: "ai";
+      type: "loading";
+      messageType: "schedule" | "message";
+    };
