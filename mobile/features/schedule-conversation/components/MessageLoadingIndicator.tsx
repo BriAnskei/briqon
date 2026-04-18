@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
 import { Colors } from "@/type/theme";
 
-const DOT_SIZE = 8;
-const BOUNCE_HEIGHT = -6;
+const DOT_SIZE = 6;
+const BOUNCE_HEIGHT = -5;
 const ANIMATION_DURATION = 400;
 const STAGGER_DELAY = 150;
 
@@ -49,8 +49,8 @@ const s = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 12,
+    gap: 4,
+    paddingVertical: 8,
     paddingHorizontal: 4,
     alignSelf: "flex-start", // left-aligned, AI side
     marginLeft: 4,

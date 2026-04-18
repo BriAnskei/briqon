@@ -32,21 +32,28 @@ export class AiService {
       const stream = await ollama.chat({
         model: 'briqon',
         messages: [{ role: 'user', content: prompt }],
+        stream: true,
       });
 
-      const cleanedJsonString = extractJson(stream.message.content || '');
+      let fullResponse = '';
+
+      for await (const chunk of stream) {
+        fullResponse += chunk.message?.content || '';
+      }
+
+      const cleanedJsonString = extractJson(fullResponse);
       const parsedJson = safeParseJson(cleanedJsonString);
 
-      const resulJson = ScheduleSchema.safeParse(parsedJson);
-      if (!resulJson.success) {
-        console.error(resulJson.error);
+      const resultJson = ScheduleSchema.safeParse(parsedJson);
+      if (!resultJson.success) {
+        console.error(resultJson.error);
         throw new Error('Invalid Schedule Schema');
       }
 
-      return resulJson.data;
+      return resultJson.data;
     } catch (error) {
       console.error(error);
-      throw new Error('Failed to generate Json response for schedule');
+      throw new Error('Failed to generate Json response');
     }
   }
 }

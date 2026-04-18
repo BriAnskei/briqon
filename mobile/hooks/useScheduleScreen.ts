@@ -10,7 +10,12 @@ export const useScheduleScreen = () => {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
-  const { generateMessageResponse, conversation, isStreaming } = useSchedule();
+  const {
+    generateMessageResponse,
+    conversation,
+    isStreaming,
+    responseLoading,
+  } = useSchedule();
   const { prompt, setPrompt } = useTextInput();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -76,5 +81,6 @@ export const useScheduleScreen = () => {
     handleReview,
     handleConfirm,
     handleAddNewMessage,
+    responseLoading,
   };
 };

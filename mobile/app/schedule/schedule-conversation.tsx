@@ -46,6 +46,7 @@ export default function ScheduleConversation() {
     conversation,
     handleSend,
     isStreaming,
+    responseLoading,
     prompt,
     setPrompt,
     modalVisible,
@@ -58,6 +59,12 @@ export default function ScheduleConversation() {
     handleAddNewMessage,
     handleConfirm,
   } = useScheduleScreen();
+
+  // find the id of the latest schedule block in the conversation
+  const latestScheduleId =
+    [...conversation]
+      .reverse()
+      .find((t) => t.role === "ai" && t.type === "schedule")?.id ?? null;
 
   return (
     <SafeAreaView style={s.root} edges={["top"]}>
@@ -105,7 +112,6 @@ export default function ScheduleConversation() {
               turn.type === "loading" &&
               turn.messageType === "message"
             )
-              // this shold be loading ui for general message
               return <MessageLoadingIndicator key={turn.id} />;
             if (turn.role === "user")
               return <ChatBubble key={turn.id} turn={turn} />;
@@ -123,6 +129,7 @@ export default function ScheduleConversation() {
                     )
                   }
                   isStreaming={isStreaming}
+                  isLatest={turn.id === latestScheduleId}
                 />
               );
             }
@@ -159,13 +166,16 @@ export default function ScheduleConversation() {
             <TouchableOpacity
               style={[
                 s.sendBtn,
-                (!prompt.trim() || isStreaming) && s.sendBtnOff,
+                (!prompt.trim() || isStreaming || responseLoading) &&
+                  s.sendBtnOff,
               ]}
               onPress={handleAddNewMessage}
-              disabled={!prompt.trim() || isStreaming}
+              disabled={!prompt.trim() || isStreaming || responseLoading}
               activeOpacity={0.85}
             >
-              <Text style={s.sendBtnIcon}>{isStreaming ? "■" : "↑"}</Text>
+              <Text style={s.sendBtnIcon}>
+                {isStreaming || responseLoading ? "■" : "↑"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
