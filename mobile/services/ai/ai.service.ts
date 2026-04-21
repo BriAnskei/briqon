@@ -66,4 +66,6 @@ export class AiService {
       throw error;
     }
   }
+
+  static async handleScheduleEditGeneration(editPrompt: string);
 }

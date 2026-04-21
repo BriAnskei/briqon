@@ -3,7 +3,7 @@ import { Body, Controller, Get, Post, Query, Res, Sse } from '@nestjs/common';
 import { AiService } from './ai.service';
 import type { Response } from 'express';
 import { PromptDto } from './dto/prompt.dto';
-import { Schedule } from './types/schedule.type';
+import { ScheduleItem } from './schemas/schedule.schema';
 
 @Controller('ai')
 export class AiController {
@@ -31,7 +31,7 @@ export class AiController {
   }
 
   @Post('schedule')
-  async getSchedule(@Body() body: PromptDto): Promise<Schedule> {
+  async getSchedule(@Body() body: PromptDto): Promise<ScheduleItem[]> {
     const { prompt } = body;
     return this.aiService.generateScheduleJson(prompt);
   }

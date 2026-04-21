@@ -1,3 +1,6 @@
+import { IsString, IsArray, IsNotEmpty, MinLength } from 'class-validator';
 export class PromptDto {
-  prompt: string;
+  @IsString()
+  @IsNotEmpty()
+  prompt: string = '';
 }
