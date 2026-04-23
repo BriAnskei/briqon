@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function TimeRow({ label, icon, time, onPress }: Props) {
+  const safeTime = time instanceof Date ? time : new Date(time as any);
   return (
     <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.8}>
       <View style={s.iconWrap}>
@@ -18,7 +19,7 @@ export function TimeRow({ label, icon, time, onPress }: Props) {
       </View>
       <View style={s.body}>
         <Text style={s.label}>{label}</Text>
-        <Text style={s.time}>{formatTime(time)}</Text>
+        <Text style={s.time}>{formatTime(safeTime)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
     </TouchableOpacity>

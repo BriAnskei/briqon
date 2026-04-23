@@ -73,7 +73,7 @@ export function durationText(start: Date, end: Date): string {
   return `Duration: ${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m` : ""}`;
 }
 
-const rulesJsonPrompt = `
+export const rulesJsonPrompt = `
 STRICT RULES:
 - Follow the appointments or activities if specify.
 - Output ONLY JSON

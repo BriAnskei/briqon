@@ -2,9 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import ollama from 'ollama';
 import { ScheduleSchema } from './schemas/schedule.schema';
 import { UpdatePromptDto } from './dto/update-prompt.dto';
-import { extractJson, safeParseJson } from '../util/json.util';
+
 import { OllamaService } from '../ollama/ollama.service';
 import { RetryHandler } from '../util/retry-handler.util';
+import { parseValidator } from '../util/json.util';
 
 @Injectable()
 export class AiService {
@@ -41,15 +42,16 @@ export class AiService {
           fullResponse += chunk.message?.content || '';
         }
 
-        const cleanedJsonString = extractJson(fullResponse);
-        const parsedJson = safeParseJson(cleanedJsonString);
+        const parserRes = parseValidator(fullResponse);
 
-        const resultJson = ScheduleSchema.safeParse(parsedJson);
-        if (resultJson.success) {
-          return resultJson.data;
+        if (parserRes.success) {
+          return parserRes.scheduleItems!;
         }
 
-        console.log('Invalid generated json format, retrying');
+        console.error(
+          'Failed to parse response',
+          parserRes.message || 'Failed to parse json response',
+        );
       } catch (error) {
         console.error(error);
       } finally {
@@ -60,14 +62,5 @@ export class AiService {
     throw new BadRequestException(
       'Failed to generate a valid schedule json format',
     );
-  }
-
-  async generateEditSchedule(updatePromptDto: UpdatePromptDto) {
-    try {
-    } catch (error) {
-      console.log('Failed in generateEditSchedule');
-      console.error(error);
-      throw new Error('Failed to generate Edit schedule');
-    }
   }
 }

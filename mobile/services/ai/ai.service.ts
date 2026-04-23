@@ -1,5 +1,6 @@
 import { ScheduleItem } from "@/type/MessageTypes";
 import { API_URL, apiFetch } from "../api.client";
+import { ApiError } from "../errors/ai.error";
 
 export class AiService {
   static generateGeneralMessageStream(
@@ -54,7 +55,12 @@ export class AiService {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to generate schedule");
+        const errBody = await res.json();
+
+        throw new ApiError(
+          errBody.message || "Failed to generate schedule",
+          res.status,
+        );
       }
 
       const scheduleJson = await res.json();
@@ -66,6 +72,4 @@ export class AiService {
       throw error;
     }
   }
-
-  static async handleScheduleEditGeneration(editPrompt: string);
 }

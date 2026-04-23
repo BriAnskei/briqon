@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useSchedule } from "@/context/ScheduleContext";
 import { ScheduleItem } from "@/type/MessageTypes";
 import { duration, formatTime } from "@/utils/parseSchedule";
 import { toneForIndex } from "../constants/tones";
+import { buildEditPrompt } from "@/features/schedule/utils/editSchedulePromptGenerator";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,7 @@ export function EditScheduleScreen() {
     itemStates[index] ?? { status: "idle" };
 
   const setItemState = useCallback((index: number, next: ItemUIState) => {
+    console.log("settring item state: ", index, next);
     setItemStates((prev) => {
       const reset: Record<number, ItemUIState> = {};
       Object.entries(prev).forEach(([k, v]) => {
@@ -61,9 +63,15 @@ export function EditScheduleScreen() {
     });
   }, []);
 
+  useEffect(() => {
+    console.log("Item states update: ", itemStates);
+  }, [itemStates]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleLongPress = (index: number) => {
     const current = getState(index);
+
+    console.log("current: ", current);
     if (current.status === "pending_delete") return;
     if (current.status === "actions") {
       setItemState(index, { status: "idle" });
@@ -134,14 +142,16 @@ export function EditScheduleScreen() {
     const scheduleEndTime = items[items.length - 1]?.end_time ?? "23:59";
 
     setIsSubmitting(true);
+
+    const prompt = buildEditPrompt(
+      items,
+      edits,
+      deletedIndices,
+      scheduleStartTime,
+      scheduleEndTime,
+    );
     try {
-      await handleEditSchedule(
-        items,
-        edits,
-        deletedIndices,
-        scheduleStartTime,
-        scheduleEndTime,
-      );
+      await handleEditSchedule(prompt);
       router.back();
     } catch (e) {
       console.error(e);
@@ -357,7 +367,7 @@ export function EditScheduleScreen() {
                         multiline
                         autoFocus
                         returnKeyType="done"
-                        blurOnSubmit
+                        submitBehavior="blurAndSubmit"
                       />
                       <View style={s.wordCountRow}>
                         <Text

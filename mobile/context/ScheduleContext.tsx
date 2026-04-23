@@ -11,6 +11,14 @@ import { AiService } from "@/services/ai/ai.service";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { useAiStreamResponse } from "@/hooks/prompt/useAiStreamResponse";
+import { defaultForm } from "@/features/schedule/utils/wizardHelpers";
+import { FormState } from "@/type/NewScheduleTypes";
+import { useRouter } from "expo-router";
+import { ApiError } from "@/services/errors/ai.error";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useToast } from "@/hooks/useToast";
+
+const STORAGE_KEY = "prev_schedule_form";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,35 +43,41 @@ type ScheduleContextType = {
   editTarget: EditTarget | null;
   setEditTarget: (target: EditTarget | null) => void;
   // batch edit
-  handleEditSchedule: (
-    items: ScheduleItem[],
-    edits: QueuedEdit[],
-    deletedIndices: number[],
-    scheduleStartTime: string,
-    scheduleEndTime: string,
-  ) => Promise<void>;
+  handleEditSchedule: (prompt: string) => Promise<void>;
+
+  // new form input on failed response
+  setPrevScheduleFormInput: React.Dispatch<
+    React.SetStateAction<FormState | undefined>
+  >;
+  prevScheduleForm: FormState | undefined;
 };
 
 const ScheduleContext = createContext<ScheduleContextType | null>(null);
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 export function ScheduleProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const { loading, setLoading, response, isStreaming, setIsStreaming } =
     useAiStreamResponse();
+
+  const { showToast } = useToast();
+
+  // new schedule form, this will be used to set the input form of the wizard when the response json format failed in the serveer
+  const [prevScheduleForm, setPrevScheduleFormInput] = useState<
+    FormState | undefined
+  >(undefined);
 
   const [conversation, setConversation] = useState<MessageTypes[]>([]);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
   const hasStreamStartedRef = useRef(false);
 
+  useEffect(() => {
+    console.log("prevous form input data: ", prevScheduleForm);
+  }, [prevScheduleForm]);
+
   const addNewMessage = (message: MessageTypes) => {
     setConversation((prev) => [...prev, message]);
   };
-
-  useEffect(() => {
-    console.log("conversation update: ", conversation);
-  }, [conversation]);
 
   // ── Generate message response ─────────────────────────────────────────────
   const generateMessageResponse = async (promptMessage: string) => {
@@ -122,19 +136,30 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       );
 
       setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+
+      // reset the conversaiton
+      setConversation([]);
+      if (error instanceof ApiError && error.status === 400) {
+        console.error("Failed to generate a valid json format");
+        console.error(error.message);
+      }
+
+      router.replace("/schedule/add");
+
+      showToast({
+        type: "error",
+        title: "Schedule generation failed",
+        message:
+          "It appears I wasn't able to generate your schedule request today. Please feel free to try again.",
+        duration: 5000,
+      });
     }
   };
 
   // ── Batch edit schedule ───────────────────────────────────────────────────
-  const handleEditSchedule = async (
-    items: ScheduleItem[],
-    edits: QueuedEdit[],
-    deletedIndices: number[],
-    scheduleStartTime: string,
-    scheduleEndTime: string,
-  ) => {
+  const handleEditSchedule = async (prompt: string) => {
     const loadingId = uuidv4();
 
     // push skeleton while model runs
@@ -147,14 +172,6 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true);
-
-      const prompt = buildBatchEditPrompt(
-        items,
-        edits,
-        deletedIndices,
-        scheduleStartTime,
-        scheduleEndTime,
-      );
 
       const responseJson = await AiService.generateScheduleJson(prompt);
 
@@ -190,6 +207,9 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         editTarget,
         setEditTarget,
         handleEditSchedule,
+
+        setPrevScheduleFormInput,
+        prevScheduleForm,
       }}
     >
       {children}
@@ -240,66 +260,6 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       return updated;
     });
   }
-}
-
-// ─── Prompt builder ───────────────────────────────────────────────────────────
-
-function buildBatchEditPrompt(
-  items: ScheduleItem[],
-  edits: QueuedEdit[],
-  deletedIndices: number[],
-  scheduleStartTime: string,
-  scheduleEndTime: string,
-): string {
-  const editLines = edits
-    .map((e) => {
-      const item = items[e.itemIndex];
-      return `- [${item.start_time} - ${item.end_time}] "${item.activity}": ${e.prompt}`;
-    })
-    .join("\n");
-
-  const deleteLines = deletedIndices
-    .map((i) => {
-      const item = items[i];
-      return `- [${item.start_time} - ${item.end_time}] "${item.activity}"`;
-    })
-    .join("\n");
-
-  return `
-You are updating an existing schedule based on user instructions.
-
-Overall schedule bounds: ${scheduleStartTime} - ${scheduleEndTime}
-
-Current full schedule:
-${items
-  .map(
-    (item, i) =>
-      `${i + 1}. [${item.start_time} - ${item.end_time}] ${item.activity}`,
-  )
-  .join("\n")}
-
-${deletedIndices.length > 0 ? `Items to DELETE (remove entirely):\n${deleteLines}` : ""}
-
-${edits.length > 0 ? `Items to EDIT (apply the instruction to that specific item):\n${editLines}` : ""}
-
-STRICT RULES:
-- Output ONLY a JSON array of the full updated schedule
-- The schedule MUST still start at ${scheduleStartTime} and end at ${scheduleEndTime}
-- Remove deleted items completely
-- Apply each edit instruction to the specified item only
-- Adjust surrounding items to fill gaps or resolve conflicts
-- Items with no instructions must remain unchanged
-- Do NOT add or remove items unless instructed
-- No explanation, no markdown
-
-[
-  {
-    "start_time": "HH:MM",
-    "end_time": "HH:MM",
-    "activity": "string"
-  }
-]
-  `.trim();
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

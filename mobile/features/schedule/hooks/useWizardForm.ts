@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   FormState,
@@ -17,12 +17,16 @@ import {
   EVENT_TOTAL_STEPS,
   PERSONAL_TOTAL_STEPS,
 } from "../contants/wizardOptions";
-import { AiService } from "@/services/ai/ai.service";
 import { useSchedule } from "@/context/ScheduleContext";
 
 export function useWizardForm() {
   const router = useRouter();
-  const { generateScheduleJson } = useSchedule();
+  const {
+    generateScheduleJson,
+    prevScheduleForm,
+
+    setPrevScheduleFormInput,
+  } = useSchedule();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(defaultForm());
@@ -35,6 +39,15 @@ export function useWizardForm() {
 
   const isEvent = form.scheduleType === "event";
   const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
+
+  useEffect(() => {
+    // if there is a valud in this state then the form renders because of the error response from the api caller
+
+    if (prevScheduleForm !== undefined) {
+      setForm(prevScheduleForm);
+      setStep(prevScheduleForm.scheduleType === "event" ? 2 : 3);
+    }
+  }, [prevScheduleForm]);
 
   const patch = (p: Partial<FormState>) =>
     setForm((prev) => ({ ...prev, ...p }));
@@ -105,7 +118,8 @@ export function useWizardForm() {
     if (isLastStep()) {
       const generatedPromp = buildPrompt(form);
 
-      console.log("Genrated prompt: ", generatedPromp);
+      setPrevScheduleFormInput(form);
+
       generateScheduleJson(generatedPromp);
 
       router.push("/schedule/schedule-conversation");
