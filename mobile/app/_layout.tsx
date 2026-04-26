@@ -10,7 +10,7 @@ export default function RootLayout() {
       <ScheduleProvider>
         <Stack
           screenOptions={{ headerShown: false }}
-          // initialRouteName="schedule/schedule-conversation"
+          // initialRouteName="schedule/review"
         >
           <Stack.Screen name="(tabs)" />
           <Stack.Screen

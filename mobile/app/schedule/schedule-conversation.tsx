@@ -14,9 +14,8 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { useScheduleScreen } from "@/hooks/useScheduleScreen";
+import { useScheduleScreen } from "@/features/schedule-conversation/hooks/useScheduleScreen";
 import { ChatBubble } from "@/features/schedule-conversation/components/ChatBubble";
-import { ReviewModal } from "@/features/schedule-conversation/components/ReviewModel";
 import { ScheduleBlock } from "@/features/schedule-conversation/components/ScheduleBlock";
 import { ScheduleSkeletonBlock } from "@/features/schedule-conversation/components/ScheduleSkeletonBlock";
 import { MessageLoadingIndicator } from "@/features/schedule-conversation/components/MessageLoadingIndicator";
@@ -49,15 +48,10 @@ export default function ScheduleConversation() {
     responseLoading,
     prompt,
     setPrompt,
-    modalVisible,
-    setModalVisible,
     selectedScheduleId,
     setSelectedScheduleId,
     scrollRef,
-    selectedItems,
-    handleReview,
     handleAddNewMessage,
-    handleConfirm,
   } = useScheduleScreen();
 
   // find the id of the latest schedule block in the conversation
@@ -65,6 +59,11 @@ export default function ScheduleConversation() {
     [...conversation]
       .reverse()
       .find((t) => t.role === "ai" && t.type === "schedule")?.id ?? null;
+
+  const handleReview = () => {
+    if (!selectedScheduleId || isStreaming) return;
+    router.push("/schedule/review");
+  };
 
   return (
     <SafeAreaView style={s.root} edges={["top"]}>
@@ -180,13 +179,6 @@ export default function ScheduleConversation() {
           </View>
         </View>
       </View>
-
-      <ReviewModal
-        visible={modalVisible}
-        items={selectedItems}
-        onClose={() => setModalVisible(false)}
-        onConfirm={handleConfirm}
-      />
     </SafeAreaView>
   );
 }

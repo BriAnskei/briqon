@@ -41,3 +41,34 @@ ${rulesJsonPrompt}
 
   return res;
 }
+
+export function buildSingleCallPrompt(
+  userPrompt: string,
+  schedule: ScheduleItem[],
+) {
+  return `
+You are given an existing schedule and a user request.
+
+Schedule:
+${schedule
+  .map((s) => `- ${s.activity} (${s.start_time} - ${s.end_time})`)
+  .join("\n")}
+
+User question:
+"${userPrompt}"
+
+Return ONLY JSON:
+
+{
+  "intent": "duration_query" | "general_question",
+  "activities": string[],
+  "needsCalculation": boolean,
+  "answer": string | null
+}
+
+Rules:
+- If calculation is needed, set "needsCalculation": true and leave "answer": null
+- If general question, answer directly in "answer"
+- Do NOT explain outside JSON
+`;
+}

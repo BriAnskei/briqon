@@ -5,6 +5,7 @@ import React, {
   useRef,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import { MessageTypes, ScheduleItem } from "../type/MessageTypes";
 import { AiService } from "@/services/ai/ai.service";
@@ -37,19 +38,20 @@ type ScheduleContextType = {
   responseLoading: boolean;
   isStreaming: boolean;
   conversation: MessageTypes[];
-  generateScheduleJson: (prompt: string) => Promise<void>;
+
   generateMessageResponse: (promptMessage: string) => Promise<void>;
   // edit target
   editTarget: EditTarget | null;
   setEditTarget: (target: EditTarget | null) => void;
   // batch edit
-  handleEditSchedule: (prompt: string) => Promise<void>;
 
   // new form input on failed response
   setPrevScheduleFormInput: React.Dispatch<
     React.SetStateAction<FormState | undefined>
   >;
   prevScheduleForm: FormState | undefined;
+
+  handleScheduleGeneration: (prompt: string, isNew: boolean) => void;
 };
 
 const ScheduleContext = createContext<ScheduleContextType | null>(null);
@@ -70,10 +72,6 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
   const hasStreamStartedRef = useRef(false);
-
-  useEffect(() => {
-    console.log("prevous form input data: ", prevScheduleForm);
-  }, [prevScheduleForm]);
 
   const addNewMessage = (message: MessageTypes) => {
     setConversation((prev) => [...prev, message]);
@@ -108,45 +106,16 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   };
 
   // ── Generate initial schedule ─────────────────────────────────────────────
-  const generateScheduleJson = async (prompt: string) => {
-    const loadingId = uuidv4();
 
-    setTimeout(() => {
-      addNewMessage({
-        id: loadingId,
-        role: "ai",
-        type: "loading",
-        messageType: "schedule",
-      });
-    }, 500);
-
+  const handleScheduleGeneration = async (prompt: string, isNew: boolean) => {
     try {
-      setLoading(true);
-      const responseJson = await AiService.generateScheduleJson(prompt);
-
-      const scheduleMessage: Extract<MessageTypes, { type: "schedule" }> = {
-        id: uuidv4(),
-        role: "ai",
-        type: "schedule",
-        items: responseJson,
-      };
-
-      setConversation((prev) =>
-        prev.map((msg) => (msg.id === loadingId ? scheduleMessage : msg)),
-      );
-
-      setLoading(false);
-    } catch (error: any) {
-      console.error(error);
-
-      // reset the conversaiton
-      setConversation([]);
-      if (error instanceof ApiError && error.status === 400) {
-        console.error("Failed to generate a valid json format");
-        console.error(error.message);
+      await generateScheduleJson(prompt);
+    } catch (error) {
+      if (isNew) {
+        router.replace("/schedule/add");
+      } else {
+        router.replace("/schedule/edit");
       }
-
-      router.replace("/schedule/add");
 
       showToast({
         type: "error",
@@ -158,47 +127,63 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ── Batch edit schedule ───────────────────────────────────────────────────
-  const handleEditSchedule = async (prompt: string) => {
-    const loadingId = uuidv4();
+  const generateScheduleJson = useCallback(
+    async (prompt: string) => {
+      const loadingId = uuidv4();
 
-    // push skeleton while model runs
-    addNewMessage({
-      id: loadingId,
-      role: "ai",
-      type: "loading",
-      messageType: "schedule",
-    });
+      setTimeout(() => {
+        addNewMessage({
+          id: loadingId,
+          role: "ai",
+          type: "loading",
+          messageType: "schedule",
+        });
+      }, 500);
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
+        const responseJson = await AiService.generateScheduleJson(prompt);
 
-      const responseJson = await AiService.generateScheduleJson(prompt);
+        const scheduleMessage: Extract<MessageTypes, { type: "schedule" }> = {
+          id: uuidv4(),
+          role: "ai",
+          type: "schedule",
+          items: responseJson,
+        };
 
-      const scheduleMessage: Extract<MessageTypes, { type: "schedule" }> = {
-        id: uuidv4(),
-        role: "ai",
-        type: "schedule",
-        items: responseJson,
-      };
+        setConversation((prev) =>
+          prev.map((msg) => (msg.id === loadingId ? scheduleMessage : msg)),
+        );
 
-      setConversation((prev) =>
-        prev.map((msg) => (msg.id === loadingId ? scheduleMessage : msg)),
-      );
+        setLoading(false);
+      } catch (error: any) {
+        console.error(error);
 
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      // remove skeleton on error
-      setConversation((prev) => prev.filter((msg) => msg.id !== loadingId));
-      setLoading(false);
-    }
-  };
+        // reset the conversaiton
+        if (conversation.length === 1) {
+          setConversation([]);
+        } else {
+          // if conversation has value, then the function is called for editing, thus we pop the last element.
+          setConversation((prev) => {
+            const convos = [...prev];
+            convos.pop();
+            return convos;
+          });
+        }
+
+        if (error instanceof ApiError && error.status === 400) {
+          console.error("Failed to generate a valid json format");
+          console.error(error.message);
+        }
+        throw error;
+      }
+    },
+    [conversation],
+  );
 
   return (
     <ScheduleContext.Provider
       value={{
-        generateScheduleJson,
         response,
         responseLoading: loading,
         isStreaming,
@@ -206,10 +191,11 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         generateMessageResponse,
         editTarget,
         setEditTarget,
-        handleEditSchedule,
 
         setPrevScheduleFormInput,
         prevScheduleForm,
+
+        handleScheduleGeneration,
       }}
     >
       {children}

@@ -22,7 +22,7 @@ import { useSchedule } from "@/context/ScheduleContext";
 export function useWizardForm() {
   const router = useRouter();
   const {
-    generateScheduleJson,
+    handleScheduleGeneration,
     prevScheduleForm,
 
     setPrevScheduleFormInput,
@@ -120,7 +120,7 @@ export function useWizardForm() {
 
       setPrevScheduleFormInput(form);
 
-      generateScheduleJson(generatedPromp);
+      handleScheduleGeneration(generatedPromp, true);
 
       router.push("/schedule/schedule-conversation");
     } else setStep((s) => s + 1);

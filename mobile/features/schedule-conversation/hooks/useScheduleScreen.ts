@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTextInput } from "./useInput";
+import { useTextInput } from "../../../hooks/useInput";
 import { MessageTypes } from "@/type/MessageTypes";
 import { useSchedule } from "@/context/ScheduleContext";
 import { ScrollView } from "react-native";
@@ -64,6 +64,35 @@ export const useScheduleScreen = () => {
 
     return turn?.items ?? [];
   })();
+
+  // general chat prompt builder
+  function buildSingleCallPrompt(userPrompt: string, schedule: ScheduleItem[]) {
+    return `
+    You are an AI assistant for a schedule app.
+
+    Schedule:
+    ${schedule
+      .map((s) => `- ${s.activity} (${s.start_time} - ${s.end_time})`)
+      .join("\n")}
+
+    User question:
+    "${userPrompt}"
+
+    Return ONLY JSON:
+
+    {
+      "intent": "duration_query" | "general_question",
+      "activities": string[],
+      "needsCalculation": boolean,
+      "answer": string | null
+    }
+
+    Rules:
+    - If calculation is needed, set "needsCalculation": true and leave "answer": null
+    - If general question, answer directly in "answer"
+    - Do NOT explain outside JSON
+`;
+  }
 
   return {
     router,

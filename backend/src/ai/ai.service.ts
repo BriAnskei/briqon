@@ -29,7 +29,7 @@ export class AiService {
   }
 
   async generateScheduleJson(prompt: string) {
-    // retry handler max of 3 for invalid format generation
+    // maximum retries of 3
     const retry = new RetryHandler(3);
 
     while (retry.shouldRetry()) {
@@ -54,6 +54,9 @@ export class AiService {
         );
       } catch (error) {
         console.error(error);
+        console.log(
+          `🔄 Retrying generation - Attempt ${retry.attempt + 1}, ${3 - retry.attempt} retries remaining`,
+        );
       } finally {
         retry.next();
       }

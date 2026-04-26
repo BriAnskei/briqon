@@ -4,6 +4,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -98,15 +100,21 @@ export default function AddScheduleScreen() {
       <StepIndicator step={w.step} labels={stepLabels} />
 
       {/* ── Content ────────────────────────────────────────────────────── */}
-      <ScrollView
-        style={s.scroll}
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={0}
       >
-        {renderStep()}
-        <View style={{ height: 32 }} />
-      </ScrollView>
+        <ScrollView
+          style={s.scroll}
+          contentContainerStyle={s.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {renderStep()}
+          <View style={{ height: 32 }} />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* ── Footer CTA ─────────────────────────────────────────────────── */}
       <View style={s.footer}>

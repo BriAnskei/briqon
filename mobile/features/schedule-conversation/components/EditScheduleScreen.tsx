@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -6,164 +6,39 @@ import {
   StyleSheet,
   TextInput,
   Pressable,
-  Keyboard,
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useRouter } from "expo-router";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { useSchedule } from "@/context/ScheduleContext";
-import { ScheduleItem } from "@/type/MessageTypes";
 import { duration, formatTime } from "@/utils/parseSchedule";
 import { toneForIndex } from "../constants/tones";
-import { buildEditPrompt } from "@/features/schedule/utils/editSchedulePromptGenerator";
+import { useEditSchedule } from "../hooks/useEditSchedule";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHAR_LIMIT = 200;
 const countChars = (text: string): number => text.length;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type ItemUIState =
-  | { status: "idle" }
-  | { status: "actions" }
-  | { status: "editing"; prompt: string }
-  | { status: "queued_edit"; prompt: string } // prompt saved, awaiting Done
-  | { status: "pending_delete" };
-
-// ─── EditScheduleScreen ───────────────────────────────────────────────────────
-
 export function EditScheduleScreen() {
+  const {
+    items,
+    isSubmitting,
+    hasChanges,
+    getState,
+    handleLongPress,
+    handleEditTap,
+    handleDeleteTap,
+    handleUndoDelete,
+    handleEditPromptChange,
+    handleEditDismiss,
+    handleApply,
+    handleDone,
+    editTarget,
+  } = useEditSchedule();
+
   const router = useRouter();
-  const { editTarget, handleEditSchedule } = useSchedule();
-
-  const [items] = useState<ScheduleItem[]>(editTarget?.items ?? []);
-  const [itemStates, setItemStates] = useState<Record<number, ItemUIState>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // ── State helpers ─────────────────────────────────────────────────────────
-  const getState = (index: number): ItemUIState =>
-    itemStates[index] ?? { status: "idle" };
-
-  const setItemState = useCallback((index: number, next: ItemUIState) => {
-    console.log("settring item state: ", index, next);
-    setItemStates((prev) => {
-      const reset: Record<number, ItemUIState> = {};
-      Object.entries(prev).forEach(([k, v]) => {
-        const i = Number(k);
-        if (i !== index && v.status === "editing") {
-          reset[i] = { status: "idle" };
-        } else {
-          reset[i] = v;
-        }
-      });
-      return { ...reset, [index]: next };
-    });
-  }, []);
-
-  useEffect(() => {
-    console.log("Item states update: ", itemStates);
-  }, [itemStates]);
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleLongPress = (index: number) => {
-    const current = getState(index);
-
-    console.log("current: ", current);
-    if (current.status === "pending_delete") return;
-    if (current.status === "actions") {
-      setItemState(index, { status: "idle" });
-    } else if (current.status === "idle") {
-      setItemState(index, { status: "actions" });
-    } else if (current.status === "queued_edit") {
-      // re-open input pre-filled with existing prompt so user can replace it
-      setItemState(index, { status: "editing", prompt: current.prompt });
-    }
-  };
-
-  const handleEditTap = (index: number) => {
-    setItemState(index, { status: "editing", prompt: "" });
-  };
-
-  const handleDeleteTap = (index: number) => {
-    setItemState(index, { status: "pending_delete" });
-  };
-
-  const handleUndoDelete = (index: number) => {
-    setItemState(index, { status: "idle" });
-  };
-
-  const handleEditPromptChange = (index: number, text: string) => {
-    setItemState(index, { status: "editing", prompt: text });
-  };
-
-  const handleEditDismiss = (index: number) => {
-    Keyboard.dismiss();
-    // if there was a previously queued prompt, restore it instead of going idle
-    const current = getState(index);
-    if (current.status === "editing" && current.prompt.trim()) {
-      // user typed something but cancelled — discard and go idle
-      setItemState(index, { status: "idle" });
-    } else {
-      setItemState(index, { status: "idle" });
-    }
-  };
-
-  // Apply — saves prompt as queued_edit, collapses input
-  const handleApply = (index: number, prompt: string) => {
-    Keyboard.dismiss();
-    setItemState(index, { status: "queued_edit", prompt });
-  };
-
-  // Done — batch all queued edits + deletes, call model, navigate back
-  const handleDone = async () => {
-    const edits: { itemIndex: number; prompt: string }[] = [];
-    const deletedIndices: number[] = [];
-
-    Object.entries(itemStates).forEach(([k, v]) => {
-      const i = Number(k);
-      if (v.status === "queued_edit") {
-        edits.push({ itemIndex: i, prompt: v.prompt });
-      } else if (v.status === "pending_delete") {
-        deletedIndices.push(i);
-      }
-    });
-
-    // nothing to do — just go back
-    if (edits.length === 0 && deletedIndices.length === 0) {
-      router.back();
-      return;
-    }
-
-    // derive schedule bounds from first/last item
-    const scheduleStartTime = items[0]?.start_time ?? "00:00";
-    const scheduleEndTime = items[items.length - 1]?.end_time ?? "23:59";
-
-    setIsSubmitting(true);
-
-    const prompt = buildEditPrompt(
-      items,
-      edits,
-      deletedIndices,
-      scheduleStartTime,
-      scheduleEndTime,
-    );
-    try {
-      await handleEditSchedule(prompt);
-      router.back();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const hasChanges = Object.values(itemStates).some(
-    (v) => v.status === "queued_edit" || v.status === "pending_delete",
-  );
 
   // ── Empty guard ───────────────────────────────────────────────────────────
   if (!editTarget) {
@@ -182,7 +57,9 @@ export function EditScheduleScreen() {
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity
-          onPress={() => !isSubmitting && router.back()}
+          onPress={() =>
+            !isSubmitting && router.replace("/schedule/schedule-conversation")
+          }
           activeOpacity={0.7}
           style={[s.backBtn, isSubmitting && s.disabled]}
           disabled={isSubmitting}
