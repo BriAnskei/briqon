@@ -39,7 +39,10 @@ type ScheduleContextType = {
   isStreaming: boolean;
   conversation: MessageTypes[];
 
-  generateMessageResponse: (promptMessage: string) => Promise<void>;
+  generateMessageResponse: (
+    messagePrompt: string,
+    generatedPrompt?: string,
+  ) => Promise<void>;
   // edit target
   editTarget: EditTarget | null;
   setEditTarget: (target: EditTarget | null) => void;
@@ -78,8 +81,11 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   };
 
   // ── Generate message response ─────────────────────────────────────────────
-  const generateMessageResponse = async (promptMessage: string) => {
-    insertUserMessagePrompt(promptMessage);
+  const generateMessageResponse = async (
+    messagePrompt: string,
+    generatedPrompt?: string,
+  ) => {
+    insertUserMessagePrompt(messagePrompt);
 
     try {
       const newMessageId = uuidv4();
@@ -90,18 +96,50 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         messageType: "message",
       });
 
-      await AiService.generateGeneralMessageStream(promptMessage, (chunk) => {
-        if (!hasStreamStartedRef.current) {
-          initializeLoadingToMessageType();
-          hasStreamStartedRef.current = true;
-        }
-        updateMessageResponseChunk(chunk);
-      });
+      const prompt = `
+        ${generatedPrompt ?? messagePrompt}
+
+        Additional rules:
+        - if asked for creating or edting the schedule then respond that you can help to do that in application create or add feature
+        - Do not response a json schedule format in this message
+      `;
+
+      await AiService.generateGeneralMessageStream(
+        generatedPrompt ?? messagePrompt,
+        (chunk) => {
+          if (!hasStreamStartedRef.current) {
+            initializeLoadingToMessageType();
+            hasStreamStartedRef.current = true;
+          }
+          updateMessageResponseChunk(chunk);
+        },
+      );
 
       hasStreamStartedRef.current = false;
       setIsStreaming(false);
     } catch (error) {
       console.error(error);
+
+      showToast({
+        type: "error",
+        title: "Message failed to response",
+        message:
+          "Sorry I wasnt been able to catch up the request, please feel free to try agian",
+        duration: 5000,
+      });
+
+      // pop the inserted loader message for
+      setConversation((prev) => {
+        const convos = [...prev];
+
+        convos.pop();
+        convos.pop();
+
+        return convos;
+      });
+
+      setIsStreaming(false);
+      setLoading(false);
     }
   };
 

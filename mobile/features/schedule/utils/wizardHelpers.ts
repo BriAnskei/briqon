@@ -116,7 +116,7 @@ ${rulesJsonPrompt}
 }
 
 function generatePersonalSchedulePrompt(form: FormState) {
-  return `
+  return `  
 Generate a personal schedule for ${form.priorityFocus}:
 
 Start: ${formatTime(form.startTime)}

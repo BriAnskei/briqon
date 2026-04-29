@@ -6,7 +6,7 @@ import { ScrollView } from "react-native";
 import { ScheduleItem } from "@/type/MessageTypes";
 import { useRouter } from "expo-router";
 
-export const useScheduleScreen = () => {
+export const useConversationScreen = () => {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -15,12 +15,18 @@ export const useScheduleScreen = () => {
     conversation,
     isStreaming,
     responseLoading,
+    prevScheduleForm,
   } = useSchedule();
+
   const { prompt, setPrompt } = useTextInput();
 
   const [modalVisible, setModalVisible] = useState(false);
 
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    null,
+  );
+
+  const [questionScheduleId, setQuestionScheduleId] = useState<string | null>(
     null,
   );
 
@@ -32,10 +38,43 @@ export const useScheduleScreen = () => {
     return () => clearTimeout(timeout);
   }, [conversation]);
 
-  const handleSend = useCallback(async (text: string) => {
-    setPrompt("");
-    await generateMessageResponse(text);
-  }, []);
+  // Derive all schedule blocks in order of appearance for numbering
+  const scheduleBlocks = conversation.filter(
+    (t) => t.role === "ai" && t.type === "schedule",
+  );
+
+  // count the number of the schedule
+  const getQuestionScheduleNumberr = () => {
+    let numberOfSched = 0;
+    for (let c of conversation) {
+      if (c.role === "ai" && c.type === "schedule") {
+        numberOfSched++;
+        if (c.id === questionScheduleId) return numberOfSched;
+      }
+    }
+
+    return null;
+  };
+  const handleSend = useCallback(
+    async (text: string) => {
+      let generatedPrompt: string | undefined;
+
+      if (questionScheduleId) {
+        for (let c of conversation) {
+          if (c.id === questionScheduleId) {
+            generatedPrompt = buildSingleCallPrompt(
+              text,
+              (c as Extract<MessageTypes, { type: "schedule" }>).items,
+            );
+          }
+        }
+      }
+
+      setPrompt("");
+      await generateMessageResponse(text, generatedPrompt);
+    },
+    [conversation, generateMessageResponse, setPrompt],
+  );
 
   const handleReview = () => {
     if (!selectedScheduleId) return;
@@ -68,29 +107,22 @@ export const useScheduleScreen = () => {
   // general chat prompt builder
   function buildSingleCallPrompt(userPrompt: string, schedule: ScheduleItem[]) {
     return `
-    You are an AI assistant for a schedule app.
+    Answer the user's message using only the schedule below.
 
-    Schedule:
+    SCHEDULE:
     ${schedule
-      .map((s) => `- ${s.activity} (${s.start_time} - ${s.end_time})`)
+      .map(
+        (s) =>
+          `- ${s.activity ?? "No activity"} (${s.start_time ?? "?"} - ${s.end_time ?? "?"})`,
+      )
       .join("\n")}
 
-    User question:
+    USER MESSAGE:
     "${userPrompt}"
 
-    Return ONLY JSON:
-
-    {
-      "intent": "duration_query" | "general_question",
-      "activities": string[],
-      "needsCalculation": boolean,
-      "answer": string | null
-    }
-
     Rules:
-    - If calculation is needed, set "needsCalculation": true and leave "answer": null
-    - If general question, answer directly in "answer"
-    - Do NOT explain outside JSON
+    - If information is missing or unclear, say so.
+    - Be concise and natural.
 `;
   }
 
@@ -105,11 +137,15 @@ export const useScheduleScreen = () => {
     setModalVisible,
     selectedScheduleId,
     setSelectedScheduleId,
+    questionScheduleId,
+    setQuestionScheduleId,
+    getQuestionScheduleNumberr,
     scrollRef,
     selectedItems,
     handleReview,
     handleConfirm,
     handleAddNewMessage,
     responseLoading,
+    prevScheduleForm,
   };
 };

@@ -11,7 +11,9 @@ type Props = {
   isSelected: boolean;
   onSelect: () => void;
   isStreaming: boolean;
-  isLatest: boolean; // only the most recent schedule block shows Edit
+  isLatest: boolean;
+  onAskAbout: () => void;
+  isSelectedForQuestion: boolean;
 };
 
 export function ScheduleBlock({
@@ -20,6 +22,8 @@ export function ScheduleBlock({
   onSelect,
   isStreaming,
   isLatest,
+  onAskAbout,
+  isSelectedForQuestion,
 }: Props) {
   const router = useRouter();
   const { setEditTarget } = useSchedule();
@@ -66,6 +70,24 @@ export function ScheduleBlock({
               Select this schedule
             </Text>
           )}
+        </TouchableOpacity>
+
+        {/* Ask about this button — icon only, shown on all schedule blocks */}
+        <TouchableOpacity
+          style={[
+            s.askBtn,
+            isSelectedForQuestion && s.askBtnActive,
+            isStreaming && s.btnDisabled,
+          ]}
+          onPress={onAskAbout}
+          activeOpacity={0.8}
+          disabled={isStreaming || isSelectedForQuestion}
+        >
+          <Text
+            style={[s.askBtnIcon, isSelectedForQuestion && s.askBtnIconActive]}
+          >
+            💬
+          </Text>
         </TouchableOpacity>
 
         {/* Edit button — only on the latest schedule block */}
@@ -123,6 +145,24 @@ const s = StyleSheet.create({
   btnTextActive: { fontSize: 12, fontWeight: "600", color: Colors.white },
   checkmark: { fontSize: 12, fontWeight: "700", color: Colors.white },
   textDisabled: { opacity: 0.4 },
+
+  // Ask about this button
+  askBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgElevated,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  askBtnActive: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accent + "20",
+  },
+  askBtnIcon: { fontSize: 16 },
+  askBtnIconActive: {},
 
   // Edit button
   editBtn: {

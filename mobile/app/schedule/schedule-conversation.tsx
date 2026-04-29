@@ -14,15 +14,33 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { useScheduleScreen } from "@/features/schedule-conversation/hooks/useScheduleScreen";
+
 import { ChatBubble } from "@/features/schedule-conversation/components/ChatBubble";
 import { ScheduleBlock } from "@/features/schedule-conversation/components/ScheduleBlock";
 import { ScheduleSkeletonBlock } from "@/features/schedule-conversation/components/ScheduleSkeletonBlock";
 import { MessageLoadingIndicator } from "@/features/schedule-conversation/components/MessageLoadingIndicator";
+import { useConversationScreen } from "@/features/schedule-conversation/hooks/useConversationScreen";
 
 const MAX_INPUT_HEIGHT = 120;
 
 export default function ScheduleConversation() {
+  const {
+    router,
+    conversation,
+    isStreaming,
+    responseLoading,
+    prompt,
+    setPrompt,
+    selectedScheduleId,
+    setSelectedScheduleId,
+    questionScheduleId,
+    setQuestionScheduleId,
+    getQuestionScheduleNumberr,
+    scrollRef,
+    handleAddNewMessage,
+    prevScheduleForm,
+  } = useConversationScreen();
+
   const insets = useSafeAreaInsets();
   const [inputHeight, setInputHeight] = useState(44);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -39,20 +57,6 @@ export default function ScheduleConversation() {
       hide.remove();
     };
   }, []);
-
-  const {
-    router,
-    conversation,
-    handleSend,
-    isStreaming,
-    responseLoading,
-    prompt,
-    setPrompt,
-    selectedScheduleId,
-    setSelectedScheduleId,
-    scrollRef,
-    handleAddNewMessage,
-  } = useScheduleScreen();
 
   // find the id of the latest schedule block in the conversation
   const latestScheduleId =
@@ -76,7 +80,9 @@ export default function ScheduleConversation() {
         >
           <Text style={s.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Your Schedule</Text>
+        <Text style={s.headerTitle}>
+          Your {prevScheduleForm?.scheduleType ?? "sdf"} Schedule
+        </Text>
         <TouchableOpacity
           style={[
             s.reviewBtn,
@@ -129,6 +135,8 @@ export default function ScheduleConversation() {
                   }
                   isStreaming={isStreaming}
                   isLatest={turn.id === latestScheduleId}
+                  onAskAbout={() => setQuestionScheduleId(turn.id)}
+                  isSelectedForQuestion={questionScheduleId === turn.id}
                 />
               );
             }
@@ -146,22 +154,39 @@ export default function ScheduleConversation() {
           ]}
         >
           <View style={s.inputRow}>
-            <TextInput
-              style={[s.input, { height: Math.max(44, inputHeight) }]}
-              placeholder="Ask anything or adjust your schedule…"
-              placeholderTextColor={Colors.textMuted}
-              value={prompt}
-              onChangeText={setPrompt}
-              onSubmitEditing={handleAddNewMessage}
-              returnKeyType="send"
-              multiline
-              scrollEnabled={inputHeight >= MAX_INPUT_HEIGHT}
-              textAlignVertical="top"
-              onContentSizeChange={(e) => {
-                const newHeight = e.nativeEvent.contentSize.height;
-                setInputHeight(Math.min(newHeight - 10, MAX_INPUT_HEIGHT));
-              }}
-            />
+            {/* Input box — pill + text input inside the same rounded container */}
+            <View style={s.inputBox}>
+              {questionScheduleId && (
+                <View style={s.schedulePill}>
+                  <Text style={s.schedulePillText}>
+                    Schedule {getQuestionScheduleNumberr()}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setQuestionScheduleId(null)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Text style={s.schedulePillX}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <TextInput
+                style={[s.input, { height: Math.max(44, inputHeight) }]}
+                placeholder="Ask anything or adjust your schedule…"
+                placeholderTextColor={Colors.textMuted}
+                value={prompt}
+                onChangeText={setPrompt}
+                onSubmitEditing={handleAddNewMessage}
+                returnKeyType="send"
+                multiline
+                scrollEnabled={inputHeight >= MAX_INPUT_HEIGHT}
+                textAlignVertical="top"
+                onContentSizeChange={(e) => {
+                  const newHeight = e.nativeEvent.contentSize.height;
+                  setInputHeight(Math.min(newHeight, MAX_INPUT_HEIGHT));
+                }}
+              />
+            </View>
+
             <TouchableOpacity
               style={[
                 s.sendBtn,
@@ -221,17 +246,49 @@ const s = StyleSheet.create({
     paddingHorizontal: 20,
   },
   inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
-  input: {
+
+  // Outer rounded container that wraps pill + text input
+  inputBox: {
     flex: 1,
     backgroundColor: Colors.bgElevated,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
+
+  // Schedule pill inside the input box
+  schedulePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    backgroundColor: Colors.accent + "20",
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 4,
+  },
+  schedulePillText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.accent,
+  },
+  schedulePillX: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.accent,
+  },
+
+  // TextInput — no longer has its own background/border/padding since inputBox handles that
+  input: {
     paddingVertical: 10,
     fontSize: 14,
     color: Colors.textPrimary,
   },
+
   sendBtn: {
     width: 40,
     height: 40,

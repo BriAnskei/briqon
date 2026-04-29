@@ -1,8 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import ollama from 'ollama';
-import { ScheduleSchema } from './schemas/schedule.schema';
-import { UpdatePromptDto } from './dto/update-prompt.dto';
-
 import { OllamaService } from '../ollama/ollama.service';
 import { RetryHandler } from '../util/retry-handler.util';
 import { parseValidator } from '../util/json.util';
@@ -15,16 +11,22 @@ export class AiService {
     prompt: string,
     onChunk: (chunk: string) => void,
   ) {
-    try {
-      const stream = await this.ollamaService.generateStreamResponse(prompt);
+    const retry = new RetryHandler(3);
 
-      for await (const part of stream) {
-        const text = part.message?.content || '';
-        onChunk(text);
+    while (retry.shouldRetry()) {
+      try {
+        const stream = await this.ollamaService.generateStreamResponse(prompt);
+
+        for await (const part of stream) {
+          const text = part.message?.content || '';
+          onChunk(text);
+        }
+      } catch (error) {
+        console.error(error);
+        throw new Error('Failed to generate ai response');
+      } finally {
+        retry.next();
       }
-    } catch (error) {
-      console.error(error);
-      throw new Error('Failed to generate ai response');
     }
   }
 
@@ -55,7 +57,7 @@ export class AiService {
       } catch (error) {
         console.error(error);
         console.log(
-          `🔄 Retrying generation - Attempt ${retry.attempt + 1}, ${3 - retry.attempt} retries remaining`,
+          `Retrying generation - Attempt ${retry.attempt + 1}, ${3 - retry.attempt} retries remaining`,
         );
       } finally {
         retry.next();
