@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTextInput } from "../../../hooks/useInput";
-import { MessageTypes } from "@/type/MessageTypes";
+import { MessageTypes, ScheduleItem } from "@/type/MessageTypes";
 import { useSchedule } from "@/context/ScheduleContext";
 import { ScrollView } from "react-native";
-import { ScheduleItem } from "@/type/MessageTypes";
 import { useRouter } from "expo-router";
 
 export const useConversationScreen = () => {
@@ -16,20 +15,19 @@ export const useConversationScreen = () => {
     isStreaming,
     responseLoading,
     prevScheduleForm,
+    setSelectedReviewItems, // ← stage items before navigating
   } = useSchedule();
 
   const { prompt, setPrompt } = useTextInput();
 
-  const [modalVisible, setModalVisible] = useState(false);
-
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
     null,
   );
-
   const [questionScheduleId, setQuestionScheduleId] = useState<string | null>(
     null,
   );
 
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (conversation.length === 0) return;
     const timeout = setTimeout(() => {
@@ -38,29 +36,60 @@ export const useConversationScreen = () => {
     return () => clearTimeout(timeout);
   }, [conversation]);
 
-  // Derive all schedule blocks in order of appearance for numbering
-  const scheduleBlocks = conversation.filter(
-    (t) => t.role === "ai" && t.type === "schedule",
-  );
+  // ── Derived: items for the currently selected schedule ────────────────────
+  const selectedItems: ScheduleItem[] = (() => {
+    if (!selectedScheduleId) return [];
+    const turn = conversation.find(
+      (t) =>
+        t.id === selectedScheduleId &&
+        t.role === "ai" &&
+        (t as any).type === "schedule",
+    ) as Extract<MessageTypes, { type: "schedule" }> | undefined;
+    return turn?.items ?? [];
+  })();
 
-  // count the number of the schedule
-  const getQuestionScheduleNumberr = () => {
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const getQuestionScheduleNumber = () => {
     let numberOfSched = 0;
-    for (let c of conversation) {
+    for (const c of conversation) {
       if (c.role === "ai" && c.type === "schedule") {
         numberOfSched++;
         if (c.id === questionScheduleId) return numberOfSched;
       }
     }
-
     return null;
   };
+
+  function buildSingleCallPrompt(userPrompt: string, schedule: ScheduleItem[]) {
+    return `
+CONTEXT:
+You must answer using ONLY the schedule below.
+
+SCHEDULE:
+${schedule
+  .map(
+    (s) =>
+      `- ${s.activity ?? "No activity"} (${s.start_time ?? "?"} - ${s.end_time ?? "?"})`,
+  )
+  .join("\n")}
+
+USER MESSAGE:
+"${userPrompt}"
+
+CONTEXT RULES:
+- Only use the provided schedule.
+- If information is missing or unclear, say so.
+- Be concise and natural.
+`;
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
   const handleSend = useCallback(
     async (text: string) => {
       let generatedPrompt: string | undefined;
 
       if (questionScheduleId) {
-        for (let c of conversation) {
+        for (const c of conversation) {
           if (c.id === questionScheduleId) {
             generatedPrompt = buildSingleCallPrompt(
               text,
@@ -73,79 +102,38 @@ export const useConversationScreen = () => {
       setPrompt("");
       await generateMessageResponse(text, generatedPrompt);
     },
-    [conversation, generateMessageResponse, setPrompt],
+    [conversation, generateMessageResponse, setPrompt, questionScheduleId],
   );
 
+  const handleAddNewMessage = () => handleSend(prompt);
+
+  /**
+   * Stage the selected schedule items in context then navigate.
+   * review.tsx reads them from useSchedule() — no URL params needed.
+   */
   const handleReview = () => {
-    if (!selectedScheduleId) return;
-    setModalVisible(true);
+    if (!selectedScheduleId || isStreaming) return;
+    setSelectedReviewItems(selectedItems);
+    router.push("/schedule/review");
   };
-
-  const handleConfirm = () => {
-    setModalVisible(false);
-    router.push("/confirmation");
-  };
-
-  const handleAddNewMessage = () => {
-    handleSend(prompt);
-  };
-
-  // Derive the items for the currently selected schedule
-  const selectedItems: ScheduleItem[] = (() => {
-    if (!selectedScheduleId) return [];
-
-    const turn = conversation.find(
-      (t) =>
-        t.id === selectedScheduleId &&
-        t.role === "ai" &&
-        (t as any).type === "schedule",
-    ) as Extract<MessageTypes, { type: "schedule" }> | undefined;
-
-    return turn?.items ?? [];
-  })();
-
-  // general chat prompt builder
-  function buildSingleCallPrompt(userPrompt: string, schedule: ScheduleItem[]) {
-    return `
-    Answer the user's message using only the schedule below.
-
-    SCHEDULE:
-    ${schedule
-      .map(
-        (s) =>
-          `- ${s.activity ?? "No activity"} (${s.start_time ?? "?"} - ${s.end_time ?? "?"})`,
-      )
-      .join("\n")}
-
-    USER MESSAGE:
-    "${userPrompt}"
-
-    Rules:
-    - If information is missing or unclear, say so.
-    - Be concise and natural.
-`;
-  }
 
   return {
     router,
     prompt,
     setPrompt,
     handleSend,
+    handleAddNewMessage,
+    handleReview,
     conversation,
     isStreaming,
-    modalVisible,
-    setModalVisible,
+    responseLoading,
+    prevScheduleForm,
     selectedScheduleId,
     setSelectedScheduleId,
     questionScheduleId,
     setQuestionScheduleId,
-    getQuestionScheduleNumberr,
+    getQuestionScheduleNumber,
     scrollRef,
     selectedItems,
-    handleReview,
-    handleConfirm,
-    handleAddNewMessage,
-    responseLoading,
-    prevScheduleForm,
   };
 };

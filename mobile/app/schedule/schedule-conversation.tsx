@@ -35,10 +35,11 @@ export default function ScheduleConversation() {
     setSelectedScheduleId,
     questionScheduleId,
     setQuestionScheduleId,
-    getQuestionScheduleNumberr,
+    getQuestionScheduleNumber,
     scrollRef,
     handleAddNewMessage,
     prevScheduleForm,
+    handleReview,
   } = useConversationScreen();
 
   const insets = useSafeAreaInsets();
@@ -63,11 +64,6 @@ export default function ScheduleConversation() {
     [...conversation]
       .reverse()
       .find((t) => t.role === "ai" && t.type === "schedule")?.id ?? null;
-
-  const handleReview = () => {
-    if (!selectedScheduleId || isStreaming) return;
-    router.push("/schedule/review");
-  };
 
   return (
     <SafeAreaView style={s.root} edges={["top"]}>
@@ -159,7 +155,7 @@ export default function ScheduleConversation() {
               {questionScheduleId && (
                 <View style={s.schedulePill}>
                   <Text style={s.schedulePillText}>
-                    Schedule {getQuestionScheduleNumberr()}
+                    Schedule {getQuestionScheduleNumber()}
                   </Text>
                   <TouchableOpacity
                     onPress={() => setQuestionScheduleId(null)}

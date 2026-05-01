@@ -11,22 +11,16 @@ export class AiService {
     prompt: string,
     onChunk: (chunk: string) => void,
   ) {
-    const retry = new RetryHandler(3);
+    try {
+      const stream = await this.ollamaService.generateStreamResponse(prompt);
 
-    while (retry.shouldRetry()) {
-      try {
-        const stream = await this.ollamaService.generateStreamResponse(prompt);
-
-        for await (const part of stream) {
-          const text = part.message?.content || '';
-          onChunk(text);
-        }
-      } catch (error) {
-        console.error(error);
-        throw new Error('Failed to generate ai response');
-      } finally {
-        retry.next();
+      for await (const part of stream) {
+        const text = part.message?.content || '';
+        onChunk(text);
       }
+    } catch (error) {
+      console.error(error);
+      throw new Error('Failed to generate ai response');
     }
   }
 

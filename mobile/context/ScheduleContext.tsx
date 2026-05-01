@@ -4,7 +4,6 @@ import React, {
   useState,
   useRef,
   ReactNode,
-  useEffect,
   useCallback,
 } from "react";
 import { MessageTypes, ScheduleItem } from "../type/MessageTypes";
@@ -12,25 +11,16 @@ import { AiService } from "@/services/ai/ai.service";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { useAiStreamResponse } from "@/hooks/prompt/useAiStreamResponse";
-import { defaultForm } from "@/features/schedule/utils/wizardHelpers";
 import { FormState } from "@/type/NewScheduleTypes";
 import { useRouter } from "expo-router";
 import { ApiError } from "@/services/errors/ai.error";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useToast } from "@/hooks/useToast";
-
-const STORAGE_KEY = "prev_schedule_form";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type EditTarget = {
   scheduleId: string;
   items: ScheduleItem[];
-};
-
-export type QueuedEdit = {
-  itemIndex: number;
-  prompt: string;
 };
 
 type ScheduleContextType = {
@@ -43,18 +33,19 @@ type ScheduleContextType = {
     messagePrompt: string,
     generatedPrompt?: string,
   ) => Promise<void>;
-  // edit target
+
   editTarget: EditTarget | null;
   setEditTarget: (target: EditTarget | null) => void;
-  // batch edit
 
-  // new form input on failed response
   setPrevScheduleFormInput: React.Dispatch<
     React.SetStateAction<FormState | undefined>
   >;
   prevScheduleForm: FormState | undefined;
 
   handleScheduleGeneration: (prompt: string, isNew: boolean) => void;
+
+  selectedReviewItems: ScheduleItem[];
+  setSelectedReviewItems: (items: ScheduleItem[]) => void;
 };
 
 const ScheduleContext = createContext<ScheduleContextType | null>(null);
@@ -66,13 +57,17 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
 
   const { showToast } = useToast();
 
-  // new schedule form, this will be used to set the input form of the wizard when the response json format failed in the serveer
   const [prevScheduleForm, setPrevScheduleFormInput] = useState<
     FormState | undefined
   >(undefined);
 
   const [conversation, setConversation] = useState<MessageTypes[]>([]);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+
+  // ── Selected review items ─────────────────────────────────────────────────
+  const [selectedReviewItems, setSelectedReviewItems] = useState<
+    ScheduleItem[]
+  >([]);
 
   const hasStreamStartedRef = useRef(false);
 
@@ -85,6 +80,8 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     messagePrompt: string,
     generatedPrompt?: string,
   ) => {
+    if (isStreaming || loading || hasStreamStartedRef.current) return;
+
     insertUserMessagePrompt(messagePrompt);
 
     try {
@@ -96,27 +93,31 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         messageType: "message",
       });
 
+      const baseRules = `
+GLOBAL RULES:
+- Do not assist with creating, editing, or modifying schedules.
+- If the user asks to create or edit a schedule, respond that you can help them using the application's create/add feature instead.
+- Do not return or generate any JSON schedule format.
+- Do not generate schedules in any form.
+`;
+
       const prompt = `
-        ${generatedPrompt ?? messagePrompt}
+${baseRules}
 
-        Additional rules:
-        - if asked for creating or edting the schedule then respond that you can help to do that in application create or add feature
-        - Do not response a json schedule format in this message
-      `;
+${generatedPrompt ?? `USER MESSAGE:\n${messagePrompt}`}
+`;
 
-      await AiService.generateGeneralMessageStream(
-        generatedPrompt ?? messagePrompt,
-        (chunk) => {
-          if (!hasStreamStartedRef.current) {
-            initializeLoadingToMessageType();
-            hasStreamStartedRef.current = true;
-          }
-          updateMessageResponseChunk(chunk);
-        },
-      );
+      await AiService.generateGeneralMessageStream(prompt, (chunk) => {
+        if (!hasStreamStartedRef.current) {
+          initializeLoadingToMessageType();
+          hasStreamStartedRef.current = true;
+        }
+        updateMessageResponseChunk(chunk);
+      });
 
       hasStreamStartedRef.current = false;
       setIsStreaming(false);
+      setLoading(false);
     } catch (error) {
       console.error(error);
 
@@ -128,13 +129,10 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         duration: 5000,
       });
 
-      // pop the inserted loader message for
       setConversation((prev) => {
         const convos = [...prev];
-
         convos.pop();
         convos.pop();
-
         return convos;
       });
 
@@ -144,7 +142,6 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   };
 
   // ── Generate initial schedule ─────────────────────────────────────────────
-
   const handleScheduleGeneration = async (prompt: string, isNew: boolean) => {
     try {
       await generateScheduleJson(prompt);
@@ -197,11 +194,9 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       } catch (error: any) {
         console.error(error);
 
-        // reset the conversaiton
         if (conversation.length === 1) {
           setConversation([]);
         } else {
-          // if conversation has value, then the function is called for editing, thus we pop the last element.
           setConversation((prev) => {
             const convos = [...prev];
             convos.pop();
@@ -229,11 +224,11 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
         generateMessageResponse,
         editTarget,
         setEditTarget,
-
         setPrevScheduleFormInput,
         prevScheduleForm,
-
         handleScheduleGeneration,
+        selectedReviewItems,
+        setSelectedReviewItems,
       }}
     >
       {children}
