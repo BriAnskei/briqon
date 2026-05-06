@@ -11,9 +11,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { SetActiveModal } from "@/features/schedule-conversation/components/review/modal/SetActiveModel";
+import { SetActiveModal } from "@/features/schedule-conversation/components/review/modal/SetActiveModal";
 import { ScheduleListItem } from "@/features/schedule-conversation/components/review/ScheduleListItem";
-import { useScheduleReview } from "@/features/schedule-conversation/hooks/review/userScheduleReview";
+import { useScheduleReview } from "@/features/schedule-conversation/hooks/review/useScheduleReview";
 
 export default function ReviewScreen() {
   const insets = useSafeAreaInsets();

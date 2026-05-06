@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "../../type/theme";
 import { useRouter } from "expo-router";
+import NativeAlarmModule from "../../specs/NativeAlarmModule";
 
 // ─── Category Colors ──────────────────────────────────────────────────────────
 
@@ -246,6 +247,18 @@ export default function HomeScreen() {
 
   const handleDelete = () => setHasSchedule(false);
 
+  const testAlarm = () => {
+    console.log("requesting permission...");
+    NativeAlarmModule.requestExactAlarmPermission(); // request first
+
+    // Give user time to grant permission before setting alarm
+    setTimeout(() => {
+      console.log("setting alarm...");
+      const fifteenSeconds = Date.now() + 15000;
+      NativeAlarmModule.setAlarm(fifteenSeconds);
+      console.log("alarm set for 15 seconds from now");
+    }, 3000); // wait 3s for user to grant permission
+  };
   return (
     <View style={s.root}>
       {/* ── Header ── */}
@@ -255,7 +268,13 @@ export default function HomeScreen() {
           <Text style={s.brandTagline}>Smart Alarm Scheduling</Text>
         </View>
         <View style={s.headerActions}>
-          <TouchableOpacity style={s.headerBtn} activeOpacity={0.75}>
+          {/* temporary test button — remove before release */}
+
+          <TouchableOpacity
+            style={s.headerBtn}
+            activeOpacity={0.75}
+            onPress={() => testAlarm()}
+          >
             <Ionicons
               name="menu-outline"
               size={20}

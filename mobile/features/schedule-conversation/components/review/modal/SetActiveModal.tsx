@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { useSetActiveModal } from "@/features/schedule-conversation/hooks/review/userSetActiveModal";
+import { useSetActiveModal } from "@/features/schedule-conversation/hooks/review/useSetActiveModal";
 import {
   FULL_DAYS,
   formatDate,
@@ -43,6 +43,8 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
     handleDateChange,
     handleClose,
     handleConfirm,
+
+    isSubmitting,
   } = useSetActiveModal({ onClose, onConfirm });
 
   return (
@@ -198,15 +200,18 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
               <Text style={s.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[s.confirmBtn, !canConfirm && s.confirmBtnDisabled]}
+              style={[
+                s.confirmBtn,
+                (!canConfirm || isSubmitting) && s.confirmBtnDisabled,
+              ]}
               onPress={handleConfirm}
               activeOpacity={0.88}
-              disabled={!canConfirm}
+              disabled={!canConfirm || isSubmitting}
             >
               <Text
                 style={[s.confirmText, !canConfirm && s.confirmTextDisabled]}
               >
-                Confirm
+                {isSubmitting ? "Scheduling…" : "Confirm"}
               </Text>
             </TouchableOpacity>
           </View>

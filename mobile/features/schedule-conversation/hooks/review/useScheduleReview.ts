@@ -4,7 +4,7 @@ import { useSchedule } from "@/context/ScheduleContext";
 
 export function useScheduleReview() {
   const router = useRouter();
-  const { selectedReviewItems } = useSchedule();
+  const { selectedReviewItems, setSelectedReviewItems } = useSchedule();
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -12,16 +12,17 @@ export function useScheduleReview() {
   const closeModal = () => setModalVisible(false);
 
   const handleSave = () => {
-    // TODO: persist schedule
+    // TODO: persist without activating
   };
 
   const handleConfirmActive = () => {
+    // scheduling already happened inside useSetActiveModal.handleConfirm
+    // this just handles post-confirm navigation
     setModalVisible(false);
     router.push("/confirmation");
   };
 
   return {
-    // real data staged by useConversationScreen before navigating
     scheduleItems: selectedReviewItems,
     modalVisible,
     openModal,
