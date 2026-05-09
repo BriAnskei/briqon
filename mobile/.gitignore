@@ -32,12 +32,53 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 
-app-example
+# Android specific
+/android/build
+/android/.gradle
+/android/local.properties
+/android/app/build
+/android/app/src/main/assets
+/android/app/src/main/res/raw
+/android/app/debug.keystore
+/android/app/release.keystore
+*.ap_
+*.apk
+*.dex
+*.class
+bin/
+gen/
+
+# iOS specific
+/ios/build
+/ios/Pods
+/ios/DerivedData
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
 
 # generated native folders
+# If you want to track native folders, comment out these lines
+# /ios
+# /android
+
+# If native folders are ignored, we still keep the specific ignores above
+# for when/if they are unignored.
 /ios
 /android

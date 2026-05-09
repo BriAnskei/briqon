@@ -8,11 +8,13 @@ import {
   Modal,
   Platform,
   Switch,
+  PermissionsAndroid,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "../../type/theme";
 import { useRouter } from "expo-router";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
+import { ScheduleItem } from "../../type/MessageTypes";
 
 // ─── Category Colors ──────────────────────────────────────────────────────────
 
@@ -247,17 +249,55 @@ export default function HomeScreen() {
 
   const handleDelete = () => setHasSchedule(false);
 
-  const testAlarm = () => {
-    console.log("requesting permission...");
-    NativeAlarmModule.requestExactAlarmPermission(); // request first
+  const testAlarm = async () => {
+    // 1. Request notification permission (Android 13+)
+    if (Platform.OS === "android" && Platform.Version >= 33) {
+      await PermissionsAndroid.request(
+        "android.permission.POST_NOTIFICATIONS" as any,
+      );
+    }
 
-    // Give user time to grant permission before setting alarm
-    setTimeout(() => {
-      console.log("setting alarm...");
-      const fifteenSeconds = Date.now() + 15000;
-      NativeAlarmModule.setAlarm(fifteenSeconds);
-      console.log("alarm set for 15 seconds from now");
-    }, 3000); // wait 3s for user to grant permission
+    // 2. Check exact alarm permission
+    const hasPermission = await NativeAlarmModule.hasExactAlarmPermission();
+    if (!hasPermission) {
+      NativeAlarmModule.requestExactAlarmPermission();
+      return;
+    }
+
+    // 3. Mock schedule — two items so we have a current + next
+    const mockSchedule = [
+      {
+        activity: "Wake Up & Morning Routine",
+        start_time: "05:30 AM",
+        end_time: "06:00 AM",
+      },
+      {
+        activity: "Work Shift",
+        start_time: "06:00 AM",
+        end_time: "03:00 PM",
+      },
+    ];
+
+    const scheduleName = "Workday Grind";
+    const current = mockSchedule[0];
+    const next = mockSchedule[1];
+
+    // 4. Set alarm 15 seconds from now
+    const fifteenSeconds = Date.now() + 15000;
+
+    NativeAlarmModule.setAlarm(
+      fifteenSeconds,
+      current.activity,
+      current.start_time,
+      current.end_time,
+      scheduleName,
+      next.activity, // next alarm activity
+      next.start_time, // next alarm start time
+    );
+
+    console.log("Alarm set — fires in 15 seconds");
+    console.log("Current:", current.activity);
+    console.log("Next:", next.activity);
   };
   return (
     <View style={s.root}>
