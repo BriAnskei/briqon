@@ -80,5 +80,5 @@ DerivedData/
 
 # If native folders are ignored, we still keep the specific ignores above
 # for when/if they are unignored.
-/ios
-/android
+# /ios
+# /android
