@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- rgba(123,111,255,0.08) → alpha 0.08×255≈20 → #14 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/transparent" />
+    <stroke android:width="1dp" android:color="#147B6FFF" />
+</shape>

@@ -34,8 +34,25 @@
       </intent-filter>
     </activity>
 
+    <!--
+      AlarmActivity: pure native lock-screen alarm UI.
+      taskAffinity=""         → own task, fully separate from the main app task
+      excludeFromRecents=true → that task never shows in the multitask view
+      launchMode=singleTop    → reuses the instance if already showing
+      theme=AlarmTheme        → lightweight Material theme, zero RN/splash overhead
+    -->
+    <activity
+      android:name=".AlarmActivity"
+      android:exported="false"
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:launchMode="singleTop"
+      android:taskAffinity=""
+      android:excludeFromRecents="true"
+      android:theme="@style/AlarmTheme"/>
+
     <receiver android:name=".AlarmReceiver"       android:exported="false"/>
-    <receiver android:name=".AlarmActionReceiver" android:exported="false"/>  <!-- handles Dismiss / Snooze buttons -->
+    <receiver android:name=".AlarmActionReceiver" android:exported="false"/>
 
     <service
       android:name=".AlarmService"

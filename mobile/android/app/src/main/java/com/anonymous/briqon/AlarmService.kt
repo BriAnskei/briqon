@@ -25,11 +25,25 @@ class AlarmService : Service() {
         val nextActivity  = intent?.getStringExtra("next_activity")   ?: ""
         val nextStartTime = intent?.getStringExtra("next_start_time") ?: ""
 
-        // true  → screen is on (unlocked or lock screen visible but interactive)
-        // false → screen is off / device asleep
         val isInteractive = (getSystemService(POWER_SERVICE) as PowerManager).isInteractive
 
-        // ── Deep-link PendingIntent (tapping the notification opens AlarmScreen) ──
+        // ── AlarmActivity intent (lock screen path) ───────────────────────────
+        val alarmActivityIntent = Intent(this, AlarmActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            putExtra("activity",        activity)
+            putExtra("start_time",      startTime)
+            putExtra("end_time",        endTime)
+            putExtra("schedule_name",   scheduleName)
+            putExtra("next_activity",   nextActivity)
+            putExtra("next_start_time", nextStartTime)
+        }
+        val alarmActivityPendingIntent = PendingIntent.getActivity(
+            this, 0, alarmActivityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // ── Deep-link intent (notification tap on unlocked screen → RN AlarmScreen) ──
         val uri = Uri.Builder()
             .scheme("reactnativecourse")
             .authority("")
@@ -46,22 +60,19 @@ class AlarmService : Service() {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            this, 0, deepLinkIntent,
+        val deepLinkPendingIntent = PendingIntent.getActivity(
+            this, 1, deepLinkIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // ── Dismiss action ────────────────────────────────────────────────────────
+        // ── Dismiss action ────────────────────────────────────────────────────
         val dismissPendingIntent = PendingIntent.getBroadcast(
             this, 100,
-            Intent(this, AlarmActionReceiver::class.java).apply {
-                action = "DISMISS_ALARM"
-                // No extras needed for dismiss — stopService is enough
-            },
+            Intent(this, AlarmActionReceiver::class.java).apply { action = "DISMISS_ALARM" },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // ── Snooze action — forward all extras so the rescheduled alarm is identical ──
+        // ── Snooze action ─────────────────────────────────────────────────────
         val snoozePendingIntent = PendingIntent.getBroadcast(
             this, 101,
             Intent(this, AlarmActionReceiver::class.java).apply {
@@ -76,7 +87,7 @@ class AlarmService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // ── Notification channel ──────────────────────────────────────────────────
+        // ── Notification channel ──────────────────────────────────────────────
         val channelId = "alarm_channel"
         NotificationChannel(channelId, "Alarm Notifications", NotificationManager.IMPORTANCE_MAX)
             .apply {
@@ -85,7 +96,7 @@ class AlarmService : Service() {
             }
             .also { getSystemService(NotificationManager::class.java).createNotificationChannel(it) }
 
-        // ── Build notification ────────────────────────────────────────────────────
+        // ── Build notification ────────────────────────────────────────────────
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentTitle(scheduleName.ifEmpty { "Scheduled Activity" })
             .setContentText(activity)
@@ -94,13 +105,13 @@ class AlarmService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
-            .setContentIntent(fullScreenPendingIntent)   // tap → AlarmScreen
-            .addAction(0, "Dismiss",      dismissPendingIntent)
-            .addAction(0, "Snooze · 5 min", snoozePendingIntent)
+            .setContentIntent(deepLinkPendingIntent)    // tap → RN AlarmScreen (unlocked)
+            .addAction(0, "Dismiss",         dismissPendingIntent)
+            .addAction(0, "Snooze · 5 min",  snoozePendingIntent)
 
-        // Full-screen intent only fires when the screen is off/locked
+        // Lock screen only: full-screen intent launches AlarmActivity instantly
         if (!isInteractive) {
-            notificationBuilder.setFullScreenIntent(fullScreenPendingIntent, true)
+            notificationBuilder.setFullScreenIntent(alarmActivityPendingIntent, true)
         }
 
         val notification = notificationBuilder.build()
@@ -111,15 +122,16 @@ class AlarmService : Service() {
             startForeground(1, notification)
         }
 
-        // Activity launch (screen takeover) — locked/off only
         if (!isInteractive) {
-            Log.d("AlarmService", "Screen off → full-screen deep link: $uri")
-            startActivity(deepLinkIntent)
+            // Belt-and-suspenders: also call startActivity in case fullScreenIntent
+            // is suppressed by the system (some OEM ROMs throttle it)
+            Log.d("AlarmService", "Screen off → launching AlarmActivity")
+            startActivity(alarmActivityIntent)
         } else {
             Log.d("AlarmService", "Screen on → notification only")
         }
 
-        // ── Alarm sound (always) ──────────────────────────────────────────────────
+        // ── Alarm sound (always) ──────────────────────────────────────────────
         Thread {
             try {
                 val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)

@@ -134,7 +134,9 @@ export default function AlarmScreen() {
       duration: 220,
       useNativeDriver: true,
     }).start(() => {
-      // Send the app to background after the overlay fades in
+      // Reset nav stack to home first, then background the app.
+      // This ensures reopening the app always lands on the home screen.
+      router.replace("/");
       NativeAlarmModule.minimizeApp();
     });
   };
@@ -155,7 +157,8 @@ export default function AlarmScreen() {
       next_start_time ?? "",
     );
 
-    // Send the app to background immediately — the real alarm fires again in 5 min
+    // Reset nav stack to home first, then background the app.
+    router.replace("/");
     NativeAlarmModule.minimizeApp();
   };
 
