@@ -11,6 +11,8 @@ export interface Spec extends TurboModule {
     nextActivity: string,
     nextStartTime: string,
   ): void;
+  stopAlarm(): void;
+  minimizeApp(): void;
   requestExactAlarmPermission(): void;
   hasExactAlarmPermission(): Promise<boolean>;
 }
@@ -36,6 +38,12 @@ const NativeAlarmModule = {
       nextActivity,
       nextStartTime,
     );
+  },
+  stopAlarm: (): void => {
+    AlarmModule?.stopAlarm();
+  },
+  minimizeApp: (): void => {
+    AlarmModule?.minimizeApp();
   },
   requestExactAlarmPermission: (): void => {
     AlarmModule?.requestExactAlarmPermission();

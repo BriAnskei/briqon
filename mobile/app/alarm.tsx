@@ -7,19 +7,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { Colors, Radius, Shadow } from "../type/theme";
+import NativeAlarmModule from "@/specs/NativeAlarmModule";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AlarmParams = {
-  // Current alarm
   activity?: string;
   start_time?: string;
   end_time?: string;
-  // Schedule meta
   schedule_name?: string;
-  // Up next
   next_activity?: string;
   next_start_time?: string;
 };
@@ -126,27 +124,39 @@ export default function AlarmScreen() {
 
   const handleDismiss = () => {
     if (snoozeRef.current) clearInterval(snoozeRef.current);
+
+    // Stop the AlarmService — kills sound and removes the foreground notification
+    NativeAlarmModule.stopAlarm();
+
     setDismissed(true);
     Animated.timing(dismissAnim, {
       toValue: 1,
       duration: 220,
       useNativeDriver: true,
-    }).start();
+    }).start(() => {
+      // Send the app to background after the overlay fades in
+      NativeAlarmModule.minimizeApp();
+    });
   };
 
   const handleSnooze = () => {
-    setSnoozed(true);
-    setSnoozeSeconds(300);
-    snoozeRef.current = setInterval(() => {
-      setSnoozeSeconds((prev) => {
-        if (prev <= 1) {
-          clearInterval(snoozeRef.current!);
-          setSnoozed(false);
-          return 300;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    // Stop the AlarmService — kills sound and removes the foreground notification
+    NativeAlarmModule.stopAlarm();
+
+    // Reschedule the same alarm 5 minutes from now via the native layer
+    const snoozeTimestamp = Date.now() + 5 * 60 * 1000;
+    NativeAlarmModule.setAlarm(
+      snoozeTimestamp,
+      activity ?? "",
+      start_time ?? "",
+      end_time ?? "",
+      schedule_name ?? "",
+      next_activity ?? "",
+      next_start_time ?? "",
+    );
+
+    // Send the app to background immediately — the real alarm fires again in 5 min
+    NativeAlarmModule.minimizeApp();
   };
 
   const snoozeDisplay = `${Math.floor(snoozeSeconds / 60)}:${String(

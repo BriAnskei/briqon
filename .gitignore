@@ -35,4 +35,13 @@ Thumbs.db
 
 # Mobile specific at root
 mobile/.env
-mobile/android/
+
+
+
+# Android
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/local.properties
+*.keystore
+*.jks
