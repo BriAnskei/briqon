@@ -18,6 +18,7 @@ class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
 
     override fun onStartCommand(intent: Intent?, startFlags: Int, startId: Int): Int {
+        val id            = intent?.getIntExtra("id", -1) ?: -1
         val activity      = intent?.getStringExtra("activity")        ?: "Alarm"
         val startTime     = intent?.getStringExtra("start_time")      ?: ""
         val endTime       = intent?.getStringExtra("end_time")        ?: ""
@@ -31,6 +32,7 @@ class AlarmService : Service() {
         val alarmActivityIntent = Intent(this, AlarmActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            putExtra("id",              id)
             putExtra("activity",        activity)
             putExtra("start_time",      startTime)
             putExtra("end_time",        endTime)
@@ -48,6 +50,7 @@ class AlarmService : Service() {
             .scheme("reactnativecourse")
             .authority("")
             .appendEncodedPath("alarm")
+            .appendQueryParameter("id",              id.toString())
             .appendQueryParameter("activity",        activity)
             .appendQueryParameter("start_time",      startTime)
             .appendQueryParameter("end_time",        endTime)
@@ -77,6 +80,7 @@ class AlarmService : Service() {
             this, 101,
             Intent(this, AlarmActionReceiver::class.java).apply {
                 action = "SNOOZE_ALARM"
+                putExtra("id",              id)
                 putExtra("activity",        activity)
                 putExtra("start_time",      startTime)
                 putExtra("end_time",        endTime)

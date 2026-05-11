@@ -13,6 +13,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
         context.stopService(Intent(context, AlarmService::class.java))
 
         if (intent.action == "SNOOZE_ALARM") {
+            val id            = intent.getIntExtra("id", -1)
             val activity      = intent.getStringExtra("activity")        ?: ""
             val startTime     = intent.getStringExtra("start_time")      ?: ""
             val endTime       = intent.getStringExtra("end_time")        ?: ""
@@ -21,6 +22,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
             val nextStartTime = intent.getStringExtra("next_start_time") ?: ""
 
             val receiverIntent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("id",              id)
                 putExtra("activity",        activity)
                 putExtra("start_time",      startTime)
                 putExtra("end_time",        endTime)

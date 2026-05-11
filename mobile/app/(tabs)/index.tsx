@@ -286,6 +286,7 @@ export default function HomeScreen() {
     const fifteenSeconds = Date.now() + 15000;
 
     NativeAlarmModule.setAlarm(
+      1001, // Unique ID
       fifteenSeconds,
       current.activity,
       current.start_time,

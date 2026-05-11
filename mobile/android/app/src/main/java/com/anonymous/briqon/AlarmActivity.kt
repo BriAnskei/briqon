@@ -43,6 +43,7 @@ class AlarmActivity : Activity() {
         setContentView(R.layout.activity_alarm)
 
         // ── Read extras passed from AlarmService ──────────────────────────────
+        val id            = intent.getIntExtra("id", -1)
         val activityName  = intent.getStringExtra("activity")        ?: "Activity"
         val startTime     = intent.getStringExtra("start_time")      ?: "--"
         val endTime       = intent.getStringExtra("end_time")        ?: "--"
@@ -124,7 +125,7 @@ class AlarmActivity : Activity() {
         // ── Snooze ────────────────────────────────────────────────────────────
         btnSnooze.setOnClickListener {
             stopAlarmService()
-            rescheduleAlarm(activityName, startTime, endTime, scheduleName, nextActivity, nextStartTime)
+            rescheduleAlarm(id, activityName, startTime, endTime, scheduleName, nextActivity, nextStartTime)
             actionsLayout.visibility = View.GONE
             snoozedCard.visibility   = View.VISIBLE
             startSnoozeCountdown(tvSnoozeCountdown)
@@ -159,13 +160,14 @@ class AlarmActivity : Activity() {
     }
 
     private fun rescheduleAlarm(
-        activity: String, startTime: String, endTime: String,
+        id: Int, activity: String, startTime: String, endTime: String,
         scheduleName: String, nextActivity: String, nextStartTime: String
     ) {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) return
 
         val intent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("id",              id)
             putExtra("activity",        activity)
             putExtra("start_time",      startTime)
             putExtra("end_time",        endTime)

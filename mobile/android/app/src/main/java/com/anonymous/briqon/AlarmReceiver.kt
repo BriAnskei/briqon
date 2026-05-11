@@ -8,6 +8,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         // Forward every extra that was bundled at schedule time
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
+            putExtra("id",              intent.getIntExtra("id", -1))
             putExtra("activity",        intent.getStringExtra("activity") ?: "")
             putExtra("start_time",      intent.getStringExtra("start_time") ?: "")
             putExtra("end_time",        intent.getStringExtra("end_time") ?: "")

@@ -14,6 +14,7 @@ import NativeAlarmModule from "@/specs/NativeAlarmModule";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AlarmParams = {
+  id?: string;
   activity?: string;
   start_time?: string;
   end_time?: string;
@@ -81,6 +82,7 @@ export default function AlarmScreen() {
   const params = useLocalSearchParams<AlarmParams>();
 
   const {
+    id,
     activity,
     start_time,
     end_time,
@@ -147,7 +149,10 @@ export default function AlarmScreen() {
 
     // Reschedule the same alarm 5 minutes from now via the native layer
     const snoozeTimestamp = Date.now() + 5 * 60 * 1000;
+    const numericId = id ? parseInt(id, 10) : -1;
+
     NativeAlarmModule.setAlarm(
+      numericId,
       snoozeTimestamp,
       activity ?? "",
       start_time ?? "",

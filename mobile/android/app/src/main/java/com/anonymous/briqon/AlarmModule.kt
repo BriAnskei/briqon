@@ -33,6 +33,7 @@ class AlarmModule(reactContext: ReactApplicationContext) :
     }
 
     override fun setAlarm(
+        id: Double,
         timestamp: Double,
         activity: String,
         startTime: String,
@@ -53,6 +54,7 @@ class AlarmModule(reactContext: ReactApplicationContext) :
             }
 
             val intent = Intent(context, AlarmReceiver::class.java).apply {
+                putExtra("id",              id.toInt())
                 putExtra("activity",        activity)
                 putExtra("start_time",      startTime)
                 putExtra("end_time",        endTime)
@@ -63,7 +65,7 @@ class AlarmModule(reactContext: ReactApplicationContext) :
 
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
-                timestamp.toInt(),
+                id.toInt(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -74,9 +76,29 @@ class AlarmModule(reactContext: ReactApplicationContext) :
                 pendingIntent
             )
 
-            Log.d(NAME, "Alarm set: $activity @ $timestamp | next: $nextActivity")
+            Log.d(NAME, "Alarm set: $activity (ID: ${id.toInt()}) @ $timestamp")
         } catch (e: Exception) {
             Log.e(NAME, "setAlarm error: ${e.message}")
+        }
+    }
+
+    override fun cancelAlarm(id: Double) {
+        try {
+            val context = reactApplicationContext
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            
+            val intent = Intent(context, AlarmReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                id.toInt(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            alarmManager.cancel(pendingIntent)
+            Log.d(NAME, "Alarm cancelled: ID ${id.toInt()}")
+        } catch (e: Exception) {
+            Log.e(NAME, "cancelAlarm error: ${e.message}")
         }
     }
 

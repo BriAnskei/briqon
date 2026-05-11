@@ -3,6 +3,7 @@ import { TurboModuleRegistry } from "react-native";
 
 export interface Spec extends TurboModule {
   setAlarm(
+    id: number,
     timestamp: number,
     activity: string,
     startTime: string,
@@ -11,6 +12,7 @@ export interface Spec extends TurboModule {
     nextActivity: string,
     nextStartTime: string,
   ): void;
+  cancelAlarm(id: number): void;
   stopAlarm(): void;
   minimizeApp(): void;
   requestExactAlarmPermission(): void;
@@ -21,6 +23,7 @@ const AlarmModule = TurboModuleRegistry.get<Spec>("AlarmModule");
 
 const NativeAlarmModule = {
   setAlarm: (
+    id: number,
     timestamp: number,
     activity: string,
     startTime: string,
@@ -30,6 +33,7 @@ const NativeAlarmModule = {
     nextStartTime: string,
   ): void => {
     AlarmModule?.setAlarm(
+      id,
       timestamp,
       activity,
       startTime,
@@ -38,6 +42,9 @@ const NativeAlarmModule = {
       nextActivity,
       nextStartTime,
     );
+  },
+  cancelAlarm: (id: number): void => {
+    AlarmModule?.cancelAlarm(id);
   },
   stopAlarm: (): void => {
     AlarmModule?.stopAlarm();
