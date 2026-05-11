@@ -231,6 +231,12 @@ function DotMenu({
 
 export default function HomeScreen() {
   const router = useRouter();
+
+  // DB implementation sample usage
+  // useEffect(() => {
+  //   initializeDatabase();
+  // }, []);
+
   const [hasSchedule, setHasSchedule] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
   const [alarms, setAlarms] = useState(MOCK_SCHEDULE.alarms);
