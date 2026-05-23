@@ -1,10 +1,23 @@
+import SplashScreen from "@/components/SplashScreen";
 import { toastConfig } from "@/components/toastConfig";
 import { ScheduleProvider } from "@/context/ScheduleContext";
+import { initializeDb } from "@/src/database/init";
 import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    initializeDb().finally(() => setIsReady(true));
+  }, []);
+
+  if (!isReady) {
+    return <SplashScreen />;
+  }
+
   return (
     <SafeAreaProvider>
       <ScheduleProvider>
