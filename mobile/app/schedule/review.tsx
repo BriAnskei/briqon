@@ -14,17 +14,23 @@ import { Colors, Radius, Shadow } from "@/type/theme";
 import { SetActiveModal } from "@/features/schedule-conversation/components/review/modal/SetActiveModal";
 import { ScheduleListItem } from "@/features/schedule-conversation/components/review/ScheduleListItem";
 import { useScheduleReview } from "@/features/schedule-conversation/hooks/review/useScheduleReview";
+import { SaveScheduleModal } from "@/features/schedule-conversation/components/review/modal/SaveScheduleModal";
 
 export default function ReviewScreen() {
   const insets = useSafeAreaInsets();
   const {
-    scheduleItems, // ← real items from the selected conversation block
-    modalVisible,
-    openModal,
-    closeModal,
+    scheduleItems,
+    isSetActiveModalOpen,
+    openSetActiveModal,
+    closeSetActiveModal,
     handleSave,
     handleConfirmActive,
     goBack,
+
+    isSaveScheduleModalOpen,
+    openSaveScheduleModal,
+    closeSaveScheduleModal,
+    isSaving,
   } = useScheduleReview();
 
   return (
@@ -67,14 +73,14 @@ export default function ReviewScreen() {
       >
         <TouchableOpacity
           style={s.saveBtn}
-          onPress={handleSave}
+          onPress={openSaveScheduleModal}
           activeOpacity={0.8}
         >
           <Text style={s.saveBtnText}>Save Schedule</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.activeBtn}
-          onPress={openModal}
+          onPress={openSetActiveModal}
           activeOpacity={0.88}
         >
           <Text style={s.activeBtnText}>Set as Active</Text>
@@ -83,9 +89,15 @@ export default function ReviewScreen() {
 
       {/* ── Modal ── */}
       <SetActiveModal
-        visible={modalVisible}
-        onClose={closeModal}
+        visible={isSetActiveModalOpen}
+        onClose={closeSetActiveModal}
         onConfirm={handleConfirmActive}
+      />
+      <SaveScheduleModal
+        visible={isSaveScheduleModalOpen}
+        onClose={closeSaveScheduleModal}
+        onConfirm={handleSave}
+        isSaving={isSaving}
       />
     </SafeAreaView>
   );

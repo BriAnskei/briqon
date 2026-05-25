@@ -6,7 +6,7 @@ import { validate } from "@/utils/zod/schemaValidator";
 export class ScheduleService {
   private repo = new ScheduleRepository();
 
-  async createSchdule(input: unknown) {
+  async createSchedule(input: unknown) {
     const validatedRawInput = validate(CreateScheduleSchema, input);
 
     const schedule: Schedule = {

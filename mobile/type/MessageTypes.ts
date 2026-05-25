@@ -1,7 +1,7 @@
 export type ScheduleItem = {
-  start_time?: string;
-  end_time?: string;
-  activity?: string;
+  start_time: string;
+  end_time: string;
+  activity: string;
 };
 export type MessageTypes =
   | { id: string; role: "user"; text: string }

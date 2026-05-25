@@ -5,6 +5,7 @@ export class ScheduleRepository extends BaseRepository {
   private mapRow(row: any): Schedule {
     return {
       id: row.id,
+      name: row.name,
       schedule_list: JSON.parse(row.schedule_list),
       temporary: Boolean(row.temporary),
     };
@@ -15,13 +16,15 @@ export class ScheduleRepository extends BaseRepository {
       `
     INSERT INTO schedules (
       id,
+      name,
       schedule_list,
       temporary
     )
-    VALUES (?, ?, ?)
+    VALUES (?, ?, ?, ?)
     `,
       [
         schedule.id,
+        schedule.name,
         JSON.stringify(schedule.schedule_list),
         schedule.temporary ? 1 : 0,
       ],

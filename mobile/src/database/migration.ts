@@ -8,9 +8,12 @@ export const migrateDatabase = async () => {
 
     CREATE TABLE IF NOT EXISTS schedules (
       id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
       schedule_list TEXT NOT NULL,
       temporary INTEGER NOT NULL
     );
+
+
 
     CREATE TABLE IF NOT EXISTS active_schedules (
       id TEXT PRIMARY KEY NOT NULL,
