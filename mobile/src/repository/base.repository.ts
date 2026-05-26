@@ -5,14 +5,37 @@ export abstract class BaseRepository {
   private dbPromise = getDatabase();
 
   /**
+   * Executes operations within an ACID transaction
+   * @param callback - Function that receives a db instance and performs operations
+   * @returns Promise resolving to the callback's return value
+   */
+  public async transaction<T>(
+    callback: (db: SQLite.SQLiteDatabase) => Promise<T>,
+  ): Promise<T> {
+    const db = await this.dbPromise;
+    let res!: T;
+    await db.withTransactionAsync(async () => {
+      res = await callback(db);
+    });
+
+    return res;
+  }
+
+  /**
    * Executes a SQL query that doesn't return data (INSERT, UPDATE, DELETE, etc.)
    * @param sql - The SQL query string to execute
    * @param params - Optional parameters to bind to the SQL query (prevents SQL injection)
+   * @param db - Optional database instance (useful for transactions)
    * @returns Promise with the run result (includes lastInsertRowId and changes)
    */
-  protected async run(sql: string, params: SQLite.SQLiteBindParams = []) {
-    const db = await this.dbPromise;
-    return db.runAsync(sql, params);
+  protected async run(
+    sql: string,
+    params: SQLite.SQLiteBindParams = [],
+    db?: SQLite.SQLiteDatabase,
+  ) {
+    const database = db ?? (await this.dbPromise);
+
+    return database.runAsync(sql, params);
   }
 
   /**

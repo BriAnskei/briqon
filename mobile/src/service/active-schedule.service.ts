@@ -5,19 +5,40 @@ import {
   CreateActivecheduleSchema,
 } from "../models/active_schedule.model";
 import { ulid } from "ulid";
+import { ScheduleRepository } from "../repository/schedule.repository";
+import { CreateScheduleSchema, Schedule } from "../models/schedule.model";
 
 export class activeScheduleService {
   private repo = new ActiveScheduleRepository();
+  private scheduleRepo = new ScheduleRepository();
 
-  async createActiveSchedule(input: unknown) {
-    const validatedRawInput = validate(CreateActivecheduleSchema, input);
+  async createActiveSchedule(
+    activeScheduleInput: unknown,
+    scheduleInput: unknown,
+  ) {
+    // validate objects first
+    const validatedSchedule = validate(CreateScheduleSchema, scheduleInput);
+    const validatedActiveSchedule = validate(
+      CreateActivecheduleSchema,
+      activeScheduleInput,
+    );
 
+    // build objects
+    let scheduleId = ulid();
+    const newSchedule: Schedule = {
+      ...validatedSchedule,
+      id: scheduleId,
+    };
     const newActiveSchedule: ActiveSchedule = {
-      ...validatedRawInput,
+      ...validatedActiveSchedule,
       id: ulid(),
+      schedule_id: scheduleId,
     };
 
-    await this.repo.create(newActiveSchedule);
+    this.repo.transaction(async (db) => {
+      await this.repo.create(newActiveSchedule, db);
+      this.scheduleRepo.create(newSchedule, db);
+    });
 
     return newActiveSchedule;
   }

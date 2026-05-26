@@ -1,5 +1,6 @@
 import { ActiveSchedule } from "../models/active_schedule.model";
 import { BaseRepository } from "./base.repository";
+import * as SQLite from "expo-sqlite";
 
 export class ActiveScheduleRepository extends BaseRepository {
   private mapRow(row: any): ActiveSchedule {
@@ -16,8 +17,8 @@ export class ActiveScheduleRepository extends BaseRepository {
     };
   }
 
-  async create(activeSchedule: ActiveSchedule) {
-    await this.run(
+  async create(activeSchedule: ActiveSchedule, db?: SQLite.SQLiteDatabase) {
+    return await this.run(
       `
       INSERT INTO active_schedule (
         id,
@@ -39,6 +40,7 @@ export class ActiveScheduleRepository extends BaseRepository {
         activeSchedule.starts_at?.toISOString() ?? null,
         activeSchedule.ends_at?.toISOString() ?? null,
       ],
+      db ?? undefined,
     );
   }
 

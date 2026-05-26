@@ -17,6 +17,7 @@ export function useScheduleReview() {
   const { selectedReviewItems } = useSchedule();
   const { showToast } = useToast();
 
+  const [isScheduleAlreadySaved, setScheduleAlreadySaved] = useState(false);
   const [isSetActiveModalOpen, SetIsSetActiveModalOpen] = useState(false);
 
   const [isSaveScheduleModalOpen, setIsSaveScheduleModalOpen] = useState(false);
@@ -62,6 +63,7 @@ export function useScheduleReview() {
       });
     } finally {
       setIsSaving(false);
+      setScheduleAlreadySaved(true);
     }
   };
 
@@ -86,5 +88,6 @@ export function useScheduleReview() {
     closeSaveScheduleModal,
 
     isSaving,
+    isScheduleAlreadySaved,
   };
 }

@@ -1,5 +1,6 @@
 import { Schedule, ScheduleSchema } from "../models/schedule.model";
 import { BaseRepository } from "./base.repository";
+import * as SQLite from "expo-sqlite";
 
 export class ScheduleRepository extends BaseRepository {
   private mapRow(row: any): Schedule {
@@ -11,8 +12,8 @@ export class ScheduleRepository extends BaseRepository {
     };
   }
 
-  async create(schedule: Schedule) {
-    await this.run(
+  async create(schedule: Schedule, db?: SQLite.SQLiteDatabase) {
+    return await this.run(
       `
     INSERT INTO schedules (
       id,
@@ -28,6 +29,7 @@ export class ScheduleRepository extends BaseRepository {
         JSON.stringify(schedule.schedule_list),
         schedule.temporary ? 1 : 0,
       ],
+      db ?? undefined,
     );
   }
 

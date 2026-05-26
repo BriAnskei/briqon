@@ -43,6 +43,12 @@ describe("useScheduleReview", () => {
     (ScheduleService as jest.Mock).mockImplementation(() => ({
       createSchedule: mockCreateSchedule,
     }));
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it("initializes with default states", () => {
