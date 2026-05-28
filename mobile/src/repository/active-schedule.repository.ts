@@ -1,4 +1,7 @@
-import { ActiveSchedule } from "../models/active_schedule.model";
+import {
+  ActiveSchedule,
+  CreateActiveSchedule,
+} from "../models/active_schedule.model";
 import { BaseRepository } from "./base.repository";
 import * as SQLite from "expo-sqlite";
 
@@ -20,7 +23,7 @@ export class ActiveScheduleRepository extends BaseRepository {
   async create(activeSchedule: ActiveSchedule, db?: SQLite.SQLiteDatabase) {
     return await this.run(
       `
-      INSERT INTO active_schedule (
+      INSERT INTO active_schedules (
         id,
         schedule_id,
         specific_date,
@@ -44,17 +47,57 @@ export class ActiveScheduleRepository extends BaseRepository {
     );
   }
 
+  async findSpecificDateConflicts(
+    activeSchedule: CreateActiveSchedule,
+  ): Promise<ActiveSchedule[]> {
+    const targetDate = activeSchedule.specific_date?.toISOString()!;
+
+    const rows = await this.all<any>(
+      `
+    SELECT *
+    FROM active_schedules
+    WHERE specific_date = ?
+    `,
+      [targetDate],
+    );
+
+    return rows.map(this.mapRow);
+  }
+
+  async findSelectedDaysConflict(
+    activeSchedule: CreateActiveSchedule,
+  ): Promise<ActiveSchedule[]> {
+    const rows = await this.all<any>(
+      `
+      SELECT *
+      FROM active_schedules
+      WHERE repeat_weekly = 1
+      `,
+    );
+
+    const conflicts = rows.filter((row) => {
+      const existingDays: number[] = JSON.parse(row.selected_days);
+
+      return existingDays.some((day) =>
+        activeSchedule.selected_days.includes(day),
+      );
+    });
+
+    return conflicts.map(this.mapRow);
+  }
+
   async findById(id: string): Promise<ActiveSchedule | null> {
-    const row = await this.first(`SELECT * FROM active_schedule WHERE id = ?`, [
-      id,
-    ]);
+    const row = await this.first(
+      `SELECT * FROM active_schedules WHERE id = ?`,
+      [id],
+    );
 
     if (!row) return null;
     return this.mapRow(row);
   }
 
   async findAll(): Promise<ActiveSchedule[]> {
-    const rows = await this.all(`SELECT * FROM active_schedule`);
+    const rows = await this.all(`SELECT * FROM active_schedules`);
 
     return rows.map(this.mapRow);
   }
@@ -70,7 +113,7 @@ export class ActiveScheduleRepository extends BaseRepository {
 
     await this.run(
       `
-      UPDATE active_schedule
+      UPDATE active_schedules
       SET
         schedule_id = ?,
         specific_date = ?,
@@ -95,6 +138,6 @@ export class ActiveScheduleRepository extends BaseRepository {
   }
 
   async delete(id: string) {
-    await this.run(`DELETE FROM active_schedule WHERE id = ?`, [id]);
+    await this.run(`DELETE FROM active_schedules WHERE id = ?`, [id]);
   }
 }

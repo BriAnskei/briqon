@@ -11,21 +11,22 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Colors, Radius, Shadow } from "@/type/theme";
+import { useSaveScheduleModal } from "@/features/schedule-conversation/hooks/review/useSaveScheduleModal";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (name: string) => void;
-  isSaving?: boolean;
 }
 
-export function SaveScheduleModal({
-  visible,
-  onClose,
-  onConfirm,
-  isSaving = false,
-}: Props) {
+export function SaveScheduleModal({ visible, onClose }: Props) {
   const [name, setName] = React.useState("");
+  const { handleSave, isSaving } = useSaveScheduleModal({
+    onSuccess: () => {
+      setName("");
+      onClose();
+    },
+  });
+
   const canSave = name.trim().length > 0 && !isSaving;
 
   const handleClose = () => {
@@ -36,8 +37,7 @@ export function SaveScheduleModal({
 
   const handleConfirm = () => {
     if (!canSave) return;
-    onConfirm(name.trim());
-    setName("");
+    handleSave(name.trim());
   };
 
   return (

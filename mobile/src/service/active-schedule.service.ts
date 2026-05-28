@@ -16,7 +16,7 @@ export class activeScheduleService {
     activeScheduleInput: unknown,
     scheduleInput: unknown,
   ) {
-    // validate objects first
+    // validate inputs
     const validatedSchedule = validate(CreateScheduleSchema, scheduleInput);
     const validatedActiveSchedule = validate(
       CreateActivecheduleSchema,

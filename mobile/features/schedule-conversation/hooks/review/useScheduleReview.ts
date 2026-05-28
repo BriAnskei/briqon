@@ -2,76 +2,42 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useSchedule } from "@/context/ScheduleContext";
 import { CreateSchedule } from "@/src/models/schedule.model";
-import { ScheduleService } from "@/src/service/schedule.service";
-import { useToast } from "@/hooks/useToast";
-import z from "zod";
-
-let scheduleServiceInstance: ScheduleService | null = null;
+import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
 
 export function useScheduleReview() {
-  if (!scheduleServiceInstance) {
-    scheduleServiceInstance = new ScheduleService();
-  }
-
   const router = useRouter();
   const { selectedReviewItems } = useSchedule();
-  const { showToast } = useToast();
 
   const [isScheduleAlreadySaved, setScheduleAlreadySaved] = useState(false);
   const [isSetActiveModalOpen, SetIsSetActiveModalOpen] = useState(false);
 
-  const [isSaveScheduleModalOpen, setIsSaveScheduleModalOpen] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSchedActivatedModalOpen, setIsSchedActivatedModalOpen] =
+    useState(false);
+  const [lastActiveSchedule, setLastActiveSchedule] =
+    useState<CreateActiveSchedule | null>(null);
+  const [lastSchedule, setLastSchedule] = useState<CreateSchedule | null>(null);
 
+  const [isSaveScheduleModalOpen, setIsSaveScheduleModalOpen] = useState(false);
+
+  // Active schedule modal
   const openSetActiveModal = () => SetIsSetActiveModalOpen(true);
   const closeSetActiveModal = () => SetIsSetActiveModalOpen(false);
 
+  // Save Schedule modal
   const openSaveScheduleModal = () => setIsSaveScheduleModalOpen(true);
-  const closeSaveScheduleModal = () => setIsSaveScheduleModalOpen(false);
-
-  const handleSave = async (scheduleName: string) => {
-    try {
-      setIsSaving(true);
-      const newSchedule: CreateSchedule = {
-        name: scheduleName,
-        schedule_list: selectedReviewItems,
-        temporary: false,
-      };
-
-      await scheduleServiceInstance?.createSchedule(newSchedule);
-
-      showToast({
-        type: "success",
-        title: "Success",
-        message: "Schedule saved successfully!",
-      });
-
-      closeSaveScheduleModal();
-    } catch (error) {
-      console.error("[useScheduleReview] Save failed:", error);
-
-      if (error instanceof z.ZodError) {
-        console.log("Zod Error: ", error.message);
-      } else if (error instanceof Error) {
-        console.log("Error: ", error.message);
-      }
-
-      showToast({
-        type: "error",
-        title: "Save Failed",
-        message: "An unexpected error occurred.",
-      });
-    } finally {
-      setIsSaving(false);
-      setScheduleAlreadySaved(true);
-    }
+  const closeSaveScheduleModal = () => {
+    setIsSaveScheduleModalOpen(false);
   };
 
-  const handleConfirmActive = () => {
-    // scheduling already happened inside useSetActiveModal.handleConfirm
-    // this just handles post-confirm navigation
-    SetIsSetActiveModalOpen(false);
-    router.push("/confirmation");
+  const handleConfirmActive = (
+    activeSchedule: CreateActiveSchedule,
+    createSchedule: CreateSchedule,
+  ) => {
+    console.log("active schedule: ", JSON.stringify(activeSchedule, null, 2));
+    console.log("create schedule: ", JSON.stringify(createSchedule, null, 2));
+
+    setLastActiveSchedule(activeSchedule);
+    setLastSchedule(createSchedule);
   };
 
   return {
@@ -79,7 +45,6 @@ export function useScheduleReview() {
     isSetActiveModalOpen,
     openSetActiveModal,
     closeSetActiveModal,
-    handleSave,
     handleConfirmActive,
     goBack: router.back,
 
@@ -87,7 +52,13 @@ export function useScheduleReview() {
     openSaveScheduleModal,
     closeSaveScheduleModal,
 
-    isSaving,
     isScheduleAlreadySaved,
+
+    isSchedActivatedModalOpen,
+    setIsSchedActivatedModalOpen,
+    lastActiveSchedule,
+    lastSchedule,
+
+    goHome: () => router.replace("/"),
   };
 }

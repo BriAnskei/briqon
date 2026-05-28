@@ -37,11 +37,30 @@ export function offsetDate(days: number): Date {
   return d;
 }
 
+export function calculateActiveDays(
+  mode: DateMode,
+  selectedDays: number[],
+): number[] {
+  const today = new Date();
+  switch (mode) {
+    case "today":
+      return [today.getDay()];
+    case "tomorrow": {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      return [tomorrow.getDay()];
+    }
+    case "range":
+      return [...selectedDays].sort((a, b) => a - b);
+    default:
+      return [];
+  }
+}
+
 export function buildSummary(
   mode: DateMode,
   recurring: boolean,
-  startDay: number,
-  endDay: number,
+  selectedDays: number[],
   specificDate: Date,
 ): string {
   const repeatSuffix = recurring ? "· Every week" : "· One time";
@@ -50,8 +69,12 @@ export function buildSummary(
       return `Active today · ${formatDate(new Date())}${recurring ? " · Every week" : ""}`;
     case "tomorrow":
       return `Active tomorrow · ${formatDate(offsetDate(1))}${recurring ? " · Every week" : ""}`;
-    case "range":
-      return `${FULL_DAYS[startDay]} – ${FULL_DAYS[endDay]} ${repeatSuffix}`;
+    case "range": {
+      if (selectedDays.length === 0) return `No days selected ${repeatSuffix}`;
+      const sorted = [...selectedDays].sort((a, b) => a - b);
+      const labels = sorted.map((d) => FULL_DAYS[d]).join(", ");
+      return `${labels} ${repeatSuffix}`;
+    }
     case "specific":
       return `${formatDate(specificDate)} ${repeatSuffix}`;
     default:

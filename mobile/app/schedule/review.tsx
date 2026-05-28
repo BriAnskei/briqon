@@ -15,6 +15,7 @@ import { SetActiveModal } from "@/features/schedule-conversation/components/revi
 import { ScheduleListItem } from "@/features/schedule-conversation/components/review/ScheduleListItem";
 import { useScheduleReview } from "@/features/schedule-conversation/hooks/review/useScheduleReview";
 import { SaveScheduleModal } from "@/features/schedule-conversation/components/review/modal/SaveScheduleModal";
+import { ScheduleActivatedModal } from "@/features/schedule-conversation/components/review/modal/ScheduleActivedModal";
 
 export default function ReviewScreen() {
   const insets = useSafeAreaInsets();
@@ -23,14 +24,22 @@ export default function ReviewScreen() {
     isSetActiveModalOpen,
     openSetActiveModal,
     closeSetActiveModal,
-    handleSave,
+
     handleConfirmActive,
     goBack,
 
     isSaveScheduleModalOpen,
     openSaveScheduleModal,
     closeSaveScheduleModal,
-    isSaving,
+
+    isSchedActivatedModalOpen,
+    setIsSchedActivatedModalOpen,
+    lastActiveSchedule,
+    lastSchedule,
+
+    isScheduleAlreadySaved,
+
+    goHome,
   } = useScheduleReview();
 
   return (
@@ -92,12 +101,23 @@ export default function ReviewScreen() {
         visible={isSetActiveModalOpen}
         onClose={closeSetActiveModal}
         onConfirm={handleConfirmActive}
+        isScheduleAlreadySave={isScheduleAlreadySaved}
+        setIsSchedActivatedModalOpen={setIsSchedActivatedModalOpen}
       />
+
+      <ScheduleActivatedModal
+        visible={isSchedActivatedModalOpen}
+        onClose={() => {
+          setIsSchedActivatedModalOpen(false);
+        }}
+        activeSchedule={lastActiveSchedule}
+        schedule={lastSchedule}
+        goHome={() => goHome()}
+      />
+
       <SaveScheduleModal
         visible={isSaveScheduleModalOpen}
         onClose={closeSaveScheduleModal}
-        onConfirm={handleSave}
-        isSaving={isSaving}
       />
     </SafeAreaView>
   );

@@ -6,46 +6,62 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  TextInput,
   Platform,
   StyleSheet,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { useSetActiveModal } from "@/features/schedule-conversation/hooks/review/useSetActiveModal";
-import {
-  FULL_DAYS,
-  formatDate,
-} from "@/features/schedule-conversation/util/reviewHelpers";
+import { formatDate } from "@/features/schedule-conversation/util/reviewHelpers";
 import { DayRangeExpanded } from "../DayRangeExpanded";
 import { OptionPill } from "../OptionPill";
+import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
+import { CreateSchedule } from "@/src/models/schedule.model";
 
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (
+    activeSchedule: CreateActiveSchedule,
+    schedule: CreateSchedule,
+  ) => void;
+
+  isScheduleAlreadySave: boolean;
+  setIsSchedActivatedModalOpen: (n: boolean) => void;
 }
 
-export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
+export function SetActiveModal({
+  visible,
+  onClose,
+  onConfirm,
+  isScheduleAlreadySave,
+  setIsSchedActivatedModalOpen,
+}: Props) {
   const {
     dateMode,
     recurring,
-    startDay,
-    endDay,
+    selectedDays,
     specificDate,
     showDatePicker,
     canConfirm,
     summary,
+    isSubmitting,
     setRecurring,
-    setStartDay,
-    setEndDay,
+    toggleDay,
     setShowDatePicker,
     handleModeSelect,
     handleDateChange,
     handleClose,
     handleConfirm,
+    scheduleName,
+    setScheduleName,
+    saveSchedule,
+    setSaveSchedule,
+  } = useSetActiveModal({ onClose, onConfirm, setIsSchedActivatedModalOpen });
 
-    isSubmitting,
-  } = useSetActiveModal({ onClose, onConfirm });
+  const isConfirmBlocked =
+    !canConfirm || isSubmitting || (saveSchedule && scheduleName.trim() === "");
 
   return (
     <Modal
@@ -100,8 +116,8 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
               />
             </View>
 
-            {/* Day range */}
-            <Text style={s.sectionLabel}>Day Range</Text>
+            {/* Day selection */}
+            <Text style={s.sectionLabel}>Days of the Week</Text>
             <View style={s.optionCard}>
               <TouchableOpacity
                 style={s.optionCardHeader}
@@ -109,11 +125,11 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
                 activeOpacity={0.8}
               >
                 <View style={s.optionCardLeft}>
-                  <Text style={s.optionCardTitle}>Day of the Week</Text>
+                  <Text style={s.optionCardTitle}>Select Days</Text>
                   <Text style={s.optionCardSubtitle}>
-                    {dateMode === "range"
-                      ? `${FULL_DAYS[startDay]} – ${FULL_DAYS[endDay]}`
-                      : "e.g. Monday to Friday"}
+                    {dateMode === "range" && selectedDays.length > 0
+                      ? `${selectedDays.length} day${selectedDays.length > 1 ? "s" : ""} selected`
+                      : "e.g. Monday, Wednesday, Friday"}
                   </Text>
                 </View>
                 <Radio active={dateMode === "range"} />
@@ -121,10 +137,8 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
 
               {dateMode === "range" && (
                 <DayRangeExpanded
-                  startDay={startDay}
-                  endDay={endDay}
-                  onStartDay={setStartDay}
-                  onEndDay={setEndDay}
+                  selectedDays={selectedDays}
+                  onToggleDay={toggleDay}
                 />
               )}
             </View>
@@ -188,6 +202,47 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
                 thumbColor={Colors.white}
               />
             </View>
+
+            {/* Save schedule toggle, if schedule is already save, then hide this completely */}
+            <View style={s.divider} />
+            {!isScheduleAlreadySave && (
+              <View style={s.repeatRow}>
+                <View style={s.repeatLeft}>
+                  <Text style={s.repeatTitle}>Save this schedule</Text>
+                  <Text style={s.repeatSubtitle}>
+                    Keep it in your saved schedules list
+                  </Text>
+                </View>
+                <Switch
+                  value={saveSchedule}
+                  onValueChange={(val) => {
+                    setSaveSchedule(val);
+                    if (!val) setScheduleName("");
+                  }}
+                  trackColor={{ false: Colors.bgElevated, true: Colors.accent }}
+                  thumbColor={Colors.white}
+                />
+              </View>
+            )}
+
+            {/* Schedule name input */}
+            {saveSchedule && (
+              <View style={s.nameInputWrap}>
+                <TextInput
+                  style={s.nameInput}
+                  placeholder="Schedule name…"
+                  placeholderTextColor={Colors.textMuted}
+                  value={scheduleName}
+                  onChangeText={setScheduleName}
+                  maxLength={60}
+                  autoFocus
+                  returnKeyType="done"
+                />
+                {scheduleName.trim() === "" && (
+                  <Text style={s.nameHint}>A name is required to save</Text>
+                )}
+              </View>
+            )}
           </ScrollView>
 
           {/* ── Actions ── */}
@@ -200,18 +255,22 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
               <Text style={s.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                s.confirmBtn,
-                (!canConfirm || isSubmitting) && s.confirmBtnDisabled,
-              ]}
+              style={[s.confirmBtn, isConfirmBlocked && s.confirmBtnDisabled]}
               onPress={handleConfirm}
               activeOpacity={0.88}
-              disabled={!canConfirm || isSubmitting}
+              disabled={isConfirmBlocked}
             >
               <Text
-                style={[s.confirmText, !canConfirm && s.confirmTextDisabled]}
+                style={[
+                  s.confirmText,
+                  isConfirmBlocked && s.confirmTextDisabled,
+                ]}
               >
-                {isSubmitting ? "Scheduling…" : "Confirm"}
+                {isSubmitting
+                  ? "Scheduling…"
+                  : saveSchedule
+                    ? "Save & Activate"
+                    : "Confirm"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -221,8 +280,6 @@ export function SetActiveModal({ visible, onClose, onConfirm }: Props) {
   );
 }
 
-// ── Inline Radio indicator ────────────────────────────────────────────────────
-
 function Radio({ active }: { active: boolean }) {
   return (
     <View style={[s.radioOuter, active && s.radioOuterActive]}>
@@ -230,8 +287,6 @@ function Radio({ active }: { active: boolean }) {
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   overlay: {
@@ -387,6 +442,32 @@ const s = StyleSheet.create({
     marginBottom: 2,
   },
   repeatSubtitle: { fontSize: 12, color: Colors.textMuted },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: 4,
+    marginVertical: 4,
+  },
+  nameInputWrap: {
+    marginTop: 2,
+    marginBottom: 4,
+    gap: 6,
+  },
+  nameInput: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  nameHint: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginLeft: 4,
+  },
   actions: {
     flexDirection: "row",
     gap: 10,

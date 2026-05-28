@@ -51,7 +51,6 @@ export default function RootLayout() {
               animation: "slide_from_right",
             }}
           />
-          <Stack.Screen name="confirmation" />
         </Stack>
       </ScheduleProvider>
       <Toast config={toastConfig} />

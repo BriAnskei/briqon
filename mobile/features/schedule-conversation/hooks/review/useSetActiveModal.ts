@@ -1,42 +1,58 @@
 import { useState } from "react";
 import { Platform } from "react-native";
-import { DateMode, buildSummary } from "../../util/reviewHelpers";
+import {
+  DateMode,
+  buildSummary,
+  calculateActiveDays,
+} from "../../util/reviewHelpers";
 import { useSchedule } from "@/context/ScheduleContext";
-import { scheduleSchedule } from "@/services/alarm/alarmService";
-import { ActiveScheduleConfig } from "@/type/alarm";
+import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
+import { CreateSchedule } from "@/src/models/schedule.model";
 
 interface UseSetActiveModalOptions {
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (
+    activeSchedule: CreateActiveSchedule,
+    schedule: CreateSchedule,
+  ) => void;
+
+  setIsSchedActivatedModalOpen: (n: boolean) => void;
 }
 
 export function useSetActiveModal({
   onClose,
   onConfirm,
+  setIsSchedActivatedModalOpen,
 }: UseSetActiveModalOptions) {
   const { selectedReviewItems } = useSchedule();
 
   const [dateMode, setDateMode] = useState<DateMode>(null);
   const [recurring, setRecurring] = useState(false);
-  const [startDay, setStartDay] = useState(0);
-  const [endDay, setEndDay] = useState(4);
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [specificDate, setSpecificDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const canConfirm = dateMode !== null && !isSubmitting;
+  const [saveSchedule, setSaveSchedule] = useState(false);
+  const [scheduleName, setScheduleName] = useState("");
 
-  const summary = buildSummary(
-    dateMode,
-    recurring,
-    startDay,
-    endDay,
-    specificDate,
-  );
+  const canConfirm =
+    dateMode !== null &&
+    !isSubmitting &&
+    (dateMode !== "range" || selectedDays.length > 0);
+
+  const summary = buildSummary(dateMode, recurring, selectedDays, specificDate);
 
   const handleModeSelect = (mode: DateMode) => {
     setDateMode((prev) => (prev === mode ? null : mode));
+    if (mode !== "range") setSelectedDays([]);
     setShowDatePicker(mode === "specific");
+  };
+
+  const toggleDay = (day: number) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
   };
 
   const handleDateChange = (_: unknown, date?: Date) => {
@@ -48,9 +64,10 @@ export function useSetActiveModal({
     setDateMode(null);
     setRecurring(false);
     setShowDatePicker(false);
-    setStartDay(0);
-    setEndDay(4);
+    setSelectedDays([]);
     setSpecificDate(new Date());
+    setSaveSchedule(false);
+    setScheduleName("");
     onClose();
   };
 
@@ -58,24 +75,28 @@ export function useSetActiveModal({
     if (!canConfirm || !dateMode) return;
 
     setIsSubmitting(true);
+
     try {
-      const config: ActiveScheduleConfig = {
-        id: Date.now().toString(),
-        scheduleItems: selectedReviewItems,
-        dateMode,
-        startDay,
-        endDay,
-        specificDate:
-          dateMode === "specific" ? specificDate.toISOString() : undefined,
-        recurring,
-        enabled: true,
+      const days = calculateActiveDays(dateMode, selectedDays);
+
+      const activeSchedule: CreateActiveSchedule = {
+        schedule_id: "",
+        selected_days: days,
+        repeat_weekly: recurring,
+        specific_date: dateMode === "specific" ? specificDate : undefined,
       };
 
-      await scheduleSchedule(config);
-      onConfirm();
+      const schedule: CreateSchedule = {
+        name: saveSchedule ? scheduleName.trim() : "",
+        schedule_list: selectedReviewItems,
+        temporary: !saveSchedule,
+      };
+
+      // await processSaveing()
+      onConfirm(activeSchedule, schedule);
+      setIsSchedActivatedModalOpen(true);
     } catch (error) {
-      console.error("Failed to schedule alarms:", error);
-      // you can hook your existing showToast here if you expose it from context
+      console.error("[useSetActiveModal] Confirm failed:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -84,20 +105,22 @@ export function useSetActiveModal({
   return {
     dateMode,
     recurring,
-    startDay,
-    endDay,
+    selectedDays,
     specificDate,
     showDatePicker,
     canConfirm,
     isSubmitting,
     summary,
     setRecurring,
-    setStartDay,
-    setEndDay,
+    toggleDay,
     setShowDatePicker,
     handleModeSelect,
     handleDateChange,
     handleClose,
     handleConfirm,
+    saveSchedule,
+    setSaveSchedule,
+    scheduleName,
+    setScheduleName,
   };
 }
