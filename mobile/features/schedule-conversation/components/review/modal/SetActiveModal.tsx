@@ -26,7 +26,6 @@ interface Props {
     activeSchedule: CreateActiveSchedule,
     schedule: CreateSchedule,
   ) => void;
-
   isScheduleAlreadySave: boolean;
   setIsSchedActivatedModalOpen: (n: boolean) => void;
 }
@@ -44,14 +43,19 @@ export function SetActiveModal({
     selectedDays,
     specificDate,
     showDatePicker,
+    disabledDays,
+    rangeStartsAt,
+    showRangeStartsPicker,
     canConfirm,
     summary,
     isSubmitting,
     setRecurring,
     toggleDay,
     setShowDatePicker,
+    setShowRangeStartsPicker,
     handleModeSelect,
     handleDateChange,
+    handleRangeStartsAtChange,
     handleClose,
     handleConfirm,
     scheduleName,
@@ -139,6 +143,14 @@ export function SetActiveModal({
                 <DayRangeExpanded
                   selectedDays={selectedDays}
                   onToggleDay={toggleDay}
+                  disabledDays={disabledDays}
+                  startsAt={rangeStartsAt}
+                  showStartsPicker={showRangeStartsPicker}
+                  onOpenStartsPicker={() => setShowRangeStartsPicker(true)}
+                  onStartsAtChange={handleRangeStartsAtChange}
+                  onStartsAtPickerDismiss={() =>
+                    setShowRangeStartsPicker(false)
+                  }
                 />
               )}
             </View>
@@ -187,23 +199,28 @@ export function SetActiveModal({
               )}
             </View>
 
-            {/* Repeat toggle */}
-            <View style={s.repeatRow}>
-              <View style={s.repeatLeft}>
-                <Text style={s.repeatTitle}>Repeat every week</Text>
-                <Text style={s.repeatSubtitle}>
-                  Apply this schedule on a weekly basis
-                </Text>
+            {/* Repeat toggle — hidden for specific date */}
+            {dateMode !== "specific" && (
+              <View style={s.repeatRow}>
+                <View style={s.repeatLeft}>
+                  <Text style={s.repeatTitle}>Repeat every week</Text>
+                  <Text style={s.repeatSubtitle}>
+                    Apply this schedule on a weekly basis
+                  </Text>
+                </View>
+                <Switch
+                  value={recurring}
+                  onValueChange={setRecurring}
+                  trackColor={{
+                    false: Colors.bgElevated,
+                    true: Colors.accent,
+                  }}
+                  thumbColor={Colors.white}
+                />
               </View>
-              <Switch
-                value={recurring}
-                onValueChange={setRecurring}
-                trackColor={{ false: Colors.bgElevated, true: Colors.accent }}
-                thumbColor={Colors.white}
-              />
-            </View>
+            )}
 
-            {/* Save schedule toggle, if schedule is already save, then hide this completely */}
+            {/* Save schedule toggle */}
             <View style={s.divider} />
             {!isScheduleAlreadySave && (
               <View style={s.repeatRow}>
@@ -219,7 +236,10 @@ export function SetActiveModal({
                     setSaveSchedule(val);
                     if (!val) setScheduleName("");
                   }}
-                  trackColor={{ false: Colors.bgElevated, true: Colors.accent }}
+                  trackColor={{
+                    false: Colors.bgElevated,
+                    true: Colors.accent,
+                  }}
                   thumbColor={Colors.white}
                 />
               </View>

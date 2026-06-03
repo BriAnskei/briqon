@@ -73,12 +73,4 @@ DerivedData/
 *.ipa
 *.xcuserstate
 
-# generated native folders
-# If you want to track native folders, comment out these lines
-# /ios
-# /android
-
-# If native folders are ignored, we still keep the specific ignores above
-# for when/if they are unignored.
-# /ios
-# /android
+/src/service/REFACTORING.md

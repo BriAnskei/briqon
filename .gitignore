@@ -36,5 +36,8 @@ Thumbs.db
 # Mobile specific at root
 mobile/.env
 
+# Roadmaps and temporary documentation
+ON_DEVICE_AI_ROADMAP.md
+
 
 

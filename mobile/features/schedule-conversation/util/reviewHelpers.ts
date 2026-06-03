@@ -42,13 +42,15 @@ export function calculateActiveDays(
   selectedDays: number[],
 ): number[] {
   const today = new Date();
+  const toMonBased = (jsDay: number) => (jsDay === 0 ? 6 : jsDay - 1);
+
   switch (mode) {
     case "today":
-      return [today.getDay()];
+      return [toMonBased(today.getDay())];
     case "tomorrow": {
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
-      return [tomorrow.getDay()];
+      return [toMonBased(tomorrow.getDay())];
     }
     case "range":
       return [...selectedDays].sort((a, b) => a - b);
