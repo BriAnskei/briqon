@@ -42,7 +42,38 @@ export class ActiveScheduleRepository extends BaseRepository {
     );
   }
 
-  async checkActivationConflict(starts_at: Date) {}
+  async findRangeOverlaps(startsAt: string, endsAt: string) {
+    return this.all<ActiveSchedule>(
+      `
+    SELECT *
+    FROM active_schedules
+    WHERE
+      starts_at <= ?
+      AND ends_at >= ?
+  `,
+      [endsAt, startsAt],
+    );
+  }
+
+  async findDayConflicts(days: number[]): Promise<ActiveSchedule[]> {
+    const placeholders = days.map(() => "?").join(",");
+    const rows = await this.all<ActiveSchedule>(
+      `
+    SELECT a.*
+    FROM active_schedules a
+    WHERE a.active_type = 'days' AND a.recurring = 1
+      AND EXISTS (
+        SELECT 1
+        FROM active_schedule_days d
+        WHERE d.active_schedule_id = a.id
+          AND d.weekday IN (${placeholders})
+      )
+    `,
+      days,
+    );
+
+    return rows.map(this.mapRow);
+  }
 
   async findById(id: string): Promise<ActiveSchedule | null> {
     const row = await this.first(

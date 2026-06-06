@@ -32,4 +32,18 @@ export class ActiveScheduleDaysRepository extends BaseRepository {
       db,
     );
   }
+
+  async fetchAllByActiveScheduleId(
+    activeScheduleId: string,
+  ): Promise<ActiveScheduleDays[]> {
+    const row = await this.all<ActiveScheduleDays[]>(
+      `
+      SELECT * FROM active_schedules WHERE 
+      active_schedule_id = ?
+      `,
+      [activeScheduleId],
+    );
+
+    return row.map(this.mapRow);
+  }
 }

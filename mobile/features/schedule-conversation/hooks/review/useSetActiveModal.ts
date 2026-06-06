@@ -9,6 +9,7 @@ import { useSchedule } from "@/context/ScheduleContext";
 import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
 import { CreateSchedule } from "@/src/models/schedule.model";
 import { ActiveScheduleService } from "@/src/service/active-schedule.service";
+import { ConflicActivationError } from "@/src/errors/scheduleActivationConflic.error";
 
 let activeScheduleServiceInstance: ActiveScheduleService | null = null;
 
@@ -113,10 +114,6 @@ export function useSetActiveModal({
 
   const [saveSchedule, setSaveSchedule] = useState(false);
   const [scheduleName, setScheduleName] = useState("");
-
-  useEffect(() => {
-    console.log("specific date update: ", specificDate);
-  }, [specificDate]);
 
   // Compute disabled days based on rangeStartsAt
   const disabledDays = useMemo(
@@ -239,8 +236,6 @@ export function useSetActiveModal({
       const days = calculateActiveDays(dateMode, selectedDays);
       const dateRange = buildDateRange();
 
-      const selectedDate = specificDate;
-
       //  active_days: days,
       const activeSchedule: CreateActiveSchedule = {
         recurring,
@@ -266,6 +261,9 @@ export function useSetActiveModal({
       setIsSchedActivatedModalOpen(true);
     } catch (error) {
       console.error("[useSetActiveModal] Confirm failed:", error);
+
+      if (error instanceof ConflicActivationError) {
+      }
     } finally {
       setIsSubmitting(false);
     }

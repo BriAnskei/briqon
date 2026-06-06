@@ -31,4 +31,18 @@ export class ActiveScheduleDatesRepository extends BaseRepository {
       db,
     );
   }
+
+  async fetchByActiveScheduleId(
+    activeScheduleId: string,
+  ): Promise<ActiveScheduleDates> {
+    const row = this.first(
+      `
+      SELECT * FROM active_schedule_dates
+      WHERE active_schedule_id = ?
+      `,
+      [activeScheduleId],
+    );
+
+    return this.mapRow(row);
+  }
 }

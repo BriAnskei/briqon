@@ -32,6 +32,7 @@ export const migrateDatabase = async () => {
     CREATE INDEX IF NOT EXISTS idx_active_schedules_schedule_id
       ON active_schedules(schedule_id);
 
+
     CREATE TABLE IF NOT EXISTS active_schedule_days (
       id TEXT PRIMARY KEY NOT NULL,
       active_schedule_id TEXT NOT NULL,
@@ -44,6 +45,11 @@ export const migrateDatabase = async () => {
 
     CREATE INDEX IF NOT EXISTS idx_active_schedule_days_active_schedule_id
       ON active_schedule_days(active_schedule_id);
+
+      CREATE INDEX IF NOT EXISTS idx_active_schedule_days_weekday_active_schedule_id
+      ON active_schedule_days(weekday, active_schedule_id);
+
+
 
     -- Active Schedule Dates
     CREATE TABLE IF NOT EXISTS active_schedule_dates (
