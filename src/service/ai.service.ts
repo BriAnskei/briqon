@@ -1,5 +1,60 @@
 import { initLlama, LlamaContext } from "llama.rn";
 import { ModelManager } from "../ai/ModelManager";
+import { ScheduleItem } from "@/type/MessageTypes";
+import {
+  FixedAppointment,
+  FlexibleTask,
+  ScheduleEngine,
+} from "./ScheduleEngine";
+
+type PlanItem = {
+  activity: string;
+  duration_minutes: number;
+};
+
+const SYSTEM_PROMPT = `
+You are Briqon.
+
+You are a schedule planning assistant.
+
+Your task is to create a realistic activity plan.
+
+Rules:
+- Generate activities only.
+- Do NOT generate timestamps.
+- Do NOT calculate clock times.
+- Do NOT explain your reasoning.
+- Respect appointments when deciding how much activity is reasonable.
+- Respect the user's focus and break preference.
+- Durations must be positive integers in minutes.
+- Use a small number of activities when break preference is "few-long".
+- Use a balanced number of activities when break preference is "balanced".
+- Use many shorter activities when break preference is "many-short".
+- Activity names should be concise.
+- Return valid JSON only.
+
+
+Response format:
+
+{
+  "activities": [
+    {
+      "activity": "Activity Name",
+      "duration_minutes": 60
+    }
+  ]
+}`.trim();
+
+import { z } from "zod";
+
+export const PlanActivitySchema = z.object({
+  activity: z.string().min(1),
+  duration_minutes: z.number().int().positive(),
+});
+
+export const PlanResponseSchema = z.object({
+  activities: z.array(PlanActivitySchema).min(1),
+});
 
 export class AIService {
   private context: LlamaContext | undefined;
@@ -24,98 +79,78 @@ export class AIService {
     return !!this.context;
   }
 
-  async generateScheduleJSON<T>(promt: string, cb: (data: any) => void) {
+  async generateScheduleJSON(
+    prompt: string,
+    startTime: string,
+    endTime: string,
+    appointments: any[],
+    scheduleType?: string,
+  ): Promise<ScheduleItem[]> {
     if (!this.context) {
       throw new Error("Model not initialized");
     }
 
-    const res = await this.context.completion(
-      {
-        messages: [
-          {
-            role: "system",
-            content: `
-You are Briqon, a specialized AI assistant that focuses on generating schedules and organizing time-based activities.
+    const res = await this.context.completion({
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.2,
+      top_p: 0.9,
+    });
 
-Your capabilities include:
-- Creating daily schedules
-- Planning routines
-- Organizing time-based activities
+    try {
+      const parsed = JSON.parse(res.content);
+      // Validate the shape of the model output using Zod
+      const validated = PlanResponseSchema.parse(parsed);
+      const activities: PlanItem[] = validated.activities;
 
+      // 1. Convert UI appointments to FixedAppointments
+      const fixedAppointments: FixedAppointment[] = appointments.map((appt) => {
+        const formatTime = (date: Date) => {
+          return date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          });
+        };
+        const label =
+          appt.type === "custom" && appt.customLabel
+            ? appt.customLabel.trim()
+            : appt.type;
+        return {
+          activity: label,
+          start_time: formatTime(new Date(appt.startTime)),
+          end_time: formatTime(new Date(appt.endTime)),
+        };
+      });
 
------------------------------------
+      // 2. Map the LLM activities to FlexibleTasks
+      // This is what the ScheduleEngine will fit into the gaps
+      const flexibleTasks: FlexibleTask[] = activities.map((act) => ({
+        activity: act.activity,
+        duration_minutes: act.duration_minutes,
+      }));
 
-SCHEDULE GENERATION RULES
+      // 3. THIS IS THE KEY PART:
+      // We pass everything into the ScheduleEngine.
+      // It will:
+      //   a) Run insertMeals() to add Breakfast, Lunch, and Dinner.
+      //   b) Sequence your FlexibleTasks around these meals and appointments.
+      //   c) Insert 15-minute breaks automatically.
+      const schedule = ScheduleEngine.compileSchedule(
+        startTime,
+        endTime,
+        fixedAppointments,
+        flexibleTasks,
+        scheduleType,
+      );
 
-When the user asks for a schedule, plan, or time-based routine:
-
-1. Create a strict, chronological schedule.
-2. Use realistic time blocks (15–60 minutes depending on context).
-3. Include all user constraints (appointments, work, gym, etc.).
-
-4. VERY IMPORTANT:
-   - Break long activities into smaller focused sessions.
-   - Insert short breaks (5–15 minutes) where appropriate.
-   - Include meals, rest, and transitions naturally.
-   - Avoid long continuous blocks unless necessary.
-   - The schedule should feel human and sustainable, not compressed.
-
-5. Fill all remaining time intelligently with the requested activity type.
-6. Do NOT leave gaps.
-7. Do NOT assign specific topics unless the user explicitly specifies them.
-
-
-For JSON responses:
-- Use 24-hour format (HH:MM).
-- Follow this exact schema:
-
-[
-  {
-    "start_time": "HH:MM",
-    "end_time": "HH:MM",
-    "activity": "string"
-  }
-]
-
-- Do NOT include any extra text, explanations, or markdown.
-- Do NOT include additional fields.
-- The JSON must remain valid.
-
-
------------------------------------
-
-SCHEDULE TYPE ADAPTATION
-
-The schedule MUST adapt based on the context of the request:
-
-1. PERSONAL / PRODUCTIVITY SCHEDULES:
-- Include routines like waking up, meals, focus sessions, breaks, rest.
-- Use general activities like "Deep work", "Break", "Lunch", etc.
-
-2. EVENT-BASED SCHEDULES (VERY IMPORTANT):
-- NEVER include personal routine activities like:
-  "Wake up", "Morning routine", "Personal tasks"
-
-- Instead, generate activities relevant to the event type.
-
-- Activities must match the nature of the event.
-- The schedule should feel like an event program, not a daily routine.
-
-          `,
-          },
-          {
-            role: "user",
-            content: promt,
-          },
-        ],
-
-        temperature: 0.2,
-        top_p: 0.9,
-      },
-
-      cb,
-    );
-
-    console.log("Full respomse: ", res.content);
+      console.log("Generated schedule with meals and breaks: ", schedule);
+      return schedule;
+    } catch (error) {
+      console.error("Error generating schedule json:", error);
+      throw new Error("Invalid JSON or scheduling error");
+    }
   }
 }

@@ -56,7 +56,13 @@ export function formatTime(date: Date) {
 }
 
 export function getDurationMins(start: Date, end: Date) {
-  return (end.getTime() - start.getTime()) / 60000;
+  let endTime = end.getTime();
+
+  if (endTime <= start.getTime()) {
+    endTime += 24 * 60 * 60 * 1000;
+  }
+
+  return (endTime - start.getTime()) / 60000;
 }
 
 export function appointmentLabel(appt: Appointment): string {
@@ -71,79 +77,4 @@ export function durationText(start: Date, end: Date): string {
   const h = Math.floor(diff / 60);
   const m = diff % 60;
   return `Duration: ${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m` : ""}`;
-}
-
-export const rulesJsonPrompt = `
-STRICT RULES:
-- Follow the appointments or activities if specify.
-- Output ONLY JSON
-- No explanation
-- Follow this schema EXACTLY:
-
-
-{
-  "start_time": "HH:MM",
-  "end_time": "HH:MM",
-  "activity": "string"
-}
-
-`;
-
-export function buildPrompt(form: FormState): string {
-  const scheduleType = form.scheduleType;
-  if (scheduleType !== "event" && scheduleType !== "personal")
-    throw new Error("Invalid schedule type");
-
-  if (form.scheduleType == "event") return generateEventSchedulePrompt(form);
-
-  return generatePersonalSchedulePrompt(form);
-}
-
-function generateEventSchedulePrompt(form: FormState) {
-  return `
-Generate a schedule based on this event:
-
-Start: ${formatTime(form.startTime)}
-End: ${formatTime(form.endTime)}
-Event type: ${form.eventType}
-
-Activities:
-${form.eventScheduleItems.map((i) => `- ${i.name} (${i.duration})`).join("\n")}
-
-
-${rulesJsonPrompt}
-  `;
-}
-
-function generatePersonalSchedulePrompt(form: FormState) {
-  return `  
-Generate a personal schedule for ${form.priorityFocus}:
-
-Start: ${formatTime(form.startTime)}
-End: ${formatTime(form.endTime)}
-Focus: ${form.productivityName || form.priorityFocus}
-Break style: ${getBreakFrequencyPrompt(form.breakFrequency!)}  
-
-
-Appointments:
-${form.appointments.map((a) => `- ${a.type} (${formatTime(a.startTime)} - ${formatTime(a.endTime)})`).join("\n")}
-
-${rulesJsonPrompt}
-  `;
-}
-
-/**
- * @returns break types description prompt based on the type
- */
-function getBreakFrequencyPrompt(breakType: string) {
-  const breakTypesPrompt: Record<string, string> = {
-    "few-long":
-      "Structure the schedule with a small number of time blocks, each covering longer continuous periods. Minimize fragmentation and group activities into extended sessions.",
-    balanced:
-      "Structure the schedule with a moderate number of time blocks, keeping a natural mix of longer and shorter activities. Maintain a steady rhythm between focus and variety",
-    "many-short":
-      "Structure the schedule with many smaller time blocks. Break activities into short, clearly separated segments to increase granularity and flexibility.",
-  };
-
-  return breakTypesPrompt[breakType];
 }

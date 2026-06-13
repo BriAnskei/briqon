@@ -1,3 +1,3 @@
-import { AiService } from "@/services/ai/ai.service";
+import { AIService } from "../service/ai.service";
 
-export const AIService = new AiService();
+export const AiInstance = new AIService();

@@ -310,42 +310,7 @@ export default function HomeScreen() {
     console.log("Next:", next.activity);
   };
 
-  const aiGenerateTest = async () => {
-    try {
-      await service!.generateScheduleJSON(
-        `Generate a personal schedule for productivity:
-
-Start: 06:00
-End: 12:00
-Focus: Coding work
-Break style: Structure the schedule with a small number of time blocks, each covering longer continuous periods. Minimize fragmentation and group activities into extended sessions.  
-
-
-Appointments:
-
-
-
-STRICT RULES:
-- Follow the appointments or activities if specify.
-- Output ONLY JSON
-- No explanation
-- Follow this schema EXACTLY:
-
-
-{
-  "start_time": "HH:MM",
-  "end_time": "HH:MM",
-  "activity": "string"
-}
-`,
-        (d) => {
-          console.log("data:", d);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const aiGenerateTest = async () => {};
 
   return (
     <View style={s.root}>

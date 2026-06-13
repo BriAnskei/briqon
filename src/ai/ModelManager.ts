@@ -1,6 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 
-const MODEL_URL = "https://your-cdn.com/model.gguf";
+const MODEL_URL =
+  "https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf";
 
 /**
  * Legacy API used intentionally because it
@@ -10,9 +11,7 @@ const DOCUMENT_DIR = FileSystem.documentDirectory!;
 
 const MODEL_DIR = `${DOCUMENT_DIR}models/`;
 
-// const MODEL_PATH = `${MODEL_DIR}Llama-3.2-1B-Instruct-UD-Q5_K_XL.gguf`;
-
-const MODEL_PATH = `${MODEL_DIR}qwen2.5-3b-instruct-q2_k.gguf`;
+const MODEL_PATH = `${MODEL_DIR}Llama-3.2-3B-Instruct-Q4_K_M.gguf`;
 
 export class ModelManager {
   static async ensureModel(
@@ -44,7 +43,7 @@ export class ModelManager {
       });
     }
 
-    const download = FileSystem.createDownloadResumable(
+    let download = FileSystem.createDownloadResumable(
       MODEL_URL,
       MODEL_PATH,
       {},
@@ -60,13 +59,56 @@ export class ModelManager {
       },
     );
 
-    const result = await download.downloadAsync();
+    const maxRetries = 10;
+    let attempt = 0;
 
-    if (!result?.uri) {
-      throw new Error("Failed to download model.");
+    while (attempt < maxRetries) {
+      try {
+        const result = await download.downloadAsync();
+        if (result?.uri) {
+          return result.uri;
+        }
+        throw new Error("Download failed: result or uri is missing");
+      } catch (e: any) {
+        attempt++;
+        console.error(`Download attempt ${attempt} failed:`, e.message);
+
+        if (attempt >= maxRetries) {
+          throw new Error(
+            `Failed to download model after ${maxRetries} attempts: ${e.message}`,
+          );
+        }
+
+        // Wait before retrying (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        // Try to resume if we have resume data
+        try {
+          const resumeData = download.savable();
+          download = FileSystem.createDownloadResumable(
+            MODEL_URL,
+            MODEL_PATH,
+            {},
+            (progress) => {
+              if (progress.totalBytesExpectedToWrite <= 0) return;
+              onProgress?.(
+                progress.totalBytesWritten / progress.totalBytesExpectedToWrite,
+              );
+            },
+            JSON.parse(resumeData).resumeData,
+          );
+        } catch (resumeError) {
+          console.warn(
+            "Failed to prepare resume data, restarting download",
+            resumeError,
+          );
+          // If resuming fails, we just continue with the original download object or recreate it
+        }
+      }
     }
 
-    return result.uri;
+    throw new Error("Failed to download model.");
   }
 
   static getPath(): string {

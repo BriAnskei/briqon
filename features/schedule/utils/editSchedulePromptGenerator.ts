@@ -1,6 +1,6 @@
 import { ScheduleItem } from "@/type/MessageTypes";
 import { formatTime } from "@/utils/parseSchedule";
-import { rulesJsonPrompt } from "./wizardHelpers";
+import { rulesJsonPrompt } from "./WizardPromptBuilder";
 
 export function buildEditPrompt(
   items: ScheduleItem[],
@@ -22,7 +22,7 @@ export function buildEditPrompt(
     .join("\n");
 
   const res = `
-You are given an existing schedule and a set of requested changes. Apply ONLY the requested changes. Keep all other items exactly as they are.
+You are given an existing schedule and a set of requested changes. 
 
 Schedule window: ${formatTime(scheduleStartTime)} – ${formatTime(scheduleEndTime)}
 
@@ -30,11 +30,10 @@ Current schedule:
 ${itemList}
 
 Instructions:
-- Items marked ← REMOVE THIS must be excluded from the output.
-- Items marked ← EDIT must be modified according to the instruction.
-- All other items must remain unchanged (same activity name, same times).
-- Re-adjust times only where necessary to fill gaps left by removed items or to accommodate edits — do not shift unaffected items.
-- Do not add new activities unless an edit explicitly asks for one.
+- Apply the requested changes (EDIT or REMOVE).
+- Return the updated schedule as a set of "fixed_appointments".
+- Keep unchanged items as "fixed_appointments" with their original times.
+- Ensure the "preferences" day_start and day_end match the schedule window.
 
 ${rulesJsonPrompt}
   `.trim();

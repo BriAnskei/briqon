@@ -15,6 +15,7 @@ import { FormState } from "@/type/NewScheduleTypes";
 import { useRouter } from "expo-router";
 import { ApiError } from "@/services/errors/ai.error";
 import { useToast } from "@/hooks/useToast";
+import { AiInstance } from "@/src/ai/ai.instance";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,18 +178,42 @@ ${generatedPrompt ?? `USER MESSAGE:\n${messagePrompt}`}
 
       try {
         setLoading(true);
-        // const responseJson = await AiService.generateScheduleJson(prompt);
 
-        // const scheduleMessage: Extract<MessageTypes, { type: "schedule" }> = {
-        //   id: uuidv4(),
-        //   role: "ai",
-        //   type: "schedule",
-        //   items: responseJson,
-        // };
+        const startTimeStr = prevScheduleForm
+          ? prevScheduleForm.startTime.toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+          : "06:00";
+        const endTimeStr = prevScheduleForm
+          ? prevScheduleForm.endTime.toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+          : "22:00";
+        const appointments = prevScheduleForm ? prevScheduleForm.appointments : [];
+        const scheduleType = prevScheduleForm ? prevScheduleForm.scheduleType ?? undefined : undefined;
 
-        // setConversation((prev) =>
-        //   prev.map((msg) => (msg.id === loadingId ? scheduleMessage : msg)),
-        // );
+        const responseJson = await AiInstance.generateScheduleJSON(
+          prompt,
+          startTimeStr,
+          endTimeStr,
+          appointments,
+          scheduleType,
+        );
+
+        const scheduleMessage: Extract<MessageTypes, { type: "schedule" }> = {
+          id: uuidv4(),
+          role: "ai",
+          type: "schedule",
+          items: responseJson,
+        };
+
+        setConversation((prev) =>
+          prev.map((msg) => (msg.id === loadingId ? scheduleMessage : msg)),
+        );
 
         setLoading(false);
       } catch (error: any) {
@@ -211,7 +236,7 @@ ${generatedPrompt ?? `USER MESSAGE:\n${messagePrompt}`}
         throw error;
       }
     },
-    [conversation],
+    [conversation, prevScheduleForm],
   );
 
   return (

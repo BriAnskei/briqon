@@ -50,7 +50,16 @@
       "@react-native-community/datetimepicker",
       "expo-web-browser",
       "expo-sqlite",
-      "expo-asset"
+      "expo-asset",
+      "llama.rn",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "largeHeap": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

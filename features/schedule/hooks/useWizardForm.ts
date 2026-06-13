@@ -11,13 +11,15 @@ import {
   defaultForm,
   defaultAppointmentDraft,
   defaultEventItemDraft,
-  buildPrompt,
+  formatTime,
 } from "../utils/wizardHelpers";
 import {
   EVENT_TOTAL_STEPS,
   PERSONAL_TOTAL_STEPS,
 } from "../contants/wizardOptions";
 import { useSchedule } from "@/context/ScheduleContext";
+import { WizardPromptBuilder } from "../utils/WizardPromptBuilder";
+import { useAI } from "@/context/AIContext";
 
 export function useWizardForm() {
   const router = useRouter();
@@ -27,6 +29,8 @@ export function useWizardForm() {
 
     setPrevScheduleFormInput,
   } = useSchedule();
+
+  const { service: AIService } = useAI();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(defaultForm());
@@ -94,7 +98,6 @@ export function useWizardForm() {
   const isLastStep = () => step === totalSteps - 1;
 
   const canProceed = (): boolean => {
-    'Generate a schedule based on this event:Start: 10:00End: 03:00Event type: weddingActivities:STRICT RULES:- Follow the appointments or activities if specify.- Output ONLY JSON- No explanation- Follow this schema EXACTLY:{  "start_time": "HH:MM",  "end_time": "HH:MM",  "activity": "string"}  ';
     if (step === 0) return form.scheduleType !== null;
     if (isEvent) {
       if (step === 1)
@@ -111,12 +114,20 @@ export function useWizardForm() {
     return false;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (apptDraft.visible) setApptDraft((d) => ({ ...d, visible: false }));
     if (eventItemDraft.visible)
       setEventItemDraft((d) => ({ ...d, visible: false }));
     if (isLastStep()) {
-      const generatedPromp = buildPrompt(form);
+      const generatedPromp = WizardPromptBuilder.build(form);
+
+      await AIService!.generateScheduleJSON(
+        generatedPromp,
+        formatTime(form.startTime),
+        formatTime(form.endTime),
+        form.appointments,
+        form.scheduleType as any,
+      );
 
       console.log("generated schedule: ", generatedPromp);
 
