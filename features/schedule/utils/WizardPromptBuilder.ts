@@ -25,8 +25,8 @@ export class WizardPromptBuilder {
    */
   public static build(form: FormState): string {
     console.log(form);
-
     console.log("____________________-");
+
     const scheduleType = form.scheduleType;
     if (scheduleType !== "event" && scheduleType !== "personal") {
       throw new Error("Invalid schedule type");
@@ -59,30 +59,31 @@ Return only activities and duration_minutes.
   }
 
   private static generatePersonalSchedulePrompt(form: FormState): string {
-    const totalAvailableMinutes = this.calculateTotalAvailableMinutes(
+    const totalWindowMinutes = this.calculateTotalWindowMinutes(
       form.startTime,
       form.endTime,
-      form.appointments,
     );
-
     const appointmentMinutes = this.calculateAppointmentMinutes(
       form.appointments,
     );
+    const breakMinutes = this.estimateBreakMinutes(
+      form.breakFrequency,
+      totalWindowMinutes,
+      appointmentMinutes,
+    );
+    const freeMinutes = totalWindowMinutes - appointmentMinutes - breakMinutes;
 
-    // NOTE: The AI **must not** generate meals (Breakfast, Lunch, Dinner). The ScheduleEngine will automatically insert those based on the personal schedule type.
-    // This keeps the model focused on productive activities and lets the deterministic engine handle meal timing safely.
-    // An example JSON response is provided at the end of this prompt.
     return `
 Create an activity plan.
 
 Available time:
 ${formatTime(form.startTime)} to ${formatTime(form.endTime)}
 
-Total available minutes:
-${totalAvailableMinutes}
+Total window minutes: ${totalWindowMinutes}
+Minutes reserved by appointments: ${appointmentMinutes}
+Estimated break minutes (based on "${form.breakFrequency}" preference): ${breakMinutes}
 
-Minutes reserved by appointments:
-${appointmentMinutes}
+**Free minutes that you must fill with activities: ${freeMinutes}**  // Aim for this total (±30 min tolerance).
 
 Focus:
 ${form.productivityName || form.priorityFocus}
@@ -104,26 +105,27 @@ ${
 
 **IMPORTANT:** Do NOT include meals (Breakfast, Lunch, Dinner) in the output – the system will add them automatically.
 
-Return ONLY a JSON object in the following format (no extra text):
+Return ONLY a JSON object in the following format (no extra text). The sum of all \`duration_minutes\` should be **between ${freeMinutes - 30} and ${freeMinutes + 30}** minutes.
 
+\`\`\`json
 {
   "activities": [
     { "activity": "Your activity name", "duration_minutes": 45 },
     { "activity": "Another activity", "duration_minutes": 30 }
   ]
 }
-
+\`\`\`
 `.trim();
   }
 
-  private static calculateTotalAvailableMinutes(
+  /**
+   * Total minutes in the time window (ignoring appointments).
+   */
+  private static calculateTotalWindowMinutes(
     startTime: Date,
     endTime: Date,
-    appointments: Appointment[],
   ): number {
-    const totalWindowMinutes = getDurationMins(startTime, endTime);
-    const appointmentMinutes = this.calculateAppointmentMinutes(appointments);
-    return totalWindowMinutes - appointmentMinutes;
+    return getDurationMins(startTime, endTime);
   }
 
   private static calculateAppointmentMinutes(
@@ -136,18 +138,45 @@ Return ONLY a JSON object in the following format (no extra text):
   }
 
   /**
-   * @returns break types description prompt based on the type
+   * Rough estimate of how many minutes the deterministic engine will insert as breaks.
+   * This is only used for prompting the model so it can aim for the correct total activity time.
    */
-  private static getBreakFrequencyPrompt(breakType: string): string {
-    const breakTypesPrompt: Record<string, string> = {
-      "few-long":
-        "Structure the schedule with a small number of time blocks, each covering longer continuous periods. Minimize fragmentation and group activities into extended sessions.",
-      balanced:
-        "Structure the schedule with a moderate number of time blocks, keeping a natural mix of longer and shorter activities. Maintain a steady rhythm between focus and variety",
-      "many-short":
-        "Structure the schedule with many smaller time blocks. Break activities into short, clearly separated segments to increase granularity and flexibility.",
-    };
+  private static estimateBreakMinutes(
+    breakPref: string | null | undefined,
+    totalWindowMins: number,
+    appointmentMins: number,
+  ): number {
+    const freeMins = totalWindowMins - appointmentMins;
+    switch (breakPref) {
+      case "few-long":
+        // Assume one 15 min break per ~90 min activity block
+        return Math.floor(freeMins / 90) * 15;
+      case "balanced":
+        // One break per ~60 min block
+        return Math.floor(freeMins / 60) * 15;
+      case "many-short":
+        // One break per ~30 min block
+        return Math.floor(freeMins / 30) * 15;
+      default:
+        return Math.floor(freeMins / 60) * 15;
+    }
+  }
 
-    return breakTypesPrompt[breakType];
+  /**
+   * Expose the free-minutes value that the prompt mentions. Helpful for the UI when
+   * we want to pass it to the AIService for the fill-the-gap loop.
+   */
+  static getFreeMinutes(form: FormState): number {
+    const totalWindowMins = this.calculateTotalWindowMinutes(
+      form.startTime,
+      form.endTime,
+    );
+    const appointmentMins = this.calculateAppointmentMinutes(form.appointments);
+    const breakMins = this.estimateBreakMinutes(
+      form.breakFrequency,
+      totalWindowMins,
+      appointmentMins,
+    );
+    return totalWindowMins - appointmentMins - breakMins;
   }
 }

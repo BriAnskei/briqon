@@ -49,3 +49,4 @@ expo-env.d.ts
 # @end expo-cli
 HYBRID_AI_ARCHITECTURE.md
 .gitignore
+clean-code-react-ts.md

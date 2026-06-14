@@ -127,6 +127,8 @@ export function useWizardForm() {
         formatTime(form.endTime),
         form.appointments,
         form.scheduleType as any,
+        form.breakFrequency as any,
+        WizardPromptBuilder.getFreeMinutes(form),
       );
 
       console.log("generated schedule: ", generatedPromp);
