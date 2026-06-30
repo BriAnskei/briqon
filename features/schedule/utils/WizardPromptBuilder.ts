@@ -1,182 +1,154 @@
-import { FormState, Appointment } from "@/type/NewScheduleTypes";
+import {
+  Appointment,
+  BreakFrequency,
+  NewScheduleFormState,
+} from "@/type/NewScheduleTypes";
 import { formatTime, getDurationMins } from "./wizardHelpers";
 
-export const rulesJsonPrompt = `
-STRICT RULES:
-- Follow the appointments or activities if specify.
-- Output ONLY JSON
-- No explanation
-- Follow this schema EXACTLY:
+// ─── Break frequency → natural language instruction ───────────────────────────
+const BREAK_FREQUENCY_INSTRUCTIONS: Record<
+  Exclude<BreakFrequency, null>,
+  string
+> = {
+  "few-long":
+    "Schedule 1–2 extended breaks (30–45 min each) spread across the day. Avoid frequent interruptions — the user prefers to work in long, uninterrupted stretches.",
+  balanced:
+    "Distribute breaks evenly throughout the day. Aim for a short break (10–15 min) every 90–120 minutes, plus a longer midday break (30–45 min).",
+  "many-short":
+    "Insert frequent micro-breaks (5–10 min) every 45–60 minutes. Keep the user consistently fresh rather than running long sessions.",
+  none: "Do NOT schedule any breaks. The user wants uninterrupted flow from start to finish. Only include meals if they fall within the time window.",
+};
 
-
-{
-  "start_time": "HH:MM",
-  "end_time": "HH:MM",
-  "activity": "string"
+// ─── Appointment label helper ─────────────────────────────────────────────────
+function appointmentLabel(appt: Appointment): string {
+  if (appt.type === "custom") return appt.customLabel || "Custom Appointment";
+  return (
+    { work: "Work", school: "School / Class", medical: "Medical Appointment" }[
+      appt.type
+    ] ?? appt.type
+  );
 }
 
-`;
+// ─── Minutes → "Xh Ym" label ──────────────────────────────────────────────────
+function formatDurationMins(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const parts: string[] = [];
+  if (h > 0) parts.push(`${h} hr${h !== 1 ? "s" : ""}`);
+  if (m > 0) parts.push(`${m} min`);
+  return parts.length > 0 ? parts.join(" ") : "0 min";
+}
 
 export class WizardPromptBuilder {
-  /**
-   * Builds the AI prompt from the given wizard form state.
-   * @param form The current state of the wizard form.
-   * @returns The generated prompt string.
-   */
-  public static build(form: FormState): string {
-    console.log(form);
-    console.log("____________________-");
+  public static build(state: NewScheduleFormState): string {
+    if (state.scheduleType === "personal") {
+      return this.buildPersonalPrompt(state);
+    }
+    if (state.scheduleType === "event") {
+      return this.buildEventPrompt(state);
+    }
+    throw new Error("scheduleType must be set before building a prompt.");
+  }
 
-    const scheduleType = form.scheduleType;
-    if (scheduleType !== "event" && scheduleType !== "personal") {
-      throw new Error("Invalid schedule type");
+  // ─── PERSONAL ──────────────────────────────────────────────────────────────
+  private static buildPersonalPrompt(state: NewScheduleFormState): string {
+    const wake = formatTime(state.startTime);
+    const sleep = formatTime(state.endTime);
+    const totalMins = getDurationMins(state.startTime, state.endTime);
+
+    const lines: string[] = [
+      `Schedule window: ${wake} – ${sleep} (${totalMins} minutes total).`,
+    ];
+
+    // ── Priority focus (required text, optional duration) ───────────────────
+    const focusText = state.priorityFocusText.trim();
+    if (focusText) {
+      lines.push(`\nPriority focus: ${focusText}`);
+
+      if (
+        state.priorityDurationMinutes != null &&
+        state.priorityDurationMinutes > 0
+      ) {
+        lines.push(
+          `Allocate approximately ${formatDurationMins(
+            state.priorityDurationMinutes,
+          )} total toward this focus across the schedule window.`,
+        );
+      } else {
+        lines.push(
+          "No specific duration was given for this focus — use your judgment to allocate an appropriate amount of time within the schedule window based on the other constraints.",
+        );
+      }
+
+      lines.push(
+        `Instruction: Fill free time with activities centered around "${focusText}". Treat this as the primary goal of the schedule, fitting it around any fixed appointments.`,
+      );
     }
 
-    if (scheduleType === "event") {
-      return this.generateEventSchedulePrompt(form);
+    // ── Fixed appointments ──────────────────────────────────────────────────
+    if (state.appointments.length > 0) {
+      lines.push("\nFixed appointments (block these times exactly):");
+      for (const appt of state.appointments) {
+        const start = formatTime(appt.startTime);
+        const end = formatTime(appt.endTime);
+        const dur = getDurationMins(appt.startTime, appt.endTime);
+        lines.push(
+          `  • ${appointmentLabel(appt)}: ${start} – ${end} (${dur} min)`,
+        );
+      }
     }
 
-    return this.generatePersonalSchedulePrompt(form);
-  }
-
-  private static generateEventSchedulePrompt(form: FormState): string {
-    return `
-Create an event activity plan.
-
-Available time:
-${formatTime(form.startTime)} to ${formatTime(form.endTime)}
-
-Event type:
-${form.eventType}
-
-Known activities:
-${form.eventScheduleItems
-  .map((i) => `- ${i.name} (${i.duration} minutes)`)
-  .join("\n")}
-
-Return only activities and duration_minutes.
-`;
-  }
-
-  private static generatePersonalSchedulePrompt(form: FormState): string {
-    const totalWindowMinutes = this.calculateTotalWindowMinutes(
-      form.startTime,
-      form.endTime,
-    );
-    const appointmentMinutes = this.calculateAppointmentMinutes(
-      form.appointments,
-    );
-    const breakMinutes = this.estimateBreakMinutes(
-      form.breakFrequency,
-      totalWindowMinutes,
-      appointmentMinutes,
-    );
-    const freeMinutes = totalWindowMinutes - appointmentMinutes - breakMinutes;
-
-    return `
-Create an activity plan.
-
-Available time:
-${formatTime(form.startTime)} to ${formatTime(form.endTime)}
-
-Total window minutes: ${totalWindowMinutes}
-Minutes reserved by appointments: ${appointmentMinutes}
-Estimated break minutes (based on "${form.breakFrequency}" preference): ${breakMinutes}
-
-**Free minutes that you must fill with activities: ${freeMinutes}**  // Aim for this total (±30 min tolerance).
-
-Focus:
-${form.productivityName || form.priorityFocus}
-
-Break preference:
-${form.breakFrequency}
-
-Appointments:
-${
-  form.appointments.length
-    ? form.appointments
-        .map(
-          (a) =>
-            `- ${a.type} (${formatTime(a.startTime)} - ${formatTime(a.endTime)})`,
-        )
-        .join("\n")
-    : "None"
-}
-
-**IMPORTANT:** Do NOT include meals (Breakfast, Lunch, Dinner) in the output – the system will add them automatically.
-
-Return ONLY a JSON object in the following format (no extra text). The sum of all \`duration_minutes\` should be **between ${freeMinutes - 30} and ${freeMinutes + 30}** minutes.
-
-\`\`\`json
-{
-  "activities": [
-    { "activity": "Your activity name", "duration_minutes": 45 },
-    { "activity": "Another activity", "duration_minutes": 30 }
-  ]
-}
-\`\`\`
-`.trim();
-  }
-
-  /**
-   * Total minutes in the time window (ignoring appointments).
-   */
-  private static calculateTotalWindowMinutes(
-    startTime: Date,
-    endTime: Date,
-  ): number {
-    return getDurationMins(startTime, endTime);
-  }
-
-  private static calculateAppointmentMinutes(
-    appointments: Appointment[],
-  ): number {
-    return appointments.reduce(
-      (total, appt) => total + getDurationMins(appt.startTime, appt.endTime),
-      0,
-    );
-  }
-
-  /**
-   * Rough estimate of how many minutes the deterministic engine will insert as breaks.
-   * This is only used for prompting the model so it can aim for the correct total activity time.
-   */
-  private static estimateBreakMinutes(
-    breakPref: string | null | undefined,
-    totalWindowMins: number,
-    appointmentMins: number,
-  ): number {
-    const freeMins = totalWindowMins - appointmentMins;
-    switch (breakPref) {
-      case "few-long":
-        // Assume one 15 min break per ~90 min activity block
-        return Math.floor(freeMins / 90) * 15;
-      case "balanced":
-        // One break per ~60 min block
-        return Math.floor(freeMins / 60) * 15;
-      case "many-short":
-        // One break per ~30 min block
-        return Math.floor(freeMins / 30) * 15;
-      default:
-        return Math.floor(freeMins / 60) * 15;
+    // ── Break preference ────────────────────────────────────────────────────
+    if (state.breakFrequency) {
+      lines.push(
+        `\nBreak preference: ${state.breakFrequency}`,
+        `Instruction: ${BREAK_FREQUENCY_INSTRUCTIONS[state.breakFrequency]}`,
+      );
     }
+
+    lines.push(
+      "\nGenerate a complete, chronological daily schedule following all constraints above.",
+    );
+
+    return lines.join("\n");
   }
 
-  /**
-   * Expose the free-minutes value that the prompt mentions. Helpful for the UI when
-   * we want to pass it to the AIService for the fill-the-gap loop.
-   */
-  static getFreeMinutes(form: FormState): number {
-    const totalWindowMins = this.calculateTotalWindowMinutes(
-      form.startTime,
-      form.endTime,
-    );
-    const appointmentMins = this.calculateAppointmentMinutes(form.appointments);
-    const breakMins = this.estimateBreakMinutes(
-      form.breakFrequency,
-      totalWindowMins,
-      appointmentMins,
-    );
-    return totalWindowMins - appointmentMins - breakMins;
+  // ─── EVENT ─────────────────────────────────────────────────────────────────
+  private static buildEventPrompt(state: NewScheduleFormState): string {
+    const start = formatTime(state.startTime);
+    const end = formatTime(state.endTime);
+    const totalMins = getDurationMins(state.startTime, state.endTime);
+
+    const eventLabel =
+      state.eventType === "other"
+        ? state.eventOtherLabel || "Event"
+        : state.eventType
+          ? state.eventType.charAt(0).toUpperCase() + state.eventType.slice(1)
+          : "Event";
+
+    const lines: string[] = [
+      `Event type: ${eventLabel}`,
+      `Event window: ${start} – ${end} (${totalMins} minutes total).`,
+    ];
+
+    // ── Event schedule items ────────────────────────────────────────────────
+    if (state.eventScheduleItems.length > 0) {
+      lines.push(
+        "\nRequired event segments (fit these into the window in order):",
+      );
+      for (const item of state.eventScheduleItems) {
+        const dur = item.duration ? ` (~${item.duration})` : "";
+        lines.push(`  • ${item.name}${dur}`);
+      }
+      lines.push(
+        "Fill any remaining time naturally with transitions, mingling, or rest appropriate for this event type.",
+      );
+    } else {
+      lines.push(
+        `Generate a complete, well-paced program for a ${eventLabel} event within the given time window.`,
+      );
+    }
+
+    return lines.join("\n");
   }
 }

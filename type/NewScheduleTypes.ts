@@ -1,10 +1,10 @@
 export type ScheduleType = "personal" | "event" | null;
-export type PriorityFocus =
-  | "productivity"
-  | "socializing"
-  | "rest and recovery"
+export type BreakFrequency =
+  | "few-long"
+  | "balanced"
+  | "many-short"
+  | "none"
   | null;
-export type BreakFrequency = "few-long" | "balanced" | "many-short" | null;
 export type AppointmentType = "work" | "school" | "medical" | "custom";
 export type EventType =
   | "birthday"
@@ -44,7 +44,7 @@ export interface EventItemDraft {
   duration: string;
 }
 
-export interface FormState {
+export interface NewScheduleFormState {
   scheduleType: ScheduleType;
   // Time window
   startTime: Date;
@@ -55,9 +55,9 @@ export interface FormState {
   appointments: Appointment[];
   // Personal: breaks
   breakFrequency: BreakFrequency;
-  // Personal: priority
-  priorityFocus: PriorityFocus;
-  productivityName: string;
+  // Personal: priority focus (required text + optional duration)
+  priorityFocusText: string;
+  priorityDurationMinutes: number | null;
   // Event details
   eventType: EventType;
   eventOtherLabel: string;

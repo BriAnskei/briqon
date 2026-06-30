@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import {
-  FormState,
+  NewScheduleFormState,
   AppointmentDraft,
   EventItemDraft,
   Appointment,
@@ -33,7 +33,7 @@ export function useWizardForm() {
   const { service: AIService } = useAI();
 
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(defaultForm());
+  const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
   const [apptDraft, setApptDraft] = useState<AppointmentDraft>(
     defaultAppointmentDraft(),
   );
@@ -53,7 +53,7 @@ export function useWizardForm() {
     }
   }, [prevScheduleForm]);
 
-  const patch = (p: Partial<FormState>) =>
+  const patch = (p: Partial<NewScheduleFormState>) =>
     setForm((prev) => ({ ...prev, ...p }));
   const patchAppt = (p: Partial<AppointmentDraft>) =>
     setApptDraft((prev) => ({ ...prev, ...p }));
@@ -109,7 +109,7 @@ export function useWizardForm() {
     } else {
       if (step === 1) return true;
       if (step === 2) return form.breakFrequency !== null;
-      if (step === 3) return form.priorityFocus !== null;
+      if (step === 3) return !!form.priorityFocusText?.trim().length;
     }
     return false;
   };
@@ -121,16 +121,6 @@ export function useWizardForm() {
     if (isLastStep()) {
       const generatedPromp = WizardPromptBuilder.build(form);
 
-      await AIService!.generateScheduleJSON(
-        generatedPromp,
-        formatTime(form.startTime),
-        formatTime(form.endTime),
-        form.appointments,
-        form.scheduleType as any,
-        form.breakFrequency as any,
-        WizardPromptBuilder.getFreeMinutes(form),
-      );
-
       console.log("generated schedule: ", generatedPromp);
 
       // setPrevScheduleFormInput(form);
@@ -138,6 +128,8 @@ export function useWizardForm() {
       // handleScheduleGeneration(generatedPromp, true);
 
       // router.push("/schedule/schedule-conversation");
+
+      await AIService?.generateSchedule(generatedPromp);
     } else setStep((s) => s + 1);
   };
 

@@ -1,34 +1,23 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
 import { formatTime, appointmentLabel } from "../../utils/wizardHelpers";
 
-import { FormState } from "@/type/NewScheduleTypes";
-import {
-  BREAK_FREQUENCY_OPTIONS,
-  PRIORITY_OPTIONS,
-} from "../../contants/wizardOptions";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
+import { BREAK_FREQUENCY_OPTIONS } from "../../contants/wizardOptions";
 import { SummaryRow } from "@/components/SummaryRow";
 
 type Props = {
-  form: FormState;
-  patch: (p: Partial<FormState>) => void;
+  form: NewScheduleFormState;
+  patch: (p: Partial<NewScheduleFormState>) => void;
 };
 
 export function PriorityStep({ form, patch }: Props) {
   const breakLabel =
     BREAK_FREQUENCY_OPTIONS.find((b) => b.key === form.breakFrequency)?.label ??
     "-";
-  const priorityLabel =
-    PRIORITY_OPTIONS.find((p) => p.key === form.priorityFocus)?.label ?? "-";
 
   const appointmentsSummary =
     form.appointments.length === 0
@@ -40,82 +29,106 @@ export function PriorityStep({ form, patch }: Props) {
           )
           .join("\n");
 
+  // ── Hours / minutes UI state derived from total minutes ──────────────────
+  const totalMins = form.priorityDurationMinutes;
+  const hoursVal = totalMins != null ? Math.floor(totalMins / 60) : null;
+  const minsVal = totalMins != null ? totalMins % 60 : null;
+
+  const handleHoursChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, "");
+    if (cleaned === "") {
+      // Clear duration only if minutes are also empty
+      patch({
+        priorityDurationMinutes: minsVal ? minsVal : null,
+      });
+      return;
+    }
+    const h = parseInt(cleaned, 10);
+    patch({ priorityDurationMinutes: h * 60 + (minsVal ?? 0) });
+  };
+
+  const handleMinutesChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, "");
+    if (cleaned === "") {
+      patch({
+        priorityDurationMinutes: hoursVal ? hoursVal * 60 : null,
+      });
+      return;
+    }
+    let m = parseInt(cleaned, 10);
+    if (m > 59) m = 59;
+    patch({ priorityDurationMinutes: (hoursVal ?? 0) * 60 + m });
+  };
+
+  const durationLabel =
+    totalMins != null
+      ? `${hoursVal ? `${hoursVal}h ` : ""}${minsVal ? `${minsVal}m` : ""}`.trim() ||
+        "0m"
+      : "AI will decide";
+
+  const isValid = (form.priorityFocusText ?? "").length > 0;
+
   return (
     <View style={s.body}>
       <Text style={s.title}>What's your priority focus?</Text>
-      <Text style={s.sub}>Select the primary goal this schedule supports.</Text>
+      <Text style={s.sub}>
+        Tell us what you want to focus on during this schedule — could be work,
+        study, a hobby, errands, anything.
+      </Text>
 
-      <View style={s.gap}>
-        {PRIORITY_OPTIONS.map((opt) => {
-          const active = form.priorityFocus === opt.key;
-          return (
-            <React.Fragment key={opt.key}>
-              <TouchableOpacity
-                style={[
-                  s.card,
-                  active && {
-                    borderColor: opt.color,
-                    backgroundColor: opt.color + "12",
-                  },
-                ]}
-                onPress={() => patch({ priorityFocus: opt.key })}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={[
-                    s.iconWrap,
-                    {
-                      backgroundColor: active
-                        ? opt.color + "25"
-                        : Colors.bgElevated,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={opt.icon}
-                    size={22}
-                    color={active ? opt.color : Colors.textMuted}
-                  />
-                </View>
-                <View style={s.cardBody}>
-                  <Text style={[s.cardLabel, active && { color: opt.color }]}>
-                    {opt.label}
-                  </Text>
-                  <Text style={s.cardDesc}>{opt.desc}</Text>
-                </View>
-                {active && (
-                  <View style={[s.check, { backgroundColor: opt.color }]}>
-                    <Ionicons name="checkmark" size={13} color={Colors.white} />
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              {active && opt.key === "productivity" && (
-                <View style={s.productivityInput}>
-                  <Text style={s.fieldLabel}>Name your productivity goal</Text>
-                  <View style={s.inputRow}>
-                    <Ionicons
-                      name="bookmark-outline"
-                      size={15}
-                      color={Colors.textMuted}
-                    />
-                    <TextInput
-                      style={s.inputField}
-                      value={form.productivityName}
-                      onChangeText={(t) => patch({ productivityName: t })}
-                      placeholder="e.g. Study Programming, Finish Report..."
-                      placeholderTextColor={Colors.textMuted}
-                      returnKeyType="done"
-                    />
-                  </View>
-                </View>
-              )}
-            </React.Fragment>
-          );
-        })}
+      <View style={s.fieldBlock}>
+        <Text style={s.fieldLabel}>What do you want to focus on?</Text>
+        <View style={s.inputRow}>
+          <Ionicons
+            name="bookmark-outline"
+            size={15}
+            color={Colors.textMuted}
+          />
+          <TextInput
+            style={s.inputField}
+            value={form.priorityFocusText}
+            onChangeText={(t) => patch({ priorityFocusText: t })}
+            placeholder="e.g. Study Programming, Job Hunting, Workout..."
+            placeholderTextColor={Colors.textMuted}
+            returnKeyType="done"
+          />
+        </View>
       </View>
 
-      {form.priorityFocus && (
+      <View style={s.fieldBlock}>
+        <View style={s.durationHeaderRow}>
+          <Text style={s.fieldLabel}>How many hours? (optional)</Text>
+          <Text style={s.optionalHint}>Leave blank and AI will decide</Text>
+        </View>
+        <View style={s.durationRow}>
+          <View style={s.durationInputWrap}>
+            <TextInput
+              style={s.durationInput}
+              value={hoursVal != null ? String(hoursVal) : ""}
+              onChangeText={handleHoursChange}
+              placeholder="0"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            <Text style={s.durationUnit}>hrs</Text>
+          </View>
+          <View style={s.durationInputWrap}>
+            <TextInput
+              style={s.durationInput}
+              value={minsVal != null ? String(minsVal) : ""}
+              onChangeText={handleMinutesChange}
+              placeholder="0"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+            <Text style={s.durationUnit}>min</Text>
+          </View>
+        </View>
+      </View>
+
+      {isValid && (
         <View style={s.reviewCard}>
           <Text style={s.reviewTitle}>Schedule Summary</Text>
           <SummaryRow icon="layers-outline" label="Type" value="Personal" />
@@ -139,12 +152,12 @@ export function PriorityStep({ form, patch }: Props) {
           <SummaryRow
             icon="rocket-outline"
             label="Priority Focus"
-            value={
-              form.priorityFocus === "productivity" &&
-              form.productivityName.trim()
-                ? `Productivity – ${form.productivityName.trim()}`
-                : priorityLabel
-            }
+            value={form.priorityFocusText.trim()}
+          />
+          <SummaryRow
+            icon="hourglass-outline"
+            label="Focus Duration"
+            value={durationLabel}
           />
         </View>
       )}
@@ -167,48 +180,13 @@ const s = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 24,
   },
-  gap: { gap: 12 },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    padding: 16,
-    gap: 14,
-    position: "relative",
-    ...Shadow.card,
-  },
-  iconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardBody: { flex: 1 },
-  cardLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: Colors.textPrimary,
-    marginBottom: 3,
-  },
-  cardDesc: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
-  check: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  productivityInput: {
+  fieldBlock: {
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     padding: 14,
-    marginTop: -4,
+    marginBottom: 14,
     ...Shadow.card,
   },
   fieldLabel: {
@@ -216,6 +194,17 @@ const s = StyleSheet.create({
     fontWeight: "600",
     color: Colors.textMuted,
     marginBottom: 8,
+  },
+  durationHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  optionalHint: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontStyle: "italic",
   },
   inputRow: {
     flexDirection: "row",
@@ -229,8 +218,29 @@ const s = StyleSheet.create({
     paddingVertical: 11,
   },
   inputField: { flex: 1, fontSize: 14, color: Colors.textPrimary, padding: 0 },
+  durationRow: { flexDirection: "row", gap: 12 },
+  durationInputWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.bgElevated,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  durationInput: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    padding: 0,
+    textAlign: "center",
+  },
+  durationUnit: { fontSize: 12, color: Colors.textMuted, fontWeight: "600" },
   reviewCard: {
-    marginTop: 24,
+    marginTop: 10,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.xl,
     borderWidth: 1,

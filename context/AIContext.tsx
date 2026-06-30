@@ -23,7 +23,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        await service.initialize(setProgress);
+        // await service.initialize(setProgress);
 
         setReady(true);
       } catch (error) {

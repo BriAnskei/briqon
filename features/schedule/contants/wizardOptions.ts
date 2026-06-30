@@ -18,21 +18,28 @@ export const BREAK_FREQUENCY_OPTIONS: {
     label: "Few Long Breaks",
     icon: "battery-charging-outline",
     desc: "1-2 extended rest periods to fully recharge",
-    color: "#1FD8A0",
+    color: "#94A3B8",
   },
   {
     key: "balanced",
     label: "Balanced",
     icon: "git-branch-outline",
     desc: "Regular breaks evenly spread throughout the day",
-    color: "#7B6FFF",
+    color: "#94A3B8",
   },
   {
     key: "many-short",
     label: "Many Short Breaks",
     icon: "flash-outline",
     desc: "Frequent micro-breaks to stay consistently fresh",
-    color: "#5BB8FF",
+    color: "#94A3B8",
+  },
+  {
+    key: "none",
+    label: "No Breaks",
+    icon: "remove-circle-outline",
+    desc: "Uninterrupted flow — no scheduled breaks",
+    color: "#94A3B8",
   },
 ];
 
