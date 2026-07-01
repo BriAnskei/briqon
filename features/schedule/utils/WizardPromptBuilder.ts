@@ -11,11 +11,11 @@ const BREAK_FREQUENCY_INSTRUCTIONS: Record<
   string
 > = {
   "few-long":
-    "Schedule 1–2 extended breaks (30–45 min each) spread across the day. Avoid frequent interruptions — the user prefers to work in long, uninterrupted stretches.",
+    "Schedule 1–2 extended breaks spread across the day. Avoid frequent interruptions — the user prefers to work in long, uninterrupted stretches.",
   balanced:
-    "Distribute breaks evenly throughout the day. Aim for a short break (10–15 min) every 90–120 minutes, plus a longer midday break (30–45 min).",
+    "Distribute breaks evenly throughout the day. Aim for a short break, plus a longer midday break",
   "many-short":
-    "Insert frequent micro-breaks (5–10 min) every 45–60 minutes. Keep the user consistently fresh rather than running long sessions.",
+    "Insert frequent micro-breaks, Keep the user consistently fresh rather than running long sessions.",
   none: "Do NOT schedule any breaks. The user wants uninterrupted flow from start to finish. Only include meals if they fall within the time window.",
 };
 

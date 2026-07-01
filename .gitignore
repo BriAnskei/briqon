@@ -50,3 +50,4 @@ expo-env.d.ts
 HYBRID_AI_ARCHITECTURE.md
 .gitignore
 clean-code-react-ts.md
+.expo/devices.json

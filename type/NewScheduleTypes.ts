@@ -44,6 +44,29 @@ export interface EventItemDraft {
   duration: string;
 }
 
+// Meals types
+
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+export type MealPlacement =
+  | "flexible"
+  | "anchor_first"
+  | "anchor_last"
+  | "fixed_time";
+
+export type MealConfig = {
+  id: string;
+  type: MealType;
+  enabled: boolean;
+  durationMinutes: number;
+  placement: MealPlacement;
+  fixedTime?: Date;
+};
+
+export type MealSettings = {
+  includeMeals: boolean;
+  meals: MealConfig[];
+};
+
 export interface NewScheduleFormState {
   scheduleType: ScheduleType;
   // Time window
