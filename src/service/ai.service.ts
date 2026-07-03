@@ -46,7 +46,7 @@ Requirements:
   "schedule": [
     {
       "start_time": "HH:MM",
-      "end_time": "HH:MM",
+      "end   e_time": "HH:MM",
       "activity": "string"
     }
   ]

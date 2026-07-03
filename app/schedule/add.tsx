@@ -58,10 +58,8 @@ export default function AddScheduleScreen() {
           <PersonalTimeStep
             form={w.form}
             patch={w.patch}
-            apptDraft={w.apptDraft}
-            patchAppt={w.patchAppt}
-            commitAppointment={w.commitAppointment}
-            removeAppointment={w.removeAppointment}
+            apptState={w.apptState}
+            mealsState={w.mealsState}
           />
         );
       if (w.step === 2)

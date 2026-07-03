@@ -14,6 +14,13 @@ export type EventType =
   | "other"
   | null;
 
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+export type MealPlacement =
+  | "flexible"
+  | "anchor_first"
+  | "anchor_last"
+  | "fixed_time";
+
 export interface Appointment {
   id: string;
   type: AppointmentType;
@@ -21,7 +28,6 @@ export interface Appointment {
   startTime: Date;
   endTime: Date;
 }
-
 export interface AppointmentDraft {
   visible: boolean;
   type: AppointmentType;
@@ -30,6 +36,14 @@ export interface AppointmentDraft {
   endTime: Date;
   showStartPicker: boolean;
   showEndPicker: boolean;
+}
+
+export interface Meals {
+  id: string;
+  type: MealType;
+  durationMinutes: number;
+  placement: MealPlacement;
+  fixedTime?: Date;
 }
 
 export interface EventScheduleItem {
@@ -44,29 +58,6 @@ export interface EventItemDraft {
   duration: string;
 }
 
-// Meals types
-
-export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
-export type MealPlacement =
-  | "flexible"
-  | "anchor_first"
-  | "anchor_last"
-  | "fixed_time";
-
-export type MealConfig = {
-  id: string;
-  type: MealType;
-  enabled: boolean;
-  durationMinutes: number;
-  placement: MealPlacement;
-  fixedTime?: Date;
-};
-
-export type MealSettings = {
-  includeMeals: boolean;
-  meals: MealConfig[];
-};
-
 export interface NewScheduleFormState {
   scheduleType: ScheduleType;
   // Time window
@@ -76,6 +67,7 @@ export interface NewScheduleFormState {
   showEndPicker: boolean;
   // Personal: appointments
   appointments: Appointment[];
+  meals: Meals[];
   // Personal: breaks
   breakFrequency: BreakFrequency;
   // Personal: priority focus (required text + optional duration)

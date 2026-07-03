@@ -1,7 +1,7 @@
 import {
   AppointmentDraft,
   EventItemDraft,
-  FormState,
+  NewScheduleFormState,
   Appointment,
 } from "@/type/NewScheduleTypes";
 import { APPOINTMENT_TYPES } from "../contants/wizardOptions";
@@ -26,11 +26,11 @@ export function defaultEventItemDraft(): EventItemDraft {
   return { visible: false, name: "", duration: "" };
 }
 
-export function defaultForm(): FormState {
+export function defaultForm(): NewScheduleFormState {
   const start = new Date();
-  start.setHours(6, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
   const end = new Date();
-  end.setHours(18, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
   return {
     scheduleType: null,
     startTime: start,

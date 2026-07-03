@@ -1,10 +1,10 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { FormState } from "@/type/NewScheduleTypes";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 type Props = {
-  scheduleType: FormState["scheduleType"];
+  scheduleType: NewScheduleFormState["scheduleType"];
   onChange: (v: "personal" | "event") => void;
 };
 
