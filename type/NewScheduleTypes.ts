@@ -15,6 +15,7 @@ export type EventType =
   | null;
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+
 export type MealPlacement =
   | "flexible"
   | "anchor_first"

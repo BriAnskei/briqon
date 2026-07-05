@@ -13,9 +13,9 @@ import {
 import { useSchedule } from "@/context/ScheduleContext";
 import { WizardPromptBuilder } from "../utils/WizardPromptBuilder";
 import { useAI } from "@/context/AIContext";
-import ScheduleRuleEngine from "../utils/ScheduleRuleEngine";
 import useMeals from "./useMeals";
 import useAppointments from "./useAppointments";
+import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 
 export function useWizardForm() {
   const router = useRouter();
@@ -31,9 +31,10 @@ export function useWizardForm() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
 
-  const scheduleRulesValidator = useMemo(() => {
-    return new ScheduleRuleEngine(form);
-  }, [form]);
+  const formValidator = useMemo(
+    () => new ScheduleFormWindowtimeRuleValidator(form),
+    [form],
+  );
 
   const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(
     defaultEventItemDraft(),

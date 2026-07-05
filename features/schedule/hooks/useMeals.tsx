@@ -101,7 +101,7 @@ const useMeals = ({ form, setForm }: Payload): UseMealsStateType => {
       const prevDuration = meals.find((m) => m.id == id)?.durationMinutes ?? 0;
 
       patchMeal(id, {
-        durationMinutes: prevDuration <= 5 ? prevDuration : prevDuration + 5,
+        durationMinutes: prevDuration + 5,
       });
     },
 

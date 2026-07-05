@@ -2,12 +2,12 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-import { FormState } from "@/type/NewScheduleTypes";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { BREAK_FREQUENCY_OPTIONS } from "../../contants/wizardOptions";
 
 type Props = {
-  breakFrequency: FormState["breakFrequency"];
-  onChange: (v: FormState["breakFrequency"]) => void;
+  breakFrequency: NewScheduleFormState["breakFrequency"];
+  onChange: (v: NewScheduleFormState["breakFrequency"]) => void;
 };
 
 export function BreaksStep({ breakFrequency, onChange }: Props) {
