@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
 import {
   NewScheduleFormState,
   EventItemDraft,
@@ -17,6 +18,12 @@ import useMeals from "./useMeals";
 import useAppointments from "./useAppointments";
 import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 
+export type FixedScheduleDuration = {
+  appMinutes: number;
+  mealMinutes: number;
+  overAllMinutes: number;
+};
+
 export function useWizardForm() {
   const router = useRouter();
 
@@ -31,17 +38,67 @@ export function useWizardForm() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
 
-  const formValidator = useMemo(
+  // moved above validation/stepError — was previously declared after
+  // stepError's useMemo, which referenced it before initialization (TDZ bug)
+  const isEvent = form.scheduleType === "event";
+  const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
+
+  const validator = useMemo(
     () => new ScheduleFormWindowtimeRuleValidator(form),
     [form],
   );
 
+  const fixedScheduleDuration: FixedScheduleDuration = {
+    appMinutes: validator.getAppointmentsTotalMinutes() ?? 0,
+    mealMinutes: validator.getMealsTotalMinutes() ?? 0,
+    overAllMinutes: validator.getPersonalOverallMinutes() ?? 0,
+  };
+
+  const validation = useMemo(() => {
+    let appointments = validator.validateAppWindowTime();
+    let meals = validator.validateMealWindowTime();
+    let breaks = validator.validateBreakFreqWindow();
+    let priorityTime = validator.validatePriorityTimeWindow();
+    let windowTime = validator.validateWindowMinDuration();
+
+    const isAllValid = [
+      appointments,
+      meals,
+      breaks,
+      priorityTime,
+      windowTime,
+    ].every((d) => d.valid);
+
+    return {
+      isAllValid,
+      appointments,
+      meals,
+      breaks,
+      priorityTime,
+      windowTime,
+    };
+  }, [validator]);
+
+  const stepError = useMemo(() => {
+    if (isEvent || validation.isAllValid) return undefined;
+    if (step === 1)
+      return (
+        (!validation.appointments.valid && validation.appointments.message) ||
+        (!validation.meals.valid && validation.meals.message) ||
+        undefined
+      );
+    if (step === 2)
+      return !validation.breaks.valid ? validation.breaks.message : undefined;
+    if (step === 3)
+      return !validation.priorityTime.valid
+        ? validation.priorityTime.message
+        : undefined;
+    return undefined;
+  }, [validation, step, isEvent]);
+
   const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(
     defaultEventItemDraft(),
   );
-
-  const isEvent = form.scheduleType === "event";
-  const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
 
   const patch = (p: Partial<NewScheduleFormState>) =>
     setForm((prev) => ({ ...prev, ...p }));
@@ -50,6 +107,31 @@ export function useWizardForm() {
 
   const mealsState = useMeals({ form, setForm });
   const apptState = useAppointments({ form, setForm });
+
+  // ── Step-error toast tracking ────────────────────────────────────────────
+  // A step only starts "live" toasting once the user has attempted to
+  // continue past it while invalid. Before that, we stay quiet so we're not
+  // yelling at someone who's still mid-input.
+  const [attemptedSteps, setAttemptedSteps] = useState<Set<number>>(new Set());
+
+  const showStepErrorToast = (message: string) => {
+    Toast.show({
+      type: "error",
+      text1: "Invalid Input",
+      text2: message,
+      position: "top",
+    });
+  };
+
+  useEffect(() => {
+    if (!attemptedSteps.has(step)) return;
+
+    if (stepError) {
+      showStepErrorToast(stepError);
+    } else {
+      Toast.hide();
+    }
+  }, [stepError, step, attemptedSteps]);
 
   // ── Event items ─────────────────────────────────────────────────────────────
   const commitEventItem = () => {
@@ -81,7 +163,9 @@ export function useWizardForm() {
         );
       if (step === 2) return true;
     } else {
-      if (step === 1) return true;
+      if (step === 1) {
+        return true;
+      }
       if (step === 2) return form.breakFrequency !== null;
       if (step === 3) return !!form.priorityFocusText?.trim().length;
     }
@@ -89,6 +173,17 @@ export function useWizardForm() {
   };
 
   const handleNext = async () => {
+    if (stepError) {
+      setAttemptedSteps((prev) => {
+        if (prev.has(step)) return prev;
+        const next = new Set(prev);
+        next.add(step);
+        return next;
+      });
+      showStepErrorToast(stepError);
+      return;
+    }
+
     if (apptState.apptDraft.visible) apptState.hideDraft();
     if (eventItemDraft.visible)
       setEventItemDraft((d) => ({ ...d, visible: false }));
@@ -107,6 +202,7 @@ export function useWizardForm() {
   };
 
   return {
+    validation,
     step,
     form,
     eventItemDraft,
@@ -122,5 +218,8 @@ export function useWizardForm() {
     handleBack,
     mealsState,
     apptState,
+    validator,
+    stepError,
+    fixedScheduleDuration,
   };
 }

@@ -1,26 +1,35 @@
 export const Colors = {
-  // Soft dark grey — not pitch black, surfaces feel warm and lifted
-  bg: "#1E1E26", // main background: soft dark grey
-  bgCard: "#28283A", // cards: clearly lighter than bg
-  bgElevated: "#33334A", // elevated surfaces: inputs, pills, badges
-  bgModal: "#242436", // modal sheet background
-  border: "#3C3C56", // borders: visible but not harsh
-  borderLight: "#4A4A68", // secondary borders and dividers
-  accent: "#7B6FFF", // purple — pops well on lighter surfaces
-  accentGlow: "rgba(123, 111, 255, 0.22)",
-  accentSoft: "rgba(123, 111, 255, 0.13)",
-  success: "#1FD8A0",
-  successSoft: "rgba(31, 216, 160, 0.12)",
-  successGlow: "rgba(31, 216, 160, 0.24)",
-  warning: "#F59E0B",
-  warningSoft: "rgba(245, 158, 11, 0.12)",
-  danger: "#FF5273",
-  dangerSoft: "rgba(255, 82, 115, 0.12)",
-  diff: "#FFD166",
-  diffSoft: "rgba(255, 209, 102, 0.14)",
-  textPrimary: "#F2F2FF", // bright white-ish for headlines
-  textSecondary: "#A0A0C0", // softer for subtitles — more readable on grey
-  textMuted: "#6A6A8A", // muted labels — lifted slightly for legibility
+  // Pure black base — flat, minimal, high contrast
+  bg: "#000000", // main background
+  bgCard: "#111111", // surface: cards, sections
+  bgElevated: "#1A1A1A", // elevated surfaces: inputs, pills, badges
+  bgModal: "#111111", // modal sheet background
+  border: "#2A2A2A", // standard border
+  borderLight: "#3A3A3A", // secondary/active borders
+  divider: "#222222", // hairline dividers between rows/sections
+
+  // Accent — white replaces purple as the single "pop" color
+  accent: "#C2C2C2", // dimmed white — softer glare on buttons/highlights
+  accentGlow: "rgba(194, 194, 194, 0.16)",
+  accentSoft: "rgba(194, 194, 194, 0.08)",
+  // Semantic states — kept muted color for scannability, everything else grayscale
+  success: "#4ADE80",
+  successSoft: "rgba(74, 222, 128, 0.10)",
+  successGlow: "rgba(74, 222, 128, 0.20)",
+
+  danger: "#F87171",
+  dangerSoft: "rgba(248, 113, 113, 0.10)",
+
+  warning: "#B3B3B3", // desaturated — no longer amber
+  warningSoft: "rgba(255, 255, 255, 0.06)",
+
+  diff: "#B3B3B3", // desaturated — no longer yellow
+  diffSoft: "rgba(255, 255, 255, 0.06)",
+
+  textPrimary: "#FFFFFF",
+  textSecondary: "#B3B3B3",
+  textMuted: "#6B6B6B", // = Disabled in your table
+  disabled: "#6B6B6B",
   white: "#FFFFFF",
 };
 
@@ -34,24 +43,24 @@ export const Radius = {
 
 export const Shadow = {
   accent: {
-    shadowColor: "#7B6FFF",
+    shadowColor: "#FFFFFF",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.15,
     shadowRadius: 18,
     elevation: 10,
   },
   success: {
-    shadowColor: "#1FD8A0",
+    shadowColor: "#4ADE80",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.2,
     shadowRadius: 18,
     elevation: 10,
   },
   card: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 3,
   },
 };

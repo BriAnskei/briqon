@@ -60,6 +60,7 @@ export default function AddScheduleScreen() {
             patch={w.patch}
             apptState={w.apptState}
             mealsState={w.mealsState}
+            fixedScheduleDuration={w.fixedScheduleDuration}
           />
         );
       if (w.step === 2)
@@ -128,7 +129,7 @@ export default function AddScheduleScreen() {
           <Ionicons
             name={w.isLastStep() ? "sparkles-outline" : "arrow-forward"}
             size={18}
-            color={Colors.white}
+            color={Colors.bg}
           />
         </TouchableOpacity>
       </View>
@@ -188,7 +189,7 @@ const s = StyleSheet.create({
   nextBtnText: {
     fontSize: 15,
     fontWeight: "700",
-    color: Colors.white,
+    color: Colors.bg,
     letterSpacing: 0.2,
   },
 });

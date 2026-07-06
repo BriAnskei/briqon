@@ -58,7 +58,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   dotActive: { borderColor: Colors.accent, backgroundColor: Colors.accentSoft },
-  dotDone: { backgroundColor: Colors.accent, borderColor: Colors.accent },
+  dotDone: { backgroundColor: "transparent", borderColor: Colors.accent },
   dotNum: { fontSize: 11, fontWeight: "700", color: Colors.textMuted },
   dotNumActive: { color: Colors.accent },
   label: { fontSize: 10, color: Colors.textMuted, fontWeight: "500" },

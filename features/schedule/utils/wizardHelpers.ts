@@ -6,6 +6,16 @@ import {
 } from "@/type/NewScheduleTypes";
 import { APPOINTMENT_TYPES } from "../contants/wizardOptions";
 
+// e.g. 95 -> "1h 35m", 60 -> "1h", 45 -> "45m", 0 -> "0m"
+export function formatMinutes(totalMinutes: number): string {
+  const mins = Math.round(totalMinutes);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
 export function defaultAppointmentDraft(): AppointmentDraft {
   const s = new Date();
   s.setHours(9, 0, 0, 0);

@@ -9,6 +9,18 @@ type ValidatorResType = {
 export default class ScheduleFormWindowtimeRuleValidator {
   constructor(private form: NewScheduleFormState) {}
 
+  public getAppointmentsTotalMinutes(): number {
+    return this.getAppWindowMin();
+  }
+
+  public getMealsTotalMinutes(): number {
+    return this.getMealsWindowMin();
+  }
+
+  public getPersonalOverallMinutes(): number {
+    return this.getAppWindowMin() + this.getMealsWindowMin();
+  }
+
   /**Validate the priotity time input */
   public validatePriorityTimeWindow(): ValidatorResType {
     let totalWindowTime = this.getWindowMinutes();
@@ -19,7 +31,7 @@ export default class ScheduleFormWindowtimeRuleValidator {
 
     let remainingWindowMin = totalWindowTime - overAllWindowEvent;
 
-    if (this.form.priorityDurationMinutes ?? 0 > remainingWindowMin) {
+    if ((this.form.priorityDurationMinutes ?? 0) > remainingWindowMin) {
       return {
         valid: false,
         message:
@@ -57,7 +69,10 @@ export default class ScheduleFormWindowtimeRuleValidator {
     const breakTypePercentage = this.getBreakPercentage();
 
     for (let [breakStyle, percentage] of Object.entries(breakTypePercentage)) {
-      if (totalFixedEventSchedMins * percentage < totalTimeWindow) {
+      if (
+        totalFixedEventSchedMins + totalTimeWindow * percentage <
+        totalTimeWindow
+      ) {
         return breakStyle as NonNullable<BreakFrequency>;
       }
     }
@@ -108,9 +123,14 @@ export default class ScheduleFormWindowtimeRuleValidator {
   }
 
   public getWindowMinutes() {
-    return this.getTotalWindowMin([
-      { start_time: this.form.startTime, end_time: this.form.endTime },
-    ]);
+    const { startTime, endTime } = this.form;
+    let diff = endTime.getTime() - startTime.getTime();
+
+    // Equal times (12am → 12am) and clock-wraparound (10pm → 6am) both mean
+    // "the window extends into the next day" — treat both as a full 24h cycle.
+    if (diff <= 0) diff += 24 * 60 * 60 * 1000;
+
+    return Math.floor(diff / (1000 * 60));
   }
 
   private getBreakPercentage(): Record<NonNullable<BreakFrequency>, number> {
@@ -128,10 +148,7 @@ export default class ScheduleFormWindowtimeRuleValidator {
         this.form.breakFrequency as NonNullable<BreakFrequency>
       ];
 
-    return (
-      this.getWindowMinutes() *
-      (breakFreqPercentage === 0 ? 1 : breakFreqPercentage)
-    );
+    return this.getWindowMinutes() * breakFreqPercentage;
   }
 
   private getAppWindowMin() {

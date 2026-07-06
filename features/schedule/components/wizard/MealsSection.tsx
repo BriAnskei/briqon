@@ -2,7 +2,11 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-import { durationText, formatTime } from "../../utils/wizardHelpers";
+import {
+  durationText,
+  formatTime,
+  formatMinutes,
+} from "../../utils/wizardHelpers";
 import { TimeRow } from "@/components/TimeRow";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Platform } from "react-native";
@@ -35,6 +39,8 @@ const PLACEMENT_OPTIONS: { key: MealPlacement; label: string }[] = [
   { key: "fixed_time", label: "Fixed time" },
 ];
 
+type Props = UseMealsStateType & { totalMinutes: number };
+
 export function MealsSection({
   includeMeal,
   toggleIncludeMeals,
@@ -46,14 +52,20 @@ export function MealsSection({
   showTimepickerFor,
   toggleTimePicker,
   meals,
-}: UseMealsStateType) {
+  totalMinutes,
+}: Props) {
   return (
     <View style={s.body}>
       <View style={s.section}>
         <View style={s.sectionHeader}>
-          <Text style={s.sectionLabel}>
-            Meals <Text style={s.optional}>(optional)</Text>
-          </Text>
+          <View style={s.sectionLabelRow}>
+            <Text style={s.sectionLabel}>
+              Meals <Text style={s.optional}>(optional)</Text>
+            </Text>
+            {includeMeal && totalMinutes > 0 && (
+              <Text style={s.totalPill}>{formatMinutes(totalMinutes)}</Text>
+            )}
+          </View>
           <TouchableOpacity
             style={[s.toggle, includeMeal && s.toggleActive]}
             onPress={toggleIncludeMeals}
@@ -227,12 +239,25 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
+  sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionLabel: {
     fontSize: 13,
     fontWeight: "700",
     color: Colors.textSecondary,
   },
   optional: { fontWeight: "400", color: Colors.textMuted },
+  totalPill: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: Colors.accent,
+    backgroundColor: Colors.accentSoft,
+    borderWidth: 1,
+    borderColor: Colors.accentGlow,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    overflow: "hidden",
+  },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
