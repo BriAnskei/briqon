@@ -23,15 +23,22 @@ export type UseMealsStateType = {
 type Payload = {
   form: NewScheduleFormState;
   setForm: React.Dispatch<React.SetStateAction<NewScheduleFormState>>;
+  step: number;
 };
 
-const useMeals = ({ form, setForm }: Payload): UseMealsStateType => {
+const useMeals = ({ form, setForm, step }: Payload): UseMealsStateType => {
   const meals: Meals[] = form?.meals ?? [];
 
   const [includeMeal, setIncludeMeals] = useState(false);
   const [showTimepickerFor, setShowTimepickerFor] = useState<
     string | undefined
   >(undefined);
+
+  useEffect(() => {
+    if (step > 1 && meals.length === 0) {
+      setIncludeMeals(false);
+    }
+  }, [step, meals]);
 
   const toggleMealType = (type: MealType, duration: number) => {
     const existing = meals.find((m) => m.type === type);
@@ -75,14 +82,22 @@ const useMeals = ({ form, setForm }: Payload): UseMealsStateType => {
     ) {
       patchMeal(anchoredLastId, { placement: "flexible" });
     }
+
+    const fixedTime = new Date();
+    fixedTime.setHours(0, 0, 0, 0);
     patchMeal(id, {
       placement,
-      fixedTime: placement === "fixed_time" ? new Date(0, 0, 0, 0) : undefined,
+      fixedTime: placement === "fixed_time" ? fixedTime : undefined,
     });
   };
 
   return {
-    toggleIncludeMeals: () => setIncludeMeals((prev) => !prev),
+    toggleIncludeMeals: () =>
+      setIncludeMeals((prev) => {
+        setForm((prev) => ({ ...prev, meals: [] }));
+
+        return !prev;
+      }),
     handlePlacement,
     toggleMealType,
 

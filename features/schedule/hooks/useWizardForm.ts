@@ -17,6 +17,7 @@ import { useAI } from "@/context/AIContext";
 import useMeals from "./useMeals";
 import useAppointments from "./useAppointments";
 import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
+import { useWizardValidation } from "./useScheduleFormValidator";
 
 export type FixedScheduleDuration = {
   appMinutes: number;
@@ -43,58 +44,13 @@ export function useWizardForm() {
   const isEvent = form.scheduleType === "event";
   const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
 
-  const validator = useMemo(
-    () => new ScheduleFormWindowtimeRuleValidator(form),
-    [form],
-  );
-
-  const fixedScheduleDuration: FixedScheduleDuration = {
-    appMinutes: validator.getAppointmentsTotalMinutes() ?? 0,
-    mealMinutes: validator.getMealsTotalMinutes() ?? 0,
-    overAllMinutes: validator.getPersonalOverallMinutes() ?? 0,
-  };
-
-  const validation = useMemo(() => {
-    let appointments = validator.validateAppWindowTime();
-    let meals = validator.validateMealWindowTime();
-    let breaks = validator.validateBreakFreqWindow();
-    let priorityTime = validator.validatePriorityTimeWindow();
-    let windowTime = validator.validateWindowMinDuration();
-
-    const isAllValid = [
-      appointments,
-      meals,
-      breaks,
-      priorityTime,
-      windowTime,
-    ].every((d) => d.valid);
-
-    return {
-      isAllValid,
-      appointments,
-      meals,
-      breaks,
-      priorityTime,
-      windowTime,
-    };
-  }, [validator]);
-
-  const stepError = useMemo(() => {
-    if (isEvent || validation.isAllValid) return undefined;
-    if (step === 1)
-      return (
-        (!validation.appointments.valid && validation.appointments.message) ||
-        (!validation.meals.valid && validation.meals.message) ||
-        undefined
-      );
-    if (step === 2)
-      return !validation.breaks.valid ? validation.breaks.message : undefined;
-    if (step === 3)
-      return !validation.priorityTime.valid
-        ? validation.priorityTime.message
-        : undefined;
-    return undefined;
-  }, [validation, step, isEvent]);
+  const {
+    validator,
+    conflictValidator,
+    fixedScheduleDuration,
+    validation,
+    stepError,
+  } = useWizardValidation({ form, step, isEvent });
 
   const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(
     defaultEventItemDraft(),
@@ -105,14 +61,8 @@ export function useWizardForm() {
   const patchEventItem = (p: Partial<EventItemDraft>) =>
     setEventItemDraft((prev) => ({ ...prev, ...p }));
 
-  const mealsState = useMeals({ form, setForm });
+  const mealsState = useMeals({ form, setForm, step });
   const apptState = useAppointments({ form, setForm });
-
-  // ── Step-error toast tracking ────────────────────────────────────────────
-  // A step only starts "live" toasting once the user has attempted to
-  // continue past it while invalid. Before that, we stay quiet so we're not
-  // yelling at someone who's still mid-input.
-  const [attemptedSteps, setAttemptedSteps] = useState<Set<number>>(new Set());
 
   const showStepErrorToast = (message: string) => {
     Toast.show({
@@ -124,14 +74,14 @@ export function useWizardForm() {
   };
 
   useEffect(() => {
-    if (!attemptedSteps.has(step)) return;
+    if (form.scheduleType === null || step === 0) return;
 
     if (stepError) {
       showStepErrorToast(stepError);
     } else {
       Toast.hide();
     }
-  }, [stepError, step, attemptedSteps]);
+  }, [validation, step]);
 
   // ── Event items ─────────────────────────────────────────────────────────────
   const commitEventItem = () => {
@@ -173,13 +123,9 @@ export function useWizardForm() {
   };
 
   const handleNext = async () => {
+    if (!canProceed()) return;
+
     if (stepError) {
-      setAttemptedSteps((prev) => {
-        if (prev.has(step)) return prev;
-        const next = new Set(prev);
-        next.add(step);
-        return next;
-      });
       showStepErrorToast(stepError);
       return;
     }

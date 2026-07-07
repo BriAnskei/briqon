@@ -1,10 +1,6 @@
 import { BreakFrequency, NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { object } from "zod";
-
-type ValidatorResType = {
-  message?: string;
-  valid: boolean;
-};
+import { ValidatorResType } from "../types/FormValidatorTimes";
 
 export default class ScheduleFormWindowtimeRuleValidator {
   constructor(private form: NewScheduleFormState) {}
@@ -80,10 +76,16 @@ export default class ScheduleFormWindowtimeRuleValidator {
   }
 
   public validateMealWindowTime(): ValidatorResType {
-    const currentWindowMin = this.getWindowMinutes() - this.getAppWindowMin();
-    const mealMinutes = this.getMealsWindowMin();
+    const totalMealsMinutes = this.getMealsTotalMinutes();
+    if (totalMealsMinutes === 0) return { valid: true };
 
-    if (mealMinutes > currentWindowMin) {
+    console.log("validating meals");
+
+    const windowMin = this.getWindowMinutes();
+    const fixedSched =
+      this.getMealsWindowMin() + this.getAppointmentsTotalMinutes();
+
+    if (fixedSched > windowMin) {
       return {
         valid: false,
         message: "The total meals duration exceeds the schedule time window.",
@@ -95,10 +97,13 @@ export default class ScheduleFormWindowtimeRuleValidator {
 
   /** Validate overall duration of the appointment the time window  */
   public validateAppWindowTime(): ValidatorResType {
-    const currentWindowMin = this.getWindowMinutes() - this.getMealsWindowMin();
-    const appMinutes = this.getAppWindowMin();
+    const totalAppointmentMinutes = this.getAppWindowMin();
+    if (totalAppointmentMinutes === 0) return { valid: true };
 
-    if (appMinutes > currentWindowMin) {
+    const windowMin = this.getWindowMinutes();
+    const fixedSched = totalAppointmentMinutes + this.getMealsWindowMin();
+
+    if (fixedSched > windowMin) {
       return {
         valid: false,
         message:
@@ -137,7 +142,7 @@ export default class ScheduleFormWindowtimeRuleValidator {
     return {
       "few-long": 0.15,
       balanced: 0.12,
-      "many-short": 0.15,
+      "many-short": 0.09,
       none: 0,
     };
   }
@@ -172,6 +177,7 @@ export default class ScheduleFormWindowtimeRuleValidator {
   private getTotalWindowMin(schedules: { start_time: Date; end_time: Date }[]) {
     let res = 0;
     for (let { start_time, end_time } of schedules) {
+      console.log("getting val: ", start_time, end_time);
       let diff = end_time.getTime() - start_time.getTime();
 
       if (diff < 0) diff += 24 * 60 * 60 * 1000;
