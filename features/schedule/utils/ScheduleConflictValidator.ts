@@ -1,5 +1,5 @@
 import { MealPlacement, NewScheduleFormState } from "@/type/NewScheduleTypes";
-import { ValidatorResType } from "../types/FormValidatorTimes";
+import { ValidatorResType } from "../types/FormValidatorTypes";
 
 type TimeBlock = {
   id: string;
@@ -98,8 +98,6 @@ export default class ScheduleConflictValidator {
           meal.fixedTime!.getTime() + meal.durationMinutes * 60 * 1000,
         ),
       }));
-
-    console.log("appoinemtns: ", appointments, "fixed meals: ", fixedMeals);
 
     return [...appointments, ...fixedMeals];
   }

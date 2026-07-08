@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 import ScheduleConflictValidator from "../utils/ScheduleConflictValidator";
-import { ValidatorResType } from "../types/FormValidatorTimes";
+import { ValidatorResType } from "../types/FormValidatorTypes";
 
 export type FixedScheduleDuration = {
   appMinutes: number;

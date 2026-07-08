@@ -147,23 +147,27 @@ describe("useWizardForm", () => {
       expect(result.current.canProceed()).toBe(true);
     });
 
-    it("[documents existing behavior] handleNext() does NOT check canProceed() — only stepError blocks it", async () => {
-      // At step 0 with no scheduleType chosen, canProceed() is false, but
-      // stepError is only ever computed for steps 1-3, so it's undefined
-      // here regardless. handleNext() only early-returns on stepError, so
-      // it will advance the step even though canProceed() says the user
-      // shouldn't be able to. This is presumably fine as long as the UI's
-      // "Next" button independently disables itself using canProceed(),
-      // but the hook itself doesn't enforce that ordering.
+    it("handleNext() respects canProceed() — it blocks advancing when canProceed() is false", async () => {
+      // handleNext() early-returns when canProceed() is false, so the hook
+      // enforces the same ordering the UI's disabled "Next" button does.
       const { result } = renderHook(() => useWizardForm());
 
-      expect(result.current.canProceed()).toBe(false);
+      expect(result.current.canProceed()).toBe(false); // no scheduleType chosen
       expect(result.current.stepError).toBeUndefined();
 
       await act(async () => {
         await result.current.handleNext();
       });
 
+      expect(result.current.step).toBe(0); // blocked — did NOT advance
+
+      // Once a scheduleType is chosen, canProceed() is true and Next advances.
+      act(() => result.current.patch({ scheduleType: "personal" }));
+      expect(result.current.canProceed()).toBe(true);
+
+      await act(async () => {
+        await result.current.handleNext();
+      });
       expect(result.current.step).toBe(1);
     });
 
@@ -202,24 +206,45 @@ describe("useWizardForm", () => {
   });
 
   describe("step-level validation errors trigger toast, and block advancing", () => {
-    it('shows "Break type is required" as soon as the user reaches the breaks step, and blocks Next', async () => {
+    it("surfaces the breaks validators not-enough-free-time error on step 2 and blocks Next", async () => {
       const { result } = renderHook(() => useWizardForm());
-      act(() => result.current.patch({ scheduleType: "personal" }));
+
+      // A 2h window fully packed with an appointment leaves no room for the
+      // "balanced" break allotment, so validateBreakFreqWindow fails.
+      act(() =>
+        result.current.patch({
+          scheduleType: "personal",
+          startTime: new Date("2026-07-07T08:00:00"),
+          endTime: new Date("2026-07-07T10:00:00"),
+          breakFrequency: "balanced",
+          appointments: [
+            {
+              id: "a1",
+              type: "work",
+              customLabel: "",
+              startTime: new Date("2026-07-07T08:00:00"),
+              endTime: new Date("2026-07-07T10:00:00"),
+            },
+          ],
+        }),
+      );
 
       await act(async () => {
-        await result.current.handleNext(); // step 0 -> 1 (appointments/meals both empty, valid)
+        await result.current.handleNext(); // step 0 -> 1
       });
       await act(async () => {
         await result.current.handleNext(); // step 1 -> 2
       });
 
       expect(result.current.step).toBe(2);
-      expect(result.current.stepError).toBe("Break type is required");
+      expect(result.current.stepError).toContain(
+        "There isn't enough free time",
+      );
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "error",
           text1: "Invalid Input",
-          text2: "Break type is required",
+          text2: expect.stringContaining("There isn't enough free time"),
           position: "top",
         }),
       );
@@ -236,7 +261,7 @@ describe("useWizardForm", () => {
         toastCallsBeforeRetry,
       );
 
-      // Fixing it clears the error, hides the toast, and unblocks Next.
+      // Switching to "none" clears the break error, hides the toast, and unblocks Next.
       act(() => result.current.patch({ breakFrequency: "none" }));
       expect(result.current.stepError).toBeUndefined();
       expect(Toast.hide).toHaveBeenCalled();
@@ -458,6 +483,116 @@ describe("useWizardForm", () => {
       // Toggling the same meal type off again removes it.
       act(() => result.current.mealsState.toggleMealType("breakfast", 30));
       expect(result.current.fixedScheduleDuration.mealMinutes).toBe(0);
+    });
+  });
+
+  describe("step 1 validation errors (appointments / meals / conflicts)", () => {
+    it("surfaces an appointment-overlap conflict on step 1 and blocks Next", async () => {
+      const { result } = renderHook(() => useWizardForm());
+
+      act(() =>
+        result.current.patch({
+          scheduleType: "personal",
+          startTime: new Date("2026-07-07T08:00:00"),
+          endTime: new Date("2026-07-07T20:00:00"), // 12h window
+          appointments: [
+            {
+              id: "a1",
+              type: "work",
+              customLabel: "",
+              startTime: new Date("2026-07-07T09:00:00"),
+              endTime: new Date("2026-07-07T10:30:00"),
+            },
+            {
+              id: "a2",
+              type: "medical",
+              customLabel: "",
+              startTime: new Date("2026-07-07T10:00:00"),
+              endTime: new Date("2026-07-07T11:00:00"),
+            },
+          ],
+        }),
+      );
+
+      await act(async () => {
+        await result.current.handleNext(); // 0 -> 1
+      });
+      expect(result.current.step).toBe(1);
+      expect(result.current.stepError).toContain("conflicts with");
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text2: expect.stringContaining("conflicts with"),
+        }),
+      );
+
+      // Tapping Next again with the conflict unfixed should re-toast and
+      // NOT advance past step 1.
+      const toastCallsBeforeRetry = (Toast.show as jest.Mock).mock.calls.length;
+      await act(async () => {
+        await result.current.handleNext();
+      });
+      expect(result.current.step).toBe(1);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
+
+      // Removing the overlapping appointment clears the error and unblocks.
+      act(() =>
+        result.current.patch({
+          appointments: result.current.form.appointments.slice(0, 1),
+        }),
+      );
+      expect(result.current.stepError).toBeUndefined();
+      expect(Toast.hide).toHaveBeenCalled();
+    });
+
+    it("surfaces a fixed-time meal placed outside the window on step 1", async () => {
+      const { result } = renderHook(() => useWizardForm());
+
+      act(() =>
+        result.current.patch({
+          scheduleType: "personal",
+          startTime: new Date("2026-07-07T08:00:00"),
+          endTime: new Date("2026-07-07T20:00:00"), // 12h window
+          meals: [
+            {
+              id: "m1",
+              type: "lunch",
+              durationMinutes: 45,
+              placement: "fixed_time",
+              fixedTime: new Date("2026-07-07T21:00:00"), // outside the window
+            },
+          ],
+        }),
+      );
+
+      await act(async () => {
+        await result.current.handleNext(); // 0 -> 1
+      });
+      expect(result.current.step).toBe(1);
+      expect(result.current.stepError).toContain("outside the schedule time window");
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text2: expect.stringContaining("outside the schedule time window"),
+        }),
+      );
+
+      // Moving the fixed meal inside the window clears the error.
+      act(() =>
+        result.current.patch({
+          meals: [
+            {
+              id: "m1",
+              type: "lunch",
+              durationMinutes: 45,
+              placement: "fixed_time",
+              fixedTime: new Date("2026-07-07T12:00:00"),
+            },
+          ],
+        }),
+      );
+      expect(result.current.stepError).toBeUndefined();
+      expect(Toast.hide).toHaveBeenCalled();
     });
   });
 

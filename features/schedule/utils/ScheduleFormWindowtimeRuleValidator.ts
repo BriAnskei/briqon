@@ -1,6 +1,6 @@
 import { BreakFrequency, NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { object } from "zod";
-import { ValidatorResType } from "../types/FormValidatorTimes";
+import { ValidatorResType } from "../types/FormValidatorTypes";
 
 export default class ScheduleFormWindowtimeRuleValidator {
   constructor(private form: NewScheduleFormState) {}
@@ -78,8 +78,6 @@ export default class ScheduleFormWindowtimeRuleValidator {
   public validateMealWindowTime(): ValidatorResType {
     const totalMealsMinutes = this.getMealsTotalMinutes();
     if (totalMealsMinutes === 0) return { valid: true };
-
-    console.log("validating meals");
 
     const windowMin = this.getWindowMinutes();
     const fixedSched =
@@ -177,7 +175,6 @@ export default class ScheduleFormWindowtimeRuleValidator {
   private getTotalWindowMin(schedules: { start_time: Date; end_time: Date }[]) {
     let res = 0;
     for (let { start_time, end_time } of schedules) {
-      console.log("getting val: ", start_time, end_time);
       let diff = end_time.getTime() - start_time.getTime();
 
       if (diff < 0) diff += 24 * 60 * 60 * 1000;
