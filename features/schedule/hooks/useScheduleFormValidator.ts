@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 import ScheduleConflictValidator from "../utils/ScheduleConflictValidator";
+import EventScheduleValidator from "../utils/EventScheduleValidator";
 import { ValidatorResType } from "../types/FormValidatorTypes";
 
 export type FixedScheduleDuration = {
@@ -19,6 +20,9 @@ export type WizardValidationResult = {
   windowTime: ValidatorResType;
   conflicts: ValidatorResType;
   timeBlockRange: ValidatorResType;
+  eventItemsPresent: ValidatorResType;
+  eventDuration: ValidatorResType;
+  eventConflicts: ValidatorResType;
 };
 
 type UseWizardValidationParams = {
@@ -29,10 +33,11 @@ type UseWizardValidationParams = {
 
 /**
  * Central place for every "is this wizard form state valid" concern.
- * Wraps the window-time rule validator (durations vs. the schedule window)
- * and the conflict validator (overlapping appointments/fixed meals) behind
- * one hook so screens/hooks that just need pass/fail + a message don't have
- * to know two validator classes exist.
+ * Wraps the window-time rule validator (durations vs. the schedule window),
+ * the conflict validator (overlapping appointments/fixed meals), and the
+ * event validator (event-segment durations vs. the window) behind one hook so
+ * screens/hooks that just need pass/fail + a message don't have to know three
+ * validator classes exist.
  */
 export function useWizardValidation({
   form,
@@ -46,6 +51,11 @@ export function useWizardValidation({
 
   const conflictValidator = useMemo(
     () => new ScheduleConflictValidator(form),
+    [form],
+  );
+
+  const eventValidator = useMemo(
+    () => new EventScheduleValidator(form),
     [form],
   );
 
@@ -66,6 +76,9 @@ export function useWizardValidation({
     const windowTime = validator.validateWindowMinDuration();
     const conflicts = conflictValidator.validateTimeConflicts();
     const timeBlockRange = conflictValidator.validateTimeBlocksWithinWindow();
+    const eventItemsPresent = eventValidator.validateEventItemsPresent();
+    const eventDuration = eventValidator.validateEventDurationWindow();
+    const eventConflicts = eventValidator.validateEventConflicts();
 
     const isAllValid = [
       appointments,
@@ -75,6 +88,9 @@ export function useWizardValidation({
       windowTime,
       conflicts,
       timeBlockRange,
+      eventItemsPresent,
+      eventDuration,
+      eventConflicts,
     ].every((d) => d.valid);
 
     return {
@@ -86,11 +102,31 @@ export function useWizardValidation({
       windowTime,
       conflicts,
       timeBlockRange,
+      eventItemsPresent,
+      eventDuration,
+      eventConflicts,
     };
-  }, [validator, conflictValidator]);
+  }, [validator, conflictValidator, eventValidator]);
 
   const stepError = useMemo(() => {
-    if (isEvent || validation.isAllValid) return undefined;
+    if (validation.isAllValid) return undefined;
+
+    if (isEvent) {
+      // Event flow: event-schedule validation lives on the details step.
+      if (step === 1) {
+        const errors = [
+          !validation.eventItemsPresent.valid &&
+            validation.eventItemsPresent.message,
+          !validation.eventDuration.valid && validation.eventDuration.message,
+          !validation.eventConflicts.valid &&
+            validation.eventConflicts.message,
+        ].filter(Boolean);
+
+        return errors.length > 0 ? errors.join("\n") : undefined;
+      }
+
+      return undefined;
+    }
 
     if (step === 1) {
       // Appointments/meals are edited on this step, so conflicts between
@@ -121,6 +157,7 @@ export function useWizardValidation({
   return {
     validator,
     conflictValidator,
+    eventValidator,
     fixedScheduleDuration,
     validation,
     stepError,

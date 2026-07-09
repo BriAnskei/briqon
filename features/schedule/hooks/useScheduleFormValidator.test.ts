@@ -316,4 +316,99 @@ describe("useWizardValidation", () => {
       result.current.validation.priorityTime.message,
     );
   });
+  // ---------------------------------------------------------------------
+  // Event schedule validation
+  // ---------------------------------------------------------------------
+
+  function eventItem(
+    id: string,
+    name: string,
+    duration: string,
+  ): NewScheduleFormState["eventScheduleItems"][number] {
+    return { id, name, duration };
+  }
+
+  it("exposes the underlying eventValidator instance", () => {
+    const { result } = setup(baseForm, 1, true);
+    expect(result.current.eventValidator).toBeDefined();
+  });
+
+  it("passes event validation for an empty event schedule", () => {
+    const form: NewScheduleFormState = {
+      ...baseForm,
+      scheduleType: "event",
+      eventScheduleItems: [],
+    };
+    const { result } = setup(form, 1, true);
+    expect(result.current.validation.eventItemsPresent.valid).toBe(true);
+    expect(result.current.validation.eventDuration.valid).toBe(true);
+    expect(result.current.validation.eventConflicts.valid).toBe(true);
+    expect(result.current.validation.isAllValid).toBe(true);
+    expect(result.current.stepError).toBeUndefined();
+  });
+
+  it("passes event validation when parseable segments fit the window", () => {
+    const form: NewScheduleFormState = {
+      ...baseForm,
+      scheduleType: "event",
+      eventScheduleItems: [
+        eventItem("e1", "Speech", "1 hr"),
+        eventItem("e2", "Games", "2 hr"),
+      ],
+    };
+    const { result } = setup(form, 1, true);
+    expect(result.current.validation.eventDuration.valid).toBe(true);
+    expect(result.current.validation.eventConflicts.valid).toBe(true);
+    expect(result.current.validation.isAllValid).toBe(true);
+    expect(result.current.stepError).toBeUndefined();
+  });
+
+  it("surfaces an event duration error on the event details step", () => {
+    const form: NewScheduleFormState = {
+      ...baseForm,
+      scheduleType: "event",
+      eventScheduleItems: [
+        eventItem("e1", "Ceremony", "7 hr"),
+        eventItem("e2", "Party", "6 hr"), // 780 > 720
+      ],
+    };
+    const { result } = setup(form, 1, true);
+    expect(result.current.validation.eventDuration.valid).toBe(false);
+    // Total exceeding the window also makes the sequential run exceed it,
+    // so both event messages surface together.
+    expect(result.current.stepError).toContain(
+      result.current.validation.eventDuration.message,
+    );
+  });
+
+  it("surfaces an unnamed-event-item error on the event details step", () => {
+    const form: NewScheduleFormState = {
+      ...baseForm,
+      scheduleType: "event",
+      eventScheduleItems: [
+        eventItem("e1", "Speech", "1 hr"),
+        eventItem("e2", "", "30 min"),
+      ],
+    };
+    const { result } = setup(form, 1, true);
+    expect(result.current.validation.eventItemsPresent.valid).toBe(false);
+    expect(result.current.stepError).toBe(
+      result.current.validation.eventItemsPresent.message,
+    );
+  });
+
+  it("keeps event validation out of personal steps (step 1 stays clean for event data)", () => {
+    // For personal schedules, event-only data must not drive a step-1 error.
+    const form: NewScheduleFormState = {
+      ...baseForm,
+      scheduleType: "personal",
+      eventScheduleItems: [
+        eventItem("e1", "Ceremony", "7 hr"),
+        eventItem("e2", "Party", "6 hr"),
+      ],
+    };
+    const { result } = setup(form, 1, false);
+    expect(result.current.stepError).toBeUndefined();
+  });
+
 });
