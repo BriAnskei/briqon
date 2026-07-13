@@ -1,4 +1,4 @@
-import z, { string } from "zod";
+import * as z from "zod";
 
 const TimeSchema = z
   .string()
@@ -10,7 +10,26 @@ const scheduleItemSchema = z.object({
   activity: z.string(),
 });
 
+const summarySubActivitySchedume = z.object({
+  name: z.string(),
+  total: z.string(),
+  total_minutes: z.number(),
+});
+
+const summaryCategorySchema = z.object({
+  name: z.string(),
+  total: z.string(),
+  total_minutes: z.number(),
+  sub_activity: summarySubActivitySchedume.array().optional(),
+});
+
+const summarySchema = z.object({
+  categories: summaryCategorySchema.array(),
+});
+
 export const CreateScheduleResponseSchema = z.object({
-  summary: z.string(),
+  summary: summarySchema,
   schedule: scheduleItemSchema.array(),
 });
+
+export const GeminiScheduleSchema = CreateScheduleResponseSchema.toJSONSchema();

@@ -10,6 +10,7 @@ import {
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
 import { CreateSchedule } from "@/src/models/schedule.model";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -17,11 +18,7 @@ function formatActiveDays(activeSchedule: CreateActiveSchedule | null): string {
   if (!activeSchedule) return "";
 
   if (activeSchedule.specific_date) {
-    return activeSchedule.specific_date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
+    return TimeFormatter.formatDate(activeSchedule.specific_date);
   }
 
   if (activeSchedule.selected_days.length === 0) return "—";

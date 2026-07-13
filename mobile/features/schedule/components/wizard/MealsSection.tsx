@@ -2,11 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-import {
-  durationText,
-  formatTime,
-  formatMinutes,
-} from "../../utils/wizardHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Platform } from "react-native";
@@ -63,7 +59,7 @@ export function MealsSection({
               Meals <Text style={s.optional}>(optional)</Text>
             </Text>
             {includeMeal && totalMinutes > 0 && (
-              <Text style={s.totalPill}>{formatMinutes(totalMinutes)}</Text>
+              <Text style={s.totalPill}>{TimeFormatter.formatMinutes(totalMinutes)}</Text>
             )}
           </View>
           <TouchableOpacity
@@ -196,7 +192,7 @@ export function MealsSection({
                         />
                         <Text style={s.inputField}>
                           {meal.fixedTime
-                            ? formatTime(meal.fixedTime)
+                            ? TimeFormatter.formatTime(meal.fixedTime)
                             : "Set time"}
                         </Text>
                       </TouchableOpacity>

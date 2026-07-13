@@ -10,6 +10,7 @@ import {
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { ConflicActivationError } from "@/src/errors/scheduleActivationConflic.error";
 import { ActiveSchedule } from "@/src/models/active_schedule.model";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -22,17 +23,6 @@ const DAY_LABELS: Record<number, string> = {
   5: "Saturday",
   6: "Sunday",
 };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 function isDaysData(data: Date | number[]): data is number[] {
   return Array.isArray(data);
@@ -161,7 +151,7 @@ function ConflictCard({
           <>
             <Text style={s.conflictDetailLabel}>Conflicting date</Text>
             <View style={s.datePill}>
-              <Text style={s.datePillText}>📅 {formatDate(data as Date)}</Text>
+              <Text style={s.datePillText}>📅 {TimeFormatter.formatDateLong(data as Date)}</Text>
             </View>
           </>
         )}
@@ -171,11 +161,11 @@ function ConflictCard({
           (activeSchedule.starts_at || activeSchedule.ends_at) && (
             <Text style={s.dateRange}>
               {activeSchedule.starts_at
-                ? formatDate(activeSchedule.starts_at)
+                ? TimeFormatter.formatDateLong(activeSchedule.starts_at)
                 : "—"}{" "}
               →{" "}
               {activeSchedule.ends_at
-                ? formatDate(activeSchedule.ends_at)
+                ? TimeFormatter.formatDateLong(activeSchedule.ends_at)
                 : "—"}
             </Text>
           )}

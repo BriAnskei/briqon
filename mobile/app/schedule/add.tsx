@@ -24,6 +24,7 @@ import {
   EVENT_STEP_LABELS,
   PERSONAL_STEP_LABELS,
 } from "@/features/schedule/contants/wizardOptions";
+import { EventItemDraft } from "@/type/NewScheduleTypes";
 
 export default function AddScheduleScreen() {
   const w = useWizardForm();
@@ -43,14 +44,7 @@ export default function AddScheduleScreen() {
         return <EventDetailsStep form={w.form} patch={w.patch} />;
       if (w.step === 2)
         return (
-          <EventTimeStep
-            form={w.form}
-            patch={w.patch}
-            eventItemDraft={w.eventItemDraft}
-            patchEventItem={w.patchEventItem}
-            commitEventItem={w.commitEventItem}
-            removeEventItem={w.removeEventItem}
-          />
+          <EventTimeStep form={w.form} patch={w.patch} {...w.eventItemsState} />
         );
     } else {
       if (w.step === 1)

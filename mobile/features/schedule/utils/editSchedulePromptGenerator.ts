@@ -1,5 +1,5 @@
 import { ScheduleItem } from "@/type/MessageTypes";
-import { formatTime } from "@/utils/parseSchedule";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { rulesJsonPrompt } from "./WizardPromptBuilder";
 
 export function buildEditPrompt(
@@ -11,7 +11,7 @@ export function buildEditPrompt(
 ): string {
   const itemList = items
     .map((item, i) => {
-      const label = `[${i}] ${formatTime(item.start_time!)} - ${formatTime(item.end_time)}: ${item.activity}`;
+      const label = `[${i}] ${TimeFormatter.formatTime12h(item.start_time!)} - ${TimeFormatter.formatTime12h(item.end_time)}: ${item.activity}`;
       const edit = edits.find((e) => e.itemIndex === i);
       const isDeleted = deletedIndices.includes(i);
 
@@ -24,7 +24,7 @@ export function buildEditPrompt(
   const res = `
 You are given an existing schedule and a set of requested changes. 
 
-Schedule window: ${formatTime(scheduleStartTime)} – ${formatTime(scheduleEndTime)}
+Schedule window: ${TimeFormatter.formatTime12h(scheduleStartTime)} – ${TimeFormatter.formatTime12h(scheduleEndTime)}
 
 Current schedule:
 ${itemList}

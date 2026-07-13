@@ -46,17 +46,22 @@ export interface Meals {
   placement: MealPlacement;
   fixedTime?: Date;
 }
-
 export interface EventScheduleItem {
   id: string;
   name: string;
-  duration: string; // free-text, optional e.g. "30 min", "1 hr"
+  durationMinutes: number | null; // null = no duration specified
+  isFixedTime: boolean;
+  fixedTime?: Date;
 }
 
 export interface EventItemDraft {
   visible: boolean;
   name: string;
-  duration: string;
+  durationHours: string; // raw text input, e.g. "1"
+  durationMinutes: string; // raw text input, e.g. "30"
+  isFixedTime: boolean;
+  fixedTime?: Date;
+  showFixedTimePicker: boolean;
 }
 
 export interface NewScheduleFormState {
@@ -77,6 +82,6 @@ export interface NewScheduleFormState {
   // Event details
   eventType: EventType;
   eventOtherLabel: string;
-  // Event: schedule items
+  // Event: schedule ite[ms
   eventScheduleItems: EventScheduleItem[];
 }

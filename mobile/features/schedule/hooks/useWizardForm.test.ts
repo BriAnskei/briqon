@@ -24,7 +24,12 @@ jest.mock("@/context/ScheduleContext");
 jest.mock("@/context/AIContext");
 
 jest.mock("../utils/WizardPromptBuilder", () => ({
-  WizardPromptBuilder: { build: jest.fn(() => "mock-prompt") },
+  WizardPromptBuilder: {
+    build: jest.fn(() => ({
+      systemInstruction: "mock-system",
+      prompt: "mock-prompt",
+    })),
+  },
 }));
 
 // uuid is ESM by default and is only used inside useMeals to generate ids.
@@ -81,6 +86,7 @@ function makeDefaultForm(): NewScheduleFormState {
 
 const mockGenerateSchedule = jest.fn().mockResolvedValue(undefined);
 const mockRouterBack = jest.fn();
+const mockRouterReplace = jest.fn();
 const mockSetPrevScheduleFormInput = jest.fn();
 const mockHandleScheduleGeneration = jest.fn();
 
@@ -92,7 +98,11 @@ beforeEach(() => {
   (defaultEventItemDraft as jest.Mock).mockImplementation(() => ({
     visible: false,
     name: "",
-    duration: "",
+    durationHours: "",
+    durationMinutes: "45", // matches wizardHelpers.defaultEventItemDraft
+    isFixedTime: false,
+    fixedTime: undefined,
+    showFixedTimePicker: false,
   }));
   (defaultAppointmentDraft as jest.Mock).mockImplementation(() => ({
     visible: false,
@@ -104,7 +114,10 @@ beforeEach(() => {
     showEndPicker: false,
   }));
 
-  (useRouter as jest.Mock).mockReturnValue({ back: mockRouterBack });
+  (useRouter as jest.Mock).mockReturnValue({
+    back: mockRouterBack,
+    replace: mockRouterReplace,
+  });
 
   (useSchedule as jest.Mock).mockReturnValue({
     handleScheduleGeneration: mockHandleScheduleGeneration,
@@ -331,7 +344,7 @@ describe("useWizardForm", () => {
   });
 
   describe("final step submission", () => {
-    it("builds the prompt and calls the AI service on the last step when there's no step error", async () => {
+    it("builds the prompt and navigates to the generation screen on the last step when there's no step error", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() =>
@@ -362,14 +375,17 @@ describe("useWizardForm", () => {
       expect(WizardPromptBuilder.build).toHaveBeenCalledWith(
         result.current.form,
       );
-      expect(mockGenerateSchedule).toHaveBeenCalledWith("mock-prompt");
+      // The hook now routes to the generation screen instead of invoking the
+      // AI service directly (the generate call is currently commented out).
+      expect(mockRouterReplace).toHaveBeenCalledWith("/schedule/generation");
+      expect(mockGenerateSchedule).not.toHaveBeenCalled();
       // Submitting doesn't advance past the last step index.
       expect(result.current.step).toBe(3);
     });
   });
 
   describe("event flow", () => {
-    it("uses EVENT_TOTAL_STEPS and never surfaces a stepError, regardless of validation state", async () => {
+    it("uses EVENT_TOTAL_STEPS and surfaces event validation (e.g. a fixed-time item outside the window) on step 2, blocking Next", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() => result.current.patch({ scheduleType: "event" }));
@@ -377,21 +393,69 @@ describe("useWizardForm", () => {
       expect(result.current.isEvent).toBe(true);
       expect(result.current.totalSteps).toBe(3); // mocked EVENT_TOTAL_STEPS
 
+      // Steps 0 and 1 don't gate on event-schedule validation, so no toast
+      // and no stepError there.
+      expect(result.current.stepError).toBeUndefined();
       await act(async () => {
         await result.current.handleNext(); // -> step 1
       });
-
-      // Even with an invalid window (endTime before startTime by more than a
-      // day, which the validator flags as invalid), stepError stays
-      // undefined for event schedules because isEvent short-circuits it.
-      act(() =>
-        result.current.patch({
-          startTime: new Date("2026-07-09T08:00:00"),
-          endTime: new Date("2026-07-07T08:00:00"),
-        }),
-      );
+      expect(result.current.step).toBe(1);
       expect(result.current.stepError).toBeUndefined();
       expect(Toast.show).not.toHaveBeenCalled();
+
+      // The event details step (step 2) requires an eventType to be chosen.
+      act(() => result.current.patch({ eventType: "birthday" }));
+      await act(async () => {
+        await result.current.handleNext(); // -> step 2
+      });
+      expect(result.current.step).toBe(2);
+
+      // Window 08:00–20:00. Add a fixed-time item at 21:00 — outside the
+      // window. This exercises EventScheduleValidator.validateEventConflicts,
+      // which now checks fixed-time blocks against the window.
+      act(() =>
+        result.current.patch({
+          startTime: new Date("2026-07-07T08:00:00"),
+          endTime: new Date("2026-07-07T20:00:00"),
+        }),
+      );
+      act(() =>
+        result.current.eventItemsState.patchEventItem({
+          visible: true,
+          name: "Evening toast",
+          isFixedTime: true,
+          fixedTime: new Date("2026-07-07T21:00:00"),
+        }),
+      );
+      act(() => result.current.eventItemsState.commitEventItem());
+
+      expect(result.current.stepError).toContain(
+        "outside the schedule time window",
+      );
+      expect(Toast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "error",
+          text1: "Invalid Input",
+          text2: expect.stringContaining("outside the schedule time window"),
+          position: "top",
+        }),
+      );
+
+      // Tapping Next with the conflict unfixed re-toasts and stays on step 2.
+      const toastCallsBeforeRetry = (Toast.show as jest.Mock).mock.calls.length;
+      await act(async () => {
+        await result.current.handleNext();
+      });
+      expect(result.current.step).toBe(2);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
+
+      // Removing the offending item clears the error and unblocks Next.
+      const badId = result.current.form.eventScheduleItems[0].id;
+      act(() => result.current.eventItemsState.removeEventItem(badId));
+      expect(result.current.stepError).toBeUndefined();
+      expect(Toast.hide).toHaveBeenCalled();
     });
 
     it("canProceed() for the event flow: step 1 requires eventType, and 'other' requires a label", async () => {
@@ -423,11 +487,16 @@ describe("useWizardForm", () => {
     it("does not commit an event item when the draft is blank or hidden", () => {
       const { result } = renderHook(() => useWizardForm());
 
-      act(() => result.current.commitEventItem());
+      act(() => result.current.eventItemsState.commitEventItem());
       expect(result.current.form.eventScheduleItems).toHaveLength(0);
 
-      act(() => result.current.patchEventItem({ visible: true, name: "   " }));
-      act(() => result.current.commitEventItem());
+      act(() =>
+        result.current.eventItemsState.patchEventItem({
+          visible: true,
+          name: "   ",
+        }),
+      );
+      act(() => result.current.eventItemsState.commitEventItem());
       expect(result.current.form.eventScheduleItems).toHaveLength(0);
     });
 
@@ -435,29 +504,57 @@ describe("useWizardForm", () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() =>
-        result.current.patchEventItem({
+        result.current.eventItemsState.patchEventItem({
           visible: true,
           name: "Cake cutting",
-          duration: "15 min",
+          durationHours: "",
+          durationMinutes: "15",
         }),
       );
-      act(() => result.current.commitEventItem());
+      act(() => result.current.eventItemsState.commitEventItem());
 
       expect(result.current.form.eventScheduleItems).toHaveLength(1);
       expect(result.current.form.eventScheduleItems[0]).toMatchObject({
         name: "Cake cutting",
-        duration: "15 min",
+        durationMinutes: 15, // "15" min parsed to a number by useEventItems
       });
       // Draft resets back to the (mocked) default after commit.
-      expect(result.current.eventItemDraft).toEqual({
+      expect(result.current.eventItemsState.eventItemDraft).toEqual({
         visible: false,
         name: "",
-        duration: "",
+        durationHours: "",
+        durationMinutes: "45",
+        isFixedTime: false,
+        fixedTime: undefined,
+        showFixedTimePicker: false,
       });
 
       const id = result.current.form.eventScheduleItems[0].id;
-      act(() => result.current.removeEventItem(id));
+      act(() => result.current.eventItemsState.removeEventItem(id));
       expect(result.current.form.eventScheduleItems).toHaveLength(0);
+    });
+
+    it("Cannot commit event item when there is no duration input", () => {
+      const { result } = renderHook(() => useWizardForm());
+
+      act(() =>
+        result.current.eventItemsState.patchEventItem({
+          visible: true,
+          name: "Toast",
+        }),
+      );
+      act(() => result.current.eventItemsState.toggleFixedTime()); // isFixedTime -> true, fixedTime defaults in
+      act(() =>
+        result.current.eventItemsState.patchEventItem({
+          fixedTime: new Date("2026-07-07T12:00:00"),
+          durationHours: "",
+          durationMinutes: "", // no duration entered -> null on commit
+        }),
+      );
+      act(() => result.current.eventItemsState.commitEventItem());
+
+      expect(result.current.form.eventScheduleItems).toHaveLength(0);
+      const item = result.current.form.eventScheduleItems[0];
     });
   });
 
@@ -570,7 +667,9 @@ describe("useWizardForm", () => {
         await result.current.handleNext(); // 0 -> 1
       });
       expect(result.current.step).toBe(1);
-      expect(result.current.stepError).toContain("outside the schedule time window");
+      expect(result.current.stepError).toContain(
+        "outside the schedule time window",
+      );
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({
           text2: expect.stringContaining("outside the schedule time window"),

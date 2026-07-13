@@ -9,26 +9,28 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { durationText } from "../../utils/wizardHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
-import { FormState, EventItemDraft } from "@/type/NewScheduleTypes";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
+import { UseEventItemsStateType } from "../../hooks/form/useEventItems";
 
 type Props = {
-  form: FormState;
-  patch: (p: Partial<FormState>) => void;
-  eventItemDraft: EventItemDraft;
-  patchEventItem: (p: Partial<EventItemDraft>) => void;
-  commitEventItem: () => void;
-  removeEventItem: (id: string) => void;
-};
+  form: NewScheduleFormState;
+  patch: (p: Partial<NewScheduleFormState>) => void;
+} & UseEventItemsStateType;
 
 export function EventTimeStep({
   form,
   patch,
   eventItemDraft,
   patchEventItem,
+  showDraft,
+  hideDraft,
   commitEventItem,
   removeEventItem,
+  toggleFixedTime,
+  toggleFixedTimePicker,
+  eventScheduleItems,
 }: Props) {
   return (
     <View style={s.body}>
@@ -79,7 +81,7 @@ export function EventTimeStep({
       <View style={s.durationHint}>
         <Ionicons name="hourglass-outline" size={14} color={Colors.textMuted} />
         <Text style={s.durationText}>
-          {durationText(form.startTime, form.endTime)}
+          {TimeFormatter.durationText(form.startTime, form.endTime)}
         </Text>
       </View>
 
@@ -97,7 +99,7 @@ export function EventTimeStep({
           {!eventItemDraft.visible && (
             <TouchableOpacity
               style={s.addBtn}
-              onPress={() => patchEventItem({ visible: true })}
+              onPress={showDraft}
               activeOpacity={0.8}
             >
               <Ionicons name="add" size={14} color={Colors.accent} />
@@ -107,15 +109,27 @@ export function EventTimeStep({
         </View>
 
         {/* Committed items */}
-        {form.eventScheduleItems.map((item) => (
+        {eventScheduleItems.map((item) => (
           <View key={item.id} style={s.itemCard}>
             <View style={s.itemIcon}>
               <Ionicons name="list-outline" size={16} color={Colors.accent} />
             </View>
             <View style={s.itemBody}>
               <Text style={s.itemTitle}>{item.name}</Text>
-              {item.duration !== "" && (
-                <Text style={s.itemSub}>{item.duration}</Text>
+              {(item.durationMinutes != null ||
+                (item.isFixedTime && item.fixedTime)) && (
+                <Text style={s.itemSub}>
+                  {[
+                    item.durationMinutes != null
+                      ? TimeFormatter.formatMinutes(item.durationMinutes)
+                      : null,
+                    item.isFixedTime && item.fixedTime
+                      ? `at ${TimeFormatter.formatTime(item.fixedTime)}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
               )}
             </View>
             <TouchableOpacity
@@ -155,26 +169,113 @@ export function EventTimeStep({
             <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>
               Duration <Text style={s.optional}>(optional)</Text>
             </Text>
-            <View style={s.inputRow}>
-              <Ionicons
-                name="time-outline"
-                size={15}
-                color={Colors.textMuted}
-              />
-              <TextInput
-                style={s.inputField}
-                value={eventItemDraft.duration}
-                onChangeText={(t) => patchEventItem({ duration: t })}
-                placeholder="e.g. 30 min, 1 hr, 2 hours..."
-                placeholderTextColor={Colors.textMuted}
-                returnKeyType="done"
-              />
+            <View style={s.durationInputsRow}>
+              <View style={s.durationInputGroup}>
+                <TextInput
+                  style={s.durationInputField}
+                  value={eventItemDraft.durationHours}
+                  onChangeText={(t) =>
+                    patchEventItem({ durationHours: t.replace(/[^0-9]/g, "") })
+                  }
+                  placeholder="0"
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+                <Text style={s.durationInputUnit}>hr</Text>
+              </View>
+              <View style={s.durationInputGroup}>
+                <TextInput
+                  style={s.durationInputField}
+                  value={eventItemDraft.durationMinutes}
+                  onChangeText={(t) =>
+                    patchEventItem({
+                      durationMinutes: t.replace(/[^0-9]/g, ""),
+                    })
+                  }
+                  placeholder="0"
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                />
+                <Text style={s.durationInputUnit}>min</Text>
+              </View>
             </View>
+
+            <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>Timing</Text>
+            <View style={s.segmentRow}>
+              <TouchableOpacity
+                style={[
+                  s.segment,
+                  !eventItemDraft.isFixedTime && s.segmentActive,
+                ]}
+                onPress={() => eventItemDraft.isFixedTime && toggleFixedTime()}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    s.segmentText,
+                    !eventItemDraft.isFixedTime && s.segmentTextActive,
+                  ]}
+                >
+                  Flexible
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  s.segment,
+                  eventItemDraft.isFixedTime && s.segmentActive,
+                ]}
+                onPress={() => !eventItemDraft.isFixedTime && toggleFixedTime()}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    s.segmentText,
+                    eventItemDraft.isFixedTime && s.segmentTextActive,
+                  ]}
+                >
+                  Fixed time
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {eventItemDraft.isFixedTime && (
+              <View style={{ marginTop: 10 }}>
+                <TouchableOpacity
+                  style={s.inputRow}
+                  onPress={toggleFixedTimePicker}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={15}
+                    color={Colors.textMuted}
+                  />
+                  <Text style={s.inputField}>
+                    {eventItemDraft.fixedTime
+                      ? TimeFormatter.formatTime(eventItemDraft.fixedTime)
+                      : "Set time"}
+                  </Text>
+                </TouchableOpacity>
+                {eventItemDraft.showFixedTimePicker && (
+                  <DateTimePicker
+                    value={eventItemDraft.fixedTime ?? new Date()}
+                    mode="time"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={(_, d) => {
+                      toggleFixedTimePicker();
+                      if (d) patchEventItem({ fixedTime: d });
+                    }}
+                  />
+                )}
+              </View>
+            )}
 
             <View style={s.draftActions}>
               <TouchableOpacity
                 style={s.cancelBtn}
-                onPress={() => patchEventItem({ visible: false })}
+                onPress={hideDraft}
                 activeOpacity={0.8}
               >
                 <Text style={s.cancelText}>Cancel</Text>
@@ -182,7 +283,10 @@ export function EventTimeStep({
               <TouchableOpacity
                 style={[
                   s.confirmBtn,
-                  !eventItemDraft.name.trim() && s.confirmBtnDisabled,
+                  (!eventItemDraft.name.trim() ||
+                    (!eventItemDraft.durationHours.trim() &&
+                      !eventItemDraft.durationMinutes.trim())) &&
+                    s.confirmBtnDisabled,
                 ]}
                 onPress={commitEventItem}
                 disabled={!eventItemDraft.name.trim()}
@@ -195,7 +299,7 @@ export function EventTimeStep({
           </View>
         )}
 
-        {form.eventScheduleItems.length === 0 && !eventItemDraft.visible && (
+        {eventScheduleItems.length === 0 && !eventItemDraft.visible && (
           <Text style={s.empty}>
             No items added — the AI will build the full schedule for you.
           </Text>
@@ -314,6 +418,48 @@ const s = StyleSheet.create({
     paddingVertical: 11,
   },
   inputField: { flex: 1, fontSize: 14, color: Colors.textPrimary, padding: 0 },
+
+  durationInputsRow: { flexDirection: "row", gap: 10 },
+  durationInputGroup: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.bgElevated,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  durationInputField: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.textPrimary,
+    padding: 0,
+    textAlign: "center",
+  },
+  durationInputUnit: { fontSize: 12, color: Colors.textMuted },
+
+  segmentRow: { flexDirection: "row", gap: 6 },
+  segment: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.bgElevated,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+  segmentActive: {
+    backgroundColor: Colors.accentSoft,
+    borderColor: Colors.accent,
+  },
+  segmentText: { fontSize: 12, fontWeight: "600", color: Colors.textMuted },
+  segmentTextActive: { color: Colors.accent },
+
   draftActions: { flexDirection: "row", gap: 10, marginTop: 14 },
   cancelBtn: {
     flex: 1,

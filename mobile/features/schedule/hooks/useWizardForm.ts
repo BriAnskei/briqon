@@ -1,12 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
-import {
-  NewScheduleFormState,
-  EventItemDraft,
-  EventScheduleItem,
-} from "@/type/NewScheduleTypes";
-import { defaultForm, defaultEventItemDraft } from "../utils/wizardHelpers";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
+import { defaultForm } from "../utils/wizardHelpers";
 import {
   EVENT_TOTAL_STEPS,
   PERSONAL_TOTAL_STEPS,
@@ -16,8 +12,10 @@ import { WizardPromptBuilder } from "../utils/WizardPromptBuilder";
 import { useAI } from "@/context/AIContext";
 import useMeals from "./useMeals";
 import useAppointments from "./useAppointments";
+
 import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 import { useWizardValidation } from "./useScheduleFormValidator";
+import useEventItems from "./form/useEventItems";
 
 export type FixedScheduleDuration = {
   appMinutes: number;
@@ -52,17 +50,12 @@ export function useWizardForm() {
     stepError,
   } = useWizardValidation({ form, step, isEvent });
 
-  const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(
-    defaultEventItemDraft(),
-  );
-
   const patch = (p: Partial<NewScheduleFormState>) =>
     setForm((prev) => ({ ...prev, ...p }));
-  const patchEventItem = (p: Partial<EventItemDraft>) =>
-    setEventItemDraft((prev) => ({ ...prev, ...p }));
 
   const mealsState = useMeals({ form, setForm, step });
   const apptState = useAppointments({ form, setForm });
+  const eventItemsState = useEventItems({ form, setForm });
 
   const showStepErrorToast = (message: string) => {
     Toast.show({
@@ -82,23 +75,6 @@ export function useWizardForm() {
       Toast.hide();
     }
   }, [validation, step]);
-
-  // ── Event items ─────────────────────────────────────────────────────────────
-  const commitEventItem = () => {
-    if (!eventItemDraft.visible || !eventItemDraft.name.trim()) return;
-
-    const item: EventScheduleItem = {
-      id: Date.now().toString(),
-      name: eventItemDraft.name.trim(),
-      duration: eventItemDraft.duration.trim(),
-    };
-    patch({ eventScheduleItems: [...form.eventScheduleItems, item] });
-    setEventItemDraft(defaultEventItemDraft());
-  };
-  const removeEventItem = (id: string) =>
-    patch({
-      eventScheduleItems: form.eventScheduleItems.filter((i) => i.id !== id),
-    });
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   const isLastStep = () => step === totalSteps - 1;
@@ -131,14 +107,20 @@ export function useWizardForm() {
     }
 
     if (apptState.apptDraft.visible) apptState.hideDraft();
-    if (eventItemDraft.visible)
-      setEventItemDraft((d) => ({ ...d, visible: false }));
+    if (eventItemsState.eventItemDraft.visible) eventItemsState.hideDraft();
     if (isLastStep()) {
-      const generatedPromp = WizardPromptBuilder.build(form);
+      const { systemInstruction, prompt } = WizardPromptBuilder.build(form);
 
-      console.log("generated schedule: ", generatedPromp);
+      router.replace("/schedule/generation");
 
-      await AIService?.generateSchedule(generatedPromp);
+      console.log(
+        "generated schedule, this is the system prompt: ",
+        systemInstruction,
+        " and this is the prompt: ",
+        prompt,
+      );
+
+      // await AIService?.generateSchedule(prompt, systemInstruction);
     } else setStep((s) => s + 1);
   };
 
@@ -151,19 +133,16 @@ export function useWizardForm() {
     validation,
     step,
     form,
-    eventItemDraft,
     isEvent,
     totalSteps,
     patch,
-    patchEventItem,
-    commitEventItem,
-    removeEventItem,
     isLastStep,
     canProceed,
     handleNext,
     handleBack,
     mealsState,
     apptState,
+    eventItemsState,
     validator,
     stepError,
     fixedScheduleDuration,

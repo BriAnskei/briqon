@@ -2,11 +2,8 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-import {
-  formatTime,
-  appointmentLabel,
-  formatMinutes,
-} from "../../utils/wizardHelpers";
+import { appointmentLabel } from "../../utils/wizardHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Platform, StyleSheet, TextInput } from "react-native";
@@ -35,7 +32,7 @@ export function AppointmentsSection({
               Appointments <Text style={s.optional}>(optional)</Text>
             </Text>
             {totalMinutes > 0 && (
-              <Text style={s.totalPill}>{formatMinutes(totalMinutes)}</Text>
+              <Text style={s.totalPill}>{TimeFormatter.formatMinutes(totalMinutes)}</Text>
             )}
           </View>
           {!apptDraft.visible && (
@@ -61,7 +58,7 @@ export function AppointmentsSection({
               <View style={s.apptBody}>
                 <Text style={s.apptTitle}>{appointmentLabel(appt)}</Text>
                 <Text style={s.apptTime}>
-                  {formatTime(appt.startTime)} – {formatTime(appt.endTime)}
+                  {TimeFormatter.formatTime(appt.startTime)} – {TimeFormatter.formatTime(appt.endTime)}
                 </Text>
               </View>
               <TouchableOpacity

@@ -11,11 +11,12 @@ import { MessageTypes, ScheduleItem } from "../type/MessageTypes";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { useAiStreamResponse } from "@/hooks/prompt/useAiStreamResponse";
-import { FormState } from "@/type/NewScheduleTypes";
+import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { useRouter } from "expo-router";
 import { ApiError } from "@/services/errors/ai.error";
 import { useToast } from "@/hooks/useToast";
 import { AiInstance } from "@/src/ai/ai.instance";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,9 +40,9 @@ type ScheduleContextType = {
   setEditTarget: (target: EditTarget | null) => void;
 
   setPrevScheduleFormInput: React.Dispatch<
-    React.SetStateAction<FormState | undefined>
+    React.SetStateAction<NewScheduleFormState | undefined>
   >;
-  prevScheduleForm: FormState | undefined;
+  prevScheduleForm: NewScheduleFormState | undefined;
 
   handleScheduleGeneration: (prompt: string, isNew: boolean) => void;
 
@@ -59,7 +60,7 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
 
   const [prevScheduleForm, setPrevScheduleFormInput] = useState<
-    FormState | undefined
+    NewScheduleFormState | undefined
   >(undefined);
 
   const [conversation, setConversation] = useState<MessageTypes[]>([]);
@@ -180,21 +181,17 @@ ${generatedPrompt ?? `USER MESSAGE:\n${messagePrompt}`}
         setLoading(true);
 
         const startTimeStr = prevScheduleForm
-          ? prevScheduleForm.startTime.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
+          ? TimeFormatter.formatTime(prevScheduleForm.startTime)
           : "06:00";
         const endTimeStr = prevScheduleForm
-          ? prevScheduleForm.endTime.toLocaleTimeString("en-GB", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
+          ? TimeFormatter.formatTime(prevScheduleForm.endTime)
           : "22:00";
-        const appointments = prevScheduleForm ? prevScheduleForm.appointments : [];
-        const scheduleType = prevScheduleForm ? prevScheduleForm.scheduleType ?? undefined : undefined;
+        const appointments = prevScheduleForm
+          ? prevScheduleForm.appointments
+          : [];
+        const scheduleType = prevScheduleForm
+          ? (prevScheduleForm.scheduleType ?? undefined)
+          : undefined;
 
         const responseJson = await AiInstance.generateScheduleJSON(
           prompt,

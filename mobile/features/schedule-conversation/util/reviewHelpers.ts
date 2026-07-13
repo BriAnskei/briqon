@@ -1,3 +1,5 @@
+import { TimeFormatter } from "@/utils/TimeFormatter";
+
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
 
 export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -22,14 +24,6 @@ export const ACCENT_COLORS = [
   "#FB7185",
   "#34D399",
 ] as const;
-
-export function formatDate(d: Date): string {
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export function offsetDate(days: number): Date {
   const d = new Date();
@@ -68,9 +62,9 @@ export function buildSummary(
   const repeatSuffix = recurring ? "· Every week" : "· One time";
   switch (mode) {
     case "today":
-      return `Active today · ${formatDate(new Date())}${recurring ? " · Every week" : ""}`;
+      return `Active today · ${TimeFormatter.formatDate(new Date())}${recurring ? " · Every week" : ""}`;
     case "tomorrow":
-      return `Active tomorrow · ${formatDate(offsetDate(1))}${recurring ? " · Every week" : ""}`;
+      return `Active tomorrow · ${TimeFormatter.formatDate(offsetDate(1))}${recurring ? " · Every week" : ""}`;
     case "range": {
       if (selectedDays.length === 0) return `No days selected ${repeatSuffix}`;
       const sorted = [...selectedDays].sort((a, b) => a - b);
@@ -78,7 +72,7 @@ export function buildSummary(
       return `${labels} ${repeatSuffix}`;
     }
     case "specific":
-      return `${formatDate(specificDate)} ${repeatSuffix}`;
+      return `${TimeFormatter.formatDate(specificDate)} ${repeatSuffix}`;
     default:
       return "";
   }

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors, Radius } from "@/type/theme";
 import { ScheduleItem } from "@/type/MessageTypes";
-import { duration, formatTime } from "@/utils/parseSchedule";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { toneForIndex } from "../constants/tones";
 
 type Props = {
@@ -13,12 +13,12 @@ type Props = {
 
 export function TimelineItem({ item, index, isLast }: Props) {
   const color = toneForIndex(index);
-  const dur = duration(item.start_time!, item.end_time!);
+  const dur = TimeFormatter.formatDuration(item.start_time!, item.end_time!);
 
   return (
     <View style={s.tlRow}>
       <View style={s.tlLeft}>
-        <Text style={s.tlTime}>{formatTime(item.start_time)}</Text>
+        <Text style={s.tlTime}>{TimeFormatter.formatTime12h(item.start_time)}</Text>
         {!isLast && <View style={s.tlLine} />}
       </View>
       <View style={[s.tlDot, { backgroundColor: color }]} />
@@ -29,7 +29,7 @@ export function TimelineItem({ item, index, isLast }: Props) {
             <Text style={s.tlTitle}>{item.activity}</Text>
             {dur ? (
               <Text style={s.tlMeta}>
-                {formatTime(item.start_time)} – {formatTime(item.end_time)} ·{" "}
+                {TimeFormatter.formatTime12h(item.start_time)} – {TimeFormatter.formatTime12h(item.end_time)} ·{" "}
                 {dur}
               </Text>
             ) : null}

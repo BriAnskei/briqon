@@ -1,5 +1,6 @@
 import { MealPlacement, NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { ValidatorResType } from "../types/FormValidatorTypes";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 type TimeBlock = {
   id: string;
@@ -40,20 +41,20 @@ export default class ScheduleConflictValidator {
   public validateTimeBlocksWithinWindow(): ValidatorResType {
     const blocks = this.getTimeBlocks();
 
-    const windowStart = this.getMinutesOfDay(this.form.startTime);
-    const windowEnd = this.normalizeMinute(
-      this.getMinutesOfDay(this.form.endTime),
+    const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
+    const windowEnd = TimeFormatter.normalizeMinute(
+      TimeFormatter.getMinutesOfDay(this.form.endTime),
       windowStart,
     );
 
     for (const block of blocks) {
-      let start = this.normalizeMinute(
-        this.getMinutesOfDay(block.start),
+      let start = TimeFormatter.normalizeMinute(
+        TimeFormatter.getMinutesOfDay(block.start),
         windowStart,
       );
 
-      let end = this.normalizeMinute(
-        this.getMinutesOfDay(block.end),
+      let end = TimeFormatter.normalizeMinute(
+        TimeFormatter.getMinutesOfDay(block.end),
         windowStart,
       );
 
@@ -104,19 +105,5 @@ export default class ScheduleConflictValidator {
 
   private isOverlapping(a: TimeBlock, b: TimeBlock): boolean {
     return a.end.getTime() > b.start.getTime();
-  }
-
-  private getMinutesOfDay(date: Date): number {
-    return date.getHours() * 60 + date.getMinutes();
-  }
-
-  private normalizeMinute(minute: number, windowStart: number): number {
-    // If the time occurs before the window start,
-    // treat it as belonging to the next day.
-    if (minute < windowStart) {
-      return minute + 24 * 60;
-    }
-
-    return minute;
   }
 }

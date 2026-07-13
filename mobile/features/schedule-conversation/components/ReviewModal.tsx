@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { ScheduleItem } from "@/type/MessageTypes";
-import { duration } from "@/utils/parseSchedule";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { toneForIndex, alarmForIndex } from "../constants/tones";
 
 type Props = {
@@ -45,7 +45,7 @@ export function ReviewModal({ visible, items, onClose, onConfirm }: Props) {
           >
             {items.map((item, index) => {
               const color = toneForIndex(index);
-              const dur = duration(item.startTime!, item.endTime!);
+              const dur = TimeFormatter.formatDuration(item.startTime!, item.endTime!);
               const alarmEnabled = alarmForIndex(index);
               return (
                 <View key={index} style={s.item}>

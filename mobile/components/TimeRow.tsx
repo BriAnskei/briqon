@@ -1,7 +1,7 @@
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { formatTime } from "@/features/schedule/utils/wizardHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 type Props = {
   label: string;
@@ -19,7 +19,7 @@ export function TimeRow({ label, icon, time, onPress }: Props) {
       </View>
       <View style={s.body}>
         <Text style={s.label}>{label}</Text>
-        <Text style={s.time}>{formatTime(safeTime)}</Text>
+        <Text style={s.time}>{TimeFormatter.formatTime(safeTime)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
     </TouchableOpacity>

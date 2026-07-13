@@ -13,7 +13,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { useSetActiveModal } from "@/features/schedule-conversation/hooks/review/useSetActiveModal";
-import { formatDate } from "@/features/schedule-conversation/util/reviewHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { DayRangeExpanded } from "../DayRangeExpanded";
 import { OptionPill } from "../OptionPill";
 import { CreateActiveSchedule } from "@/src/models/active_schedule.model";
@@ -182,7 +182,7 @@ export function SetActiveModal({
                     <Text style={s.optionCardTitle}>Pick a Date</Text>
                     <Text style={s.optionCardSubtitle}>
                       {dateMode === "specific"
-                        ? formatDate(specificDate)
+                        ? TimeFormatter.formatDate(specificDate)
                         : "Choose from calendar"}
                     </Text>
                   </View>
@@ -206,7 +206,7 @@ export function SetActiveModal({
                         activeOpacity={0.8}
                       >
                         <Text style={s.changeDateText}>
-                          📅 {formatDate(specificDate)} · Tap to change
+                          📅 {TimeFormatter.formatDate(specificDate)} · Tap to change
                         </Text>
                       </TouchableOpacity>
                     )}

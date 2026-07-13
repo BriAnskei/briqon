@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useRouter } from "expo-router";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { duration, formatTime } from "@/utils/parseSchedule";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { toneForIndex } from "../constants/tones";
 import { useEditSchedule } from "../hooks/useEditSchedule";
 
@@ -103,7 +103,7 @@ export function EditScheduleScreen() {
         {items.map((item, index) => {
           const state = getState(index);
           const color = toneForIndex(index);
-          const dur = duration(item.start_time!, item.end_time!);
+          const dur = TimeFormatter.formatDuration(item.start_time!, item.end_time!);
           const isPendingDelete = state.status === "pending_delete";
           const isEditing = state.status === "editing";
           const showActions = state.status === "actions";
@@ -114,7 +114,7 @@ export function EditScheduleScreen() {
               {/* Left time column */}
               <View style={s.tlLeft}>
                 <Text style={[s.tlTime, isPendingDelete && s.deletedText]}>
-                  {formatTime(item.start_time)}
+                  {TimeFormatter.formatTime12h(item.start_time)}
                 </Text>
                 {index !== items.length - 1 && (
                   <View style={[s.tlLine, isPendingDelete && s.deletedLine]} />
@@ -173,8 +173,8 @@ export function EditScheduleScreen() {
                           <Text
                             style={[s.tlMeta, isPendingDelete && s.deletedText]}
                           >
-                            {formatTime(item.start_time)} –{" "}
-                            {formatTime(item.end_time)} · {dur}
+                            {TimeFormatter.formatTime12h(item.start_time)} –{" "}
+                            {TimeFormatter.formatTime12h(item.end_time)} · {dur}
                           </Text>
                         ) : null}
                       </View>

@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
-import { formatMinutes } from "../../utils/wizardHelpers";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 import { TimeWindowSettings } from "./TimeWindowSettings";
 import { AppointmentsSection } from "./AppointmentsSection";
 import { MealsSection } from "./MealsSection";
@@ -40,7 +40,7 @@ export function PersonalTimeStep({
         </View>
         <View style={s.overallTextWrap}>
           <Text style={s.overallLabel}>Total scheduled time</Text>
-          <Text style={s.overallValue}>{formatMinutes(overAllMinutes)}</Text>
+          <Text style={s.overallValue}>{TimeFormatter.formatMinutes(overAllMinutes)}</Text>
         </View>
       </View>
 

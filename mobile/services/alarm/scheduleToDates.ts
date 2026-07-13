@@ -1,6 +1,6 @@
 import { DateMode } from "@/features/schedule-conversation/util/reviewHelpers";
 import { ScheduleItem } from "@/type/MessageTypes";
-import { parseTime } from "@/utils/timeUtils";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
 const DAY_MAP: Record<number, number> = {
   //  startDay 0=Mon, JS getDay() 0=Sun
@@ -41,7 +41,7 @@ export function buildDates({
     for (const item of items) {
       if (!item.start_time || !item.activity) continue;
 
-      const { hour, minute } = parseTime(item.start_time);
+      const { hour, minute } = TimeFormatter.parseTime(item.start_time);
       const alarmDate = new Date(baseDate);
       alarmDate.setHours(hour, minute, 0, 0);
 

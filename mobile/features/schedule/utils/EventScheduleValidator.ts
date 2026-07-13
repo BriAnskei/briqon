@@ -1,42 +1,42 @@
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { ValidatorResType } from "../types/FormValidatorTypes";
+import { TimeFormatter } from "@/utils/TimeFormatter";
 
-type ParsedDuration = {
-  raw: string;
-  minutes: number | null; // null when the free-text duration can't be parsed
+type TimeBlock = {
+  id: string;
+  label: string;
+  start: Date;
+  end: Date;
 };
 
 /**
  * Validates an EVENT schedule.
  *
- * Event segments are user-entered items with a free-text duration
- * (e.g. "30 min", "1 hr 30 min"), unlike personal appointments/meals which
- * carry explicit Date/number durations. This validator mirrors the personal
- * validators' intent:
+ * Event segments carry an explicit numeric duration (minutes, optional) and
+ * are either "flexible" (placed in order, no explicit time) or "fixed" (an
+ * explicit start time that must not move). This validator mirrors the
+ * personal validators' intent:
  *  - duration math against the schedule window (like
  *    ScheduleFormWindowtimeRuleValidator for appointments/meals)
- *  - "do the segments fit / overrun" detection (like the conflict validator's
- *    overlap detection, adapted to sequential, timeless segments)
- *
- * Because event durations are free text, a duration we can't parse is treated
- * as "unknown" and skipped rather than failing the whole schedule — matching
- * the personal validators' behaviour of only measuring what they can measure.
+ *  - overlap detection between fixed-time segments, and fixed segments
+ *    falling within the window (like ScheduleConflictValidator)
  */
 export default class EventScheduleValidator {
   constructor(private form: NewScheduleFormState) {}
 
-  /** Total minutes across all event items whose duration we could parse. */
+  /** Total minutes across all event items that have a specified duration. */
   public getEventTotalMinutes(): number {
-    return this.parseAllDurations().reduce(
-      (total, parsed) => total + (parsed.minutes ?? 0),
+    return this.form.eventScheduleItems.reduce(
+      (total, item) => total + (item.durationMinutes ?? 0),
       0,
     );
   }
 
   /**
-   * The sum of every parseable event-segment duration must fit inside the
-   * schedule time window. Unparseable durations are skipped (treated as
-   * unknown), so free text like "TBD" never blocks the schedule.
+   * The sum of every event-segment duration must fit inside the schedule
+   * time window. Items without a specified duration are skipped (treated as
+   * unknown), matching the personal validators' behaviour of only measuring
+   * what they can measure.
    */
   public validateEventDurationWindow(): ValidatorResType {
     const totalEventMinutes = this.getEventTotalMinutes();
@@ -55,28 +55,55 @@ export default class EventScheduleValidator {
   }
 
   /**
-   * Event items have no explicit start/end times, so a "conflict" is when the
-   * parseable segments, placed back-to-back in order, run past the end of the
-   * schedule window. When fewer than two segments are measurable there is
-   * nothing to overrun, so it passes.
+   * Fixed-time segments must not overlap each other, and must fall within
+   * the schedule window. A fixed segment without a specified duration is
+   * treated as a zero-length point in time for overlap purposes.
    */
   public validateEventConflicts(): ValidatorResType {
-    const measurable = this.parseAllDurations().filter(
-      (parsed) => parsed.minutes !== null,
+    const fixedBlocks = this.getFixedTimeBlocks();
+
+    if (fixedBlocks.length === 0) return { valid: true };
+
+    const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
+    const windowEnd = TimeFormatter.normalizeMinute(
+      TimeFormatter.getMinutesOfDay(this.form.endTime),
+      windowStart,
     );
 
-    if (measurable.length <= 1) return { valid: true };
+    const sorted = [...fixedBlocks].sort(
+      (a, b) => a.start.getTime() - b.start.getTime(),
+    );
 
-    const windowMin = this.getWindowMinutes();
-    let running = 0;
-    for (const parsed of measurable) {
-      running += parsed.minutes as number;
-      if (running > windowMin) {
+    for (let i = 0; i < sorted.length; i++) {
+      const block = sorted[i];
+      const start = TimeFormatter.normalizeMinute(
+        TimeFormatter.getMinutesOfDay(block.start),
+        windowStart,
+      );
+      let end = TimeFormatter.normalizeMinute(
+        TimeFormatter.getMinutesOfDay(block.end),
+        windowStart,
+      );
+
+      // Handle a segment that crosses midnight (but not a zero-duration
+      // point in time, where start === end is valid).
+      if (end < start) end += 24 * 60;
+
+      if (start < windowStart || end > windowEnd) {
         return {
           valid: false,
-          message:
-            "The event segments run longer than the schedule window when placed back-to-back.",
+          message: `"${block.label}" is outside the schedule time window.`,
         };
+      }
+
+      if (i < sorted.length - 1) {
+        const next = sorted[i + 1];
+        if (block.end.getTime() > next.start.getTime()) {
+          return {
+            valid: false,
+            message: `"${block.label}" conflicts with "${next.label}".`,
+          };
+        }
       }
     }
 
@@ -114,50 +141,16 @@ export default class EventScheduleValidator {
     return Math.floor(diff / (1000 * 60));
   }
 
-  private parseAllDurations(): ParsedDuration[] {
-    return this.form.eventScheduleItems.map((item) =>
-      this.parseDuration(item.duration),
-    );
-  }
-
-  /**
-   * Parse a free-text duration such as "30 min", "1 hr", "1h 30m", "2 hours".
-   * Returns `minutes: null` for anything that can't be parsed, so unparseable
-   * input never blocks a schedule.
-   */
-  private parseDuration(raw: string): ParsedDuration {
-    const text = (raw ?? "").trim().toLowerCase();
-    if (!text) return { raw: text, minutes: null };
-
-    const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/);
-    const minMatch = text.match(
-      /(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes)\b/,
-    );
-
-    let minutes = 0;
-    let matched = false;
-
-    if (hourMatch) {
-      minutes += parseFloat(hourMatch[1]) * 60;
-      matched = true;
-    }
-    if (minMatch) {
-      minutes += parseFloat(minMatch[1]);
-      matched = true;
-    }
-
-    // A bare number like "45" is interpreted as minutes.
-    if (!matched) {
-      const bare = text.match(/^(\d+(?:\.\d+)?)$/);
-      if (bare) {
-        minutes += parseFloat(bare[1]);
-        matched = true;
-      }
-    }
-
-    return {
-      raw: text,
-      minutes: matched ? Math.round(minutes) : null,
-    };
+  private getFixedTimeBlocks(): TimeBlock[] {
+    return this.form.eventScheduleItems
+      .filter((item) => item.isFixedTime && item.fixedTime)
+      .map((item) => ({
+        id: item.id,
+        label: item.name,
+        start: item.fixedTime!,
+        end: new Date(
+          item.fixedTime!.getTime() + (item.durationMinutes ?? 0) * 60 * 1000,
+        ),
+      }));
   }
 }

@@ -51,8 +51,9 @@ function ScreenStack() {
           animation: "slide_from_right",
         }}
       />
+
       <Stack.Screen
-        name="schedule/edit"
+        name="schedule/generation"
         options={{
           presentation: "card",
           animation: "slide_from_right",

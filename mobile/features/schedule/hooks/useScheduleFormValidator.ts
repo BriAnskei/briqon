@@ -113,42 +113,41 @@ export function useWizardValidation({
 
     if (isEvent) {
       // Event flow: event-schedule validation lives on the details step.
-      if (step === 1) {
+      if (step === 2) {
         const errors = [
           !validation.eventItemsPresent.valid &&
             validation.eventItemsPresent.message,
           !validation.eventDuration.valid && validation.eventDuration.message,
-          !validation.eventConflicts.valid &&
-            validation.eventConflicts.message,
+          !validation.eventConflicts.valid && validation.eventConflicts.message,
         ].filter(Boolean);
 
         return errors.length > 0 ? errors.join("\n") : undefined;
       }
 
       return undefined;
-    }
+    } else {
+      if (step === 1) {
+        // Appointments/meals are edited on this step, so conflicts between
+        // them (or between an appointment and a fixed-time meal) surface here too.
+        const errors = [
+          !validation.appointments.valid && validation.appointments.message,
+          !validation.meals.valid && validation.meals.message,
+          !validation.conflicts.valid && validation.conflicts.message,
+          !validation.timeBlockRange.valid && validation.timeBlockRange.message,
+        ].filter(Boolean);
 
-    if (step === 1) {
-      // Appointments/meals are edited on this step, so conflicts between
-      // them (or between an appointment and a fixed-time meal) surface here too.
-      const errors = [
-        !validation.appointments.valid && validation.appointments.message,
-        !validation.meals.valid && validation.meals.message,
-        !validation.conflicts.valid && validation.conflicts.message,
-        !validation.timeBlockRange.valid && validation.timeBlockRange.message,
-      ].filter(Boolean);
+        return errors.length > 0 ? errors.join("\n") : undefined;
+      }
 
-      return errors.length > 0 ? errors.join("\n") : undefined;
-    }
+      if (step === 2) {
+        return !validation.breaks.valid ? validation.breaks.message : undefined;
+      }
 
-    if (step === 2) {
-      return !validation.breaks.valid ? validation.breaks.message : undefined;
-    }
-
-    if (step === 3) {
-      return !validation.priorityTime.valid
-        ? validation.priorityTime.message
-        : undefined;
+      if (step === 3) {
+        return !validation.priorityTime.valid
+          ? validation.priorityTime.message
+          : undefined;
+      }
     }
 
     return undefined;
