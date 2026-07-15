@@ -12,7 +12,7 @@ export default async function handler(req: any, res: any) {
     });
   }
 
-  const { prompt, systemInstruction } = req.body;
+ const { prompt, systemInstruction } = req.body;
 
   try {
     let MAX_ATTEMPS = 2;
@@ -20,6 +20,7 @@ export default async function handler(req: any, res: any) {
     while (MAX_ATTEMPS > 0) {
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
+
 
         config: {
           systemInstruction,
@@ -39,6 +40,7 @@ export default async function handler(req: any, res: any) {
           res: parsed.data,
         });
       }
+
 
       console.error(parsed.error);
       MAX_ATTEMPS--;

@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
 import { ScheduleItem } from "../../type/MessageTypes";
 import { useAI } from "@/context/AIContext";
+import { API_URL } from "@/services/api.client";
 
 // ─── Category Colors ──────────────────────────────────────────────────────────
 
@@ -233,12 +234,14 @@ function DotMenu({
 export default function HomeScreen() {
   const router = useRouter();
 
-  const { service } = useAI();
-
   // DB implementation sample usage
   // useEffect(() => {
   //   initializeDatabase();
   // }, []);
+
+  useEffect(() => {
+    console.log("PRocess env: ", process.env.EXPO_PUBLIC_API_URL);
+  }, []);
 
   const [hasSchedule, setHasSchedule] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);

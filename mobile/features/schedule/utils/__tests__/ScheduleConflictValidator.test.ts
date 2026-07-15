@@ -230,6 +230,32 @@ describe("ScheduleConflictValidator", () => {
   });
 
   // ---------------------------------------------------------------------
+  // Window-boundary check (validateTimeBlocksWithinWindow)
+  // ---------------------------------------------------------------------
+
+  it("treats a 9am-10am appointment as inside a full 24h window (00:00->00:00)", () => {
+    const form = {
+      ...baseForm,
+      startTime: new Date("2026-07-07T00:00:00"),
+      endTime: new Date("2026-07-07T00:00:00"), // equal -> full-day window
+      appointments: [appt("a1", "work", "09:00", "10:00")],
+    };
+    const validator = new ScheduleConflictValidator(form as any);
+    expect(validator.validateTimeBlocksWithinWindow().valid).toBe(true);
+  });
+
+  it("treats an 11pm appointment as inside a full 24h window", () => {
+    const form = {
+      ...baseForm,
+      startTime: new Date("2026-07-07T00:00:00"),
+      endTime: new Date("2026-07-07T00:00:00"),
+      appointments: [appt("a1", "work", "23:00", "23:30")],
+    };
+    const validator = new ScheduleConflictValidator(form as any);
+    expect(validator.validateTimeBlocksWithinWindow().valid).toBe(true);
+  });
+
+  // ---------------------------------------------------------------------
   // Known gap: no overnight/wraparound handling (unlike the window validator)
   // ---------------------------------------------------------------------
 

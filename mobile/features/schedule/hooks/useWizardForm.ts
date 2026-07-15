@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -8,12 +9,10 @@ import {
   PERSONAL_TOTAL_STEPS,
 } from "../contants/wizardOptions";
 import { useSchedule } from "@/context/ScheduleContext";
-import { WizardPromptBuilder } from "../utils/WizardPromptBuilder";
 import { useAI } from "@/context/AIContext";
 import useMeals from "./useMeals";
 import useAppointments from "./useAppointments";
 
-import ScheduleFormWindowtimeRuleValidator from "../utils/ScheduleFormWindowtimeRuleValidator";
 import { useWizardValidation } from "./useScheduleFormValidator";
 import useEventItems from "./form/useEventItems";
 
@@ -23,16 +22,29 @@ export type FixedScheduleDuration = {
   overAllMinutes: number;
 };
 
+export type PersonalSummary = {
+  windowMinutes: number;
+  appointmentMinutes: number;
+  mealMinutes: number;
+  remainingMinutes: number;
+};
+
+export type EventSummary = {
+  windowMinutes: number;
+  totalItemMinutes: number;
+  totalItems: number;
+  remainingMinutes: number;
+};
+
 export function useWizardForm() {
   const router = useRouter();
+  const { setInputForm } = useAI();
 
   const {
     handleScheduleGeneration,
     prevScheduleForm,
     setPrevScheduleFormInput,
   } = useSchedule();
-
-  const { service: AIService } = useAI();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
@@ -42,13 +54,8 @@ export function useWizardForm() {
   const isEvent = form.scheduleType === "event";
   const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
 
-  const {
-    validator,
-    conflictValidator,
-    fixedScheduleDuration,
-    validation,
-    stepError,
-  } = useWizardValidation({ form, step, isEvent });
+  const { validator, fixedScheduleDuration, validation, stepError } =
+    useWizardValidation({ form, step, isEvent });
 
   const patch = (p: Partial<NewScheduleFormState>) =>
     setForm((prev) => ({ ...prev, ...p }));
@@ -56,6 +63,44 @@ export function useWizardForm() {
   const mealsState = useMeals({ form, setForm, step });
   const apptState = useAppointments({ form, setForm });
   const eventItemsState = useEventItems({ form, setForm });
+
+  // ── Per-step summary (window / meals / appointments / remaining, etc.) ──
+  const personalSummary = useMemo<PersonalSummary | null>(() => {
+    if (isEvent) return null;
+    const windowMinutes = validator.getWindowMinutes();
+    const breakMinutes = form.breakFrequency
+      ? validator.getBreakWindowMin()
+      : 0;
+    const remainingMinutes = Math.max(
+      0,
+      windowMinutes -
+        fixedScheduleDuration.appMinutes -
+        fixedScheduleDuration.mealMinutes -
+        breakMinutes,
+    );
+    return {
+      windowMinutes,
+      appointmentMinutes: fixedScheduleDuration.appMinutes,
+      mealMinutes: fixedScheduleDuration.mealMinutes,
+      remainingMinutes,
+    };
+  }, [validator, form, fixedScheduleDuration, isEvent]);
+
+  const eventSummary = useMemo<EventSummary | null>(() => {
+    if (!isEvent) return null;
+    const windowMinutes = validator.getWindowMinutes();
+    const totalItemMinutes = form.eventScheduleItems.reduce(
+      (acc, item) => acc + (item.durationMinutes ?? 0),
+      0,
+    );
+    const remainingMinutes = Math.max(0, windowMinutes - totalItemMinutes);
+    return {
+      windowMinutes,
+      totalItemMinutes,
+      totalItems: form.eventScheduleItems.length,
+      remainingMinutes,
+    };
+  }, [validator, form, isEvent]);
 
   const showStepErrorToast = (message: string) => {
     Toast.show({
@@ -87,13 +132,20 @@ export function useWizardForm() {
           form.eventType !== null &&
           (form.eventType !== "other" || !!form.eventOtherLabel.trim())
         );
-      if (step === 2) return true;
+      if (step === 2) return true; // Time window
+      if (step === 3) return true; // Event items (optional)
     } else {
       if (step === 1) {
-        return true;
+        return true; // Time window
       }
-      if (step === 2) return form.breakFrequency !== null;
-      if (step === 3) return !!form.priorityFocusText?.trim().length;
+      if (step === 2) {
+        return true; // Appointments (optional)
+      }
+      if (step === 3) {
+        return true; // Meals (optional)
+      }
+      if (step === 4) return form.breakFrequency !== null;
+      if (step === 5) return !!form.priorityFocusText?.trim().length;
     }
     return false;
   };
@@ -109,16 +161,8 @@ export function useWizardForm() {
     if (apptState.apptDraft.visible) apptState.hideDraft();
     if (eventItemsState.eventItemDraft.visible) eventItemsState.hideDraft();
     if (isLastStep()) {
-      const { systemInstruction, prompt } = WizardPromptBuilder.build(form);
-
-      router.replace("/schedule/generation");
-
-      console.log(
-        "generated schedule, this is the system prompt: ",
-        systemInstruction,
-        " and this is the prompt: ",
-        prompt,
-      );
+      setInputForm(form);
+      router.push("/schedule/generation");
 
       // await AIService?.generateSchedule(prompt, systemInstruction);
     } else setStep((s) => s + 1);
@@ -146,5 +190,7 @@ export function useWizardForm() {
     validator,
     stepError,
     fixedScheduleDuration,
+    personalSummary,
+    eventSummary,
   };
 }

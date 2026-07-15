@@ -274,6 +274,34 @@ describe("EventScheduleValidator", () => {
   });
 
   // -------------------------------------------------------------------
+  // Full 24h window (start === end === 00:00)
+  // Regression: window end must be windowStart + 1440, not 0, or every
+  // fixed item gets flagged "outside the schedule time window".
+  // -------------------------------------------------------------------
+
+  describe("full 24h schedule window (00:00 -> 00:00)", () => {
+    const fullDayForm = (items: EventScheduleItem[]) =>
+      withItems(items, {
+        startTime: new Date("2026-07-07T00:00:00"),
+        endTime: new Date("2026-07-07T00:00:00"),
+      });
+
+    it("treats a 9am-10am fixed item as inside the full-day window", () => {
+      const validator = new EventScheduleValidator(
+        fullDayForm([fixedItem("e1", "Morning meeting", atTime(9), 60)]),
+      );
+      expect(validator.validateEventConflicts().valid).toBe(true);
+    });
+
+    it("treats a 11pm-11:30pm fixed item as inside the full-day window", () => {
+      const validator = new EventScheduleValidator(
+        fullDayForm([fixedItem("e1", "Late block", atTime(23), 30)]),
+      );
+      expect(validator.validateEventConflicts().valid).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------
   // validateEventItemsPresent
   // -------------------------------------------------------------------
 

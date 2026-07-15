@@ -10,7 +10,7 @@ import { Platform, StyleSheet, TextInput } from "react-native";
 import { APPOINTMENT_TYPES } from "../../contants/wizardOptions";
 import { UseAppointmentsStateType } from "../../hooks/useAppointments";
 
-type Props = UseAppointmentsStateType & { totalMinutes: number };
+type Props = UseAppointmentsStateType;
 
 export function AppointmentsSection({
   appointments,
@@ -20,232 +20,201 @@ export function AppointmentsSection({
   hideDraft,
   commitAppointment,
   removeAppointment,
-  totalMinutes,
 }: Props) {
   return (
-    <View style={s.body}>
-      {/* ── Appointments ─────────────────────────────────────────────── */}
-      <View style={s.section}>
-        <View style={s.sectionHeader}>
-          <View style={s.sectionLabelRow}>
-            <Text style={s.sectionLabel}>
-              Appointments <Text style={s.optional}>(optional)</Text>
-            </Text>
-            {totalMinutes > 0 && (
-              <Text style={s.totalPill}>{TimeFormatter.formatMinutes(totalMinutes)}</Text>
-            )}
-          </View>
-          {!apptDraft.visible && (
-            <TouchableOpacity
-              style={s.addBtn}
-              onPress={showDraft}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="add" size={14} color={Colors.accent} />
-              <Text style={s.addBtnText}>Add</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Committed appointments */}
-        {appointments.map((appt) => {
-          const meta = APPOINTMENT_TYPES.find((t) => t.key === appt.type)!;
-          return (
-            <View key={appt.id} style={s.apptCard}>
-              <View style={s.apptIcon}>
-                <Ionicons name={meta.icon} size={16} color={Colors.accent} />
-              </View>
-              <View style={s.apptBody}>
-                <Text style={s.apptTitle}>{appointmentLabel(appt)}</Text>
-                <Text style={s.apptTime}>
-                  {TimeFormatter.formatTime(appt.startTime)} – {TimeFormatter.formatTime(appt.endTime)}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => removeAppointment(appt.id)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={20}
-                  color={Colors.textMuted}
-                />
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-
-        {/* Draft form */}
-        {apptDraft.visible && (
-          <View style={s.draftCard}>
-            {/* Type chips */}
-            <Text style={s.draftFieldLabel}>Type</Text>
-            <View style={s.chipRow}>
-              {APPOINTMENT_TYPES.map((t) => {
-                const active = apptDraft.type === t.key;
-                return (
-                  <TouchableOpacity
-                    key={t.key}
-                    style={[s.chip, active && s.chipActive]}
-                    onPress={() => patchAppt({ type: t.key })}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={t.icon}
-                      size={13}
-                      color={active ? Colors.accent : Colors.textMuted}
-                    />
-                    <Text style={[s.chipText, active && s.chipTextActive]}>
-                      {t.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Custom label */}
-            {apptDraft.type === "custom" && (
-              <>
-                <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>
-                  Label
-                </Text>
-                <View style={s.inputRow}>
-                  <Ionicons
-                    name="create-outline"
-                    size={15}
-                    color={Colors.textMuted}
-                  />
-                  <TextInput
-                    style={s.inputField}
-                    value={apptDraft.customLabel}
-                    onChangeText={(t) => patchAppt({ customLabel: t })}
-                    placeholder="e.g. Gym, Therapy, Errand..."
-                    placeholderTextColor={Colors.textMuted}
-                    returnKeyType="done"
-                  />
-                </View>
-              </>
-            )}
-
-            {/* Time block */}
-            <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>
-              Time Block
-            </Text>
-            <View style={{ gap: 16 }}>
-              <TimeRow
-                label="Start"
-                icon="play-circle-outline"
-                time={apptDraft.startTime}
-                onPress={() => patchAppt({ showStartPicker: true })}
-              />
-              <TimeRow
-                label="End"
-                icon="stop-circle-outline"
-                time={apptDraft.endTime}
-                onPress={() => patchAppt({ showEndPicker: true })}
-              />
-            </View>
-            {apptDraft.showStartPicker && (
-              <DateTimePicker
-                value={apptDraft.startTime}
-                mode="time"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(_, d) => {
-                  patchAppt({ showStartPicker: false });
-                  if (d) patchAppt({ startTime: d });
-                }}
-              />
-            )}
-            {apptDraft.showEndPicker && (
-              <DateTimePicker
-                value={apptDraft.endTime}
-                mode="time"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(_, d) => {
-                  patchAppt({ showEndPicker: false });
-                  if (d) patchAppt({ endTime: d });
-                }}
-              />
-            )}
-
-            {/* Actions */}
-            <View style={s.draftActions}>
-              <TouchableOpacity
-                style={s.cancelBtn}
-                onPress={hideDraft}
-                activeOpacity={0.8}
-              >
-                <Text style={s.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.confirmBtn}
-                onPress={commitAppointment}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="checkmark" size={15} color={Colors.white} />
-                <Text style={s.confirmText}>Add Appointment</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {appointments.length === 0 && !apptDraft.visible && (
-          <Text style={s.empty}>No appointments added yet.</Text>
+    <View style={s.section}>
+      <View style={s.sectionHeader}>
+        <Text style={s.sectionLabel}>
+          Appointments <Text style={s.optional}>(optional)</Text>
+        </Text>
+        {!apptDraft.visible && (
+          <TouchableOpacity
+            style={s.addBtn}
+            onPress={showDraft}
+            activeOpacity={0.6}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="add" size={16} color={Colors.accent} />
+            <Text style={s.addBtnText}>Add</Text>
+          </TouchableOpacity>
         )}
       </View>
+
+      {/* Committed appointments — cards */}
+      {appointments.map((appt) => {
+        const meta = APPOINTMENT_TYPES.find((t) => t.key === appt.type)!;
+        return (
+          <View key={appt.id} style={s.apptCard}>
+            <View style={s.apptIcon}>
+              <Ionicons name={meta.icon} size={16} color={Colors.accent} />
+            </View>
+            <View style={s.apptBody}>
+              <Text style={s.apptTitle}>{appointmentLabel(appt)}</Text>
+              <Text style={s.apptTime}>
+                {TimeFormatter.formatTime(appt.startTime)} –{" "}
+                {TimeFormatter.formatTime(appt.endTime)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={s.removeBtn}
+              onPress={() => removeAppointment(appt.id)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons
+                name="close-circle-outline"
+                size={26}
+                color={Colors.textMuted}
+              />
+            </TouchableOpacity>
+          </View>
+        );
+      })}
+
+      {/* Draft form — flat */}
+      {apptDraft.visible && (
+        <View style={s.draftBlock}>
+          {/* Type chips */}
+          <Text style={s.draftFieldLabel}>Type</Text>
+          <View style={s.chipRow}>
+            {APPOINTMENT_TYPES.map((t) => {
+              const active = apptDraft.type === t.key;
+              return (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[s.chip, active && s.chipActive]}
+                  onPress={() => patchAppt({ type: t.key })}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={t.icon}
+                    size={13}
+                    color={active ? Colors.accent : Colors.textMuted}
+                  />
+                  <Text style={[s.chipText, active && s.chipTextActive]}>
+                    {t.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Custom label */}
+          {apptDraft.type === "custom" && (
+            <>
+              <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>Label</Text>
+              <View style={s.inputRow}>
+                <Ionicons
+                  name="create-outline"
+                  size={15}
+                  color={Colors.textMuted}
+                />
+                <TextInput
+                  style={s.inputField}
+                  value={apptDraft.customLabel}
+                  onChangeText={(t) => patchAppt({ customLabel: t })}
+                  placeholder="e.g. Gym, Therapy, Errand..."
+                  placeholderTextColor={Colors.textMuted}
+                  returnKeyType="done"
+                />
+              </View>
+            </>
+          )}
+
+          {/* Time block */}
+          <Text style={[s.draftFieldLabel, { marginTop: 12 }]}>Time Block</Text>
+          <View style={{ gap: 16 }}>
+            <TimeRow
+              label="Start"
+              icon="play-circle-outline"
+              time={apptDraft.startTime}
+              onPress={() => patchAppt({ showStartPicker: true })}
+            />
+            <TimeRow
+              label="End"
+              icon="stop-circle-outline"
+              time={apptDraft.endTime}
+              onPress={() => patchAppt({ showEndPicker: true })}
+            />
+          </View>
+          {apptDraft.showStartPicker && (
+            <DateTimePicker
+              value={apptDraft.startTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, d) => {
+                patchAppt({ showStartPicker: false });
+                if (d) patchAppt({ startTime: d });
+              }}
+            />
+          )}
+          {apptDraft.showEndPicker && (
+            <DateTimePicker
+              value={apptDraft.endTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={(_, d) => {
+                patchAppt({ showEndPicker: false });
+                if (d) patchAppt({ endTime: d });
+              }}
+            />
+          )}
+
+          {/* Actions */}
+          <View style={s.draftActions}>
+            <TouchableOpacity
+              style={s.cancelBtn}
+              onPress={hideDraft}
+              activeOpacity={0.8}
+            >
+              <Text style={s.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.confirmBtn}
+              onPress={commitAppointment}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="checkmark" size={15} color={Colors.white} />
+              <Text style={s.confirmText}>Add Appointment</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {appointments.length === 0 && !apptDraft.visible && (
+        <Text style={s.empty}>No appointments added yet.</Text>
+      )}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  body: { paddingTop: 8 },
-  section: { marginTop: 24 },
+  section: { marginTop: 0, marginBottom: 24 },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  sectionLabelRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sectionLabel: {
     fontSize: 13,
     fontWeight: "700",
     color: Colors.textSecondary,
   },
   optional: { fontWeight: "400", color: Colors.textMuted },
-  totalPill: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.accent,
-    backgroundColor: Colors.accentSoft,
-    borderWidth: 1,
-    borderColor: Colors.accentGlow,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    overflow: "hidden",
-  },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.accentSoft,
-    borderWidth: 1,
-    borderColor: Colors.accentGlow,
   },
-  addBtnText: { fontSize: 12, fontWeight: "700", color: Colors.accent },
+  addBtnText: { fontSize: 13, fontWeight: "700", color: Colors.accent },
+
   apptCard: {
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
+    gap: 12,
     backgroundColor: Colors.bgCard,
     borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
     padding: 14,
-    gap: 12,
     marginBottom: 8,
     ...Shadow.card,
   },
@@ -265,15 +234,18 @@ const s = StyleSheet.create({
     marginBottom: 2,
   },
   apptTime: { fontSize: 12, color: Colors.textMuted },
-  draftCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.accent + "40",
-    padding: 16,
+  removeBtn: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  draftBlock: {
+    paddingTop: 14,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    marginTop: 4,
     gap: 4,
-    marginBottom: 8,
-    ...Shadow.card,
   },
   draftFieldLabel: {
     fontSize: 12,
@@ -331,7 +303,6 @@ const s = StyleSheet.create({
     paddingVertical: 11,
     borderRadius: Radius.md,
     backgroundColor: Colors.accent,
-    ...Shadow.accent,
   },
   confirmText: { fontSize: 13, fontWeight: "700", color: Colors.white },
   empty: {

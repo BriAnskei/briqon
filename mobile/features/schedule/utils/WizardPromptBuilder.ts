@@ -124,7 +124,10 @@ export class WizardPromptBuilder {
   private static buildPersonalPrompt(state: NewScheduleFormState): BuiltPrompt {
     const wake = TimeFormatter.formatTime(state.startTime);
     const sleep = TimeFormatter.formatTime(state.endTime);
-    const totalMins = TimeFormatter.getDurationMins(state.startTime, state.endTime);
+    const totalMins = TimeFormatter.getDurationMins(
+      state.startTime,
+      state.endTime,
+    );
 
     const lines: string[] = [
       `Schedule window: ${wake} – ${sleep} (${totalMins} minutes total).`,
@@ -206,7 +209,10 @@ export class WizardPromptBuilder {
   private static buildEventPrompt(state: NewScheduleFormState): BuiltPrompt {
     const start = TimeFormatter.formatTime(state.startTime);
     const end = TimeFormatter.formatTime(state.endTime);
-    const totalMins = TimeFormatter.getDurationMins(state.startTime, state.endTime);
+    const totalMins = TimeFormatter.getDurationMins(
+      state.startTime,
+      state.endTime,
+    );
 
     const eventKey = state.eventType ?? "other";
     const eventInfo =
@@ -282,12 +288,10 @@ Format:
       {
         "name": "string",
         "total": "string",
-        "total_minutes": number,
         "sub_activities": [
           {
             "name": "string",
             "total": "string",
-            "total_minutes": number
           }
         ]
       }
@@ -306,8 +310,8 @@ Format:
 SUMMARY FORMAT:
 "summary" is an object whose "categories" array totals the time per category, computed from the schedule.
 - Group blocks into categories inferred from their "activity".
-- "total_minutes" = exact sum of block minutes (source of truth); "total" is its "X hr Y min" display.
-- If a category has distinct sub-activities, list each under "sub_activities" with the same shape; its "total_minutes" must equal the sum of its subs.
+- "total" is its "X hr Y min" display.
+- If a category has distinct sub-activities, list each under "sub_activities" with the same shape;
 - Verify every total equals the sum of its blocks.
 `;
 

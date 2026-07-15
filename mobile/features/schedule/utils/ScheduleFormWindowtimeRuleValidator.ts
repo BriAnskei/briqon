@@ -145,7 +145,7 @@ export default class ScheduleFormWindowtimeRuleValidator {
     };
   }
 
-  private getBreakWindowMin() {
+  public getBreakWindowMin() {
     const breakFreqPercentage =
       this.getBreakPercentage()[
         this.form.breakFrequency as NonNullable<BreakFrequency>

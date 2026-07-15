@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   MealPlacement,
   Meals,
@@ -35,7 +36,7 @@ const useMeals = ({ form, setForm, step }: Payload): UseMealsStateType => {
   >(undefined);
 
   useEffect(() => {
-    if (step > 1 && meals.length === 0) {
+    if (step > 3 && meals.length === 0) {
       setIncludeMeals(false);
     }
   }, [step, meals]);

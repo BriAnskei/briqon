@@ -42,10 +42,7 @@ export default class ScheduleConflictValidator {
     const blocks = this.getTimeBlocks();
 
     const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
-    const windowEnd = TimeFormatter.normalizeMinute(
-      TimeFormatter.getMinutesOfDay(this.form.endTime),
-      windowStart,
-    );
+    const windowEnd = windowStart + this.getWindowMinutes();
 
     for (const block of blocks) {
       let start = TimeFormatter.normalizeMinute(
@@ -105,5 +102,17 @@ export default class ScheduleConflictValidator {
 
   private isOverlapping(a: TimeBlock, b: TimeBlock): boolean {
     return a.end.getTime() > b.start.getTime();
+  }
+
+  /** Total minutes spanned by the schedule window (mirrors the window validator). */
+  public getWindowMinutes(): number {
+    const { startTime, endTime } = this.form;
+    let diff = endTime.getTime() - startTime.getTime();
+
+    // Equal times (12am -> 12am) and clock-wraparound (10pm -> 6am) both mean
+    // "the window extends into the next day" -- treat both as a full 24h cycle.
+    if (diff <= 0) diff += 24 * 60 * 60 * 1000;
+
+    return Math.floor(diff / (1000 * 60));
   }
 }

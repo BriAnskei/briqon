@@ -39,6 +39,8 @@ export default class EventScheduleValidator {
    * what they can measure.
    */
   public validateEventDurationWindow(): ValidatorResType {
+    if (this.form.scheduleType === "personal") return { valid: true }; // no need for validation
+
     const totalEventMinutes = this.getEventTotalMinutes();
     if (totalEventMinutes === 0) return { valid: true };
 
@@ -60,15 +62,28 @@ export default class EventScheduleValidator {
    * treated as a zero-length point in time for overlap purposes.
    */
   public validateEventConflicts(): ValidatorResType {
+    if (this.form.scheduleType === "personal") return { valid: true }; // no need for validation
     const fixedBlocks = this.getFixedTimeBlocks();
 
     if (fixedBlocks.length === 0) return { valid: true };
 
+
+
+
+
+
+
+
+
+
+
+
     const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
-    const windowEnd = TimeFormatter.normalizeMinute(
-      TimeFormatter.getMinutesOfDay(this.form.endTime),
-      windowStart,
-    );
+    // windowStart plus the full window duration. Using getWindowMinutes()
+    // (which returns 1440 for an equal 00:00->00:00 "full day" window)
+    // avoids normalizeMinute collapsing a 00:00 end back to 0, which made
+    // every block look "outside" the window.
+    const windowEnd = windowStart + this.getWindowMinutes();
 
     const sorted = [...fixedBlocks].sort(
       (a, b) => a.start.getTime() - b.start.getTime(),
@@ -112,6 +127,7 @@ export default class EventScheduleValidator {
 
   /** Every event item must at least have a name. */
   public validateEventItemsPresent(): ValidatorResType {
+    if (this.form.scheduleType === "personal") return { valid: true }; // no need for validation
     if (this.form.eventScheduleItems.length === 0) {
       return { valid: true };
     }

@@ -112,8 +112,9 @@ export function useWizardValidation({
     if (validation.isAllValid) return undefined;
 
     if (isEvent) {
-      // Event flow: event-schedule validation lives on the details step.
-      if (step === 2) {
+      // Event flow: event-schedule validation lives on the items step
+      // (step 3 after the time step was split out from the details step).
+      if (step === 3) {
         const errors = [
           !validation.eventItemsPresent.valid &&
             validation.eventItemsPresent.message,
@@ -127,10 +128,27 @@ export function useWizardValidation({
       return undefined;
     } else {
       if (step === 1) {
-        // Appointments/meals are edited on this step, so conflicts between
-        // them (or between an appointment and a fixed-time meal) surface here too.
+        // Time-window step: the window itself is the only input here.
+        return !validation.windowTime.valid
+          ? validation.windowTime.message
+          : undefined;
+      }
+
+      if (step === 2) {
+        // Appointments step: appointment validity plus any conflicts / window
+        // violations (fixed-time meals count as time blocks too).
         const errors = [
           !validation.appointments.valid && validation.appointments.message,
+          !validation.conflicts.valid && validation.conflicts.message,
+          !validation.timeBlockRange.valid && validation.timeBlockRange.message,
+        ].filter(Boolean);
+
+        return errors.length > 0 ? errors.join("\n") : undefined;
+      }
+
+      if (step === 3) {
+        // Meals step: meal validity plus any conflicts / window violations.
+        const errors = [
           !validation.meals.valid && validation.meals.message,
           !validation.conflicts.valid && validation.conflicts.message,
           !validation.timeBlockRange.valid && validation.timeBlockRange.message,
@@ -139,11 +157,11 @@ export function useWizardValidation({
         return errors.length > 0 ? errors.join("\n") : undefined;
       }
 
-      if (step === 2) {
+      if (step === 4) {
         return !validation.breaks.valid ? validation.breaks.message : undefined;
       }
 
-      if (step === 3) {
+      if (step === 5) {
         return !validation.priorityTime.valid
           ? validation.priorityTime.message
           : undefined;

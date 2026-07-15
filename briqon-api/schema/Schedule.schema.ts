@@ -13,13 +13,11 @@ const scheduleItemSchema = z.object({
 const summarySubActivitySchedume = z.object({
   name: z.string(),
   total: z.string(),
-  total_minutes: z.number(),
 });
 
 const summaryCategorySchema = z.object({
   name: z.string(),
   total: z.string(),
-  total_minutes: z.number(),
   sub_activity: summarySubActivitySchedume.array().optional(),
 });
 

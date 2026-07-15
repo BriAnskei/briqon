@@ -52,8 +52,8 @@ jest.mock("../utils/wizardHelpers", () => ({
 // else in the module (e.g. APPOINTMENT_TYPES) stays real.
 jest.mock("../contants/wizardOptions", () => ({
   ...jest.requireActual("../contants/wizardOptions"),
-  PERSONAL_TOTAL_STEPS: 4,
-  EVENT_TOTAL_STEPS: 3,
+  PERSONAL_TOTAL_STEPS: 6,
+  EVENT_TOTAL_STEPS: 4,
 }));
 
 import {
@@ -64,7 +64,7 @@ import {
 
 // ---------------------------------------------------------------------
 // Fixtures
-// ---------------------------------------------------------------------
+// -------------------------------------------- -------------------------
 
 function makeDefaultForm(): NewScheduleFormState {
   return {
@@ -85,7 +85,9 @@ function makeDefaultForm(): NewScheduleFormState {
 }
 
 const mockGenerateSchedule = jest.fn().mockResolvedValue(undefined);
+const mockSetInputForm = jest.fn();
 const mockRouterBack = jest.fn();
+const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
 const mockSetPrevScheduleFormInput = jest.fn();
 const mockHandleScheduleGeneration = jest.fn();
@@ -117,6 +119,7 @@ beforeEach(() => {
   (useRouter as jest.Mock).mockReturnValue({
     back: mockRouterBack,
     replace: mockRouterReplace,
+    push: mockRouterPush,
   });
 
   (useSchedule as jest.Mock).mockReturnValue({
@@ -127,6 +130,7 @@ beforeEach(() => {
 
   (useAI as jest.Mock).mockReturnValue({
     service: { generateSchedule: mockGenerateSchedule },
+    setInputForm: mockSetInputForm,
   });
 });
 
@@ -142,7 +146,7 @@ describe("useWizardForm", () => {
       expect(result.current.step).toBe(0);
       expect(result.current.form).toEqual(makeDefaultForm());
       expect(result.current.isEvent).toBe(false);
-      expect(result.current.totalSteps).toBe(4); // mocked PERSONAL_TOTAL_STEPS
+      expect(result.current.totalSteps).toBe(6); // mocked PERSONAL_TOTAL_STEPS
       expect(result.current.stepError).toBeUndefined();
       expect(Toast.show).not.toHaveBeenCalled();
       expect(Toast.hide).not.toHaveBeenCalled();
@@ -184,11 +188,11 @@ describe("useWizardForm", () => {
       expect(result.current.step).toBe(1);
     });
 
-    it("canProceed() for personal flow: step 1 always true, step 2 requires breakFrequency, step 3 requires priorityFocusText", async () => {
+    it("canProceed() for personal flow: steps 1-3 always true, step 4 requires breakFrequency, step 5 requires priorityFocusText", async () => {
       const { result } = renderHook(() => useWizardForm());
       act(() => result.current.patch({ scheduleType: "personal" }));
 
-      // step 1
+      // step 1 — Time window
       expect(result.current.canProceed()).toBe(true); // step 0 satisfied
       await act(async () => {
         await result.current.handleNext();
@@ -196,21 +200,35 @@ describe("useWizardForm", () => {
       expect(result.current.step).toBe(1);
       expect(result.current.canProceed()).toBe(true); // step 1 always true
 
-      // step 2
+      // step 2 — Appointments (optional)
       await act(async () => {
         await result.current.handleNext();
       });
       expect(result.current.step).toBe(2);
+      expect(result.current.canProceed()).toBe(true); // step 2 always true
+
+      // step 3 — Meals (optional)
+      await act(async () => {
+        await result.current.handleNext();
+      });
+      expect(result.current.step).toBe(3);
+      expect(result.current.canProceed()).toBe(true); // step 3 always true
+
+      // step 4 — Breaks
+      await act(async () => {
+        await result.current.handleNext();
+      });
+      expect(result.current.step).toBe(4);
       expect(result.current.canProceed()).toBe(false); // breakFrequency still null
 
       act(() => result.current.patch({ breakFrequency: "none" }));
       expect(result.current.canProceed()).toBe(true);
 
-      // step 3
+      // step 5 — Priority
       await act(async () => {
         await result.current.handleNext();
       });
-      expect(result.current.step).toBe(3);
+      expect(result.current.step).toBe(5);
       expect(result.current.canProceed()).toBe(false); // priorityFocusText empty
 
       act(() => result.current.patch({ priorityFocusText: "Deep work" }));
@@ -219,7 +237,7 @@ describe("useWizardForm", () => {
   });
 
   describe("step-level validation errors trigger toast, and block advancing", () => {
-    it("surfaces the breaks validators not-enough-free-time error on step 2 and blocks Next", async () => {
+    it("surfaces the breaks validators not-enough-free-time error on step 4 and blocks Next", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       // A 2h window fully packed with an appointment leaves no room for the
@@ -243,13 +261,19 @@ describe("useWizardForm", () => {
       );
 
       await act(async () => {
-        await result.current.handleNext(); // step 0 -> 1
+        await result.current.handleNext(); // step 0 -> 1 (Time)
       });
       await act(async () => {
-        await result.current.handleNext(); // step 1 -> 2
+        await result.current.handleNext(); // step 1 -> 2 (Appointments)
+      });
+      await act(async () => {
+        await result.current.handleNext(); // step 2 -> 3 (Meals)
+      });
+      await act(async () => {
+        await result.current.handleNext(); // step 3 -> 4 (Breaks)
       });
 
-      expect(result.current.step).toBe(2);
+      expect(result.current.step).toBe(4);
       expect(result.current.stepError).toContain(
         "There isn't enough free time",
       );
@@ -269,7 +293,7 @@ describe("useWizardForm", () => {
       await act(async () => {
         await result.current.handleNext();
       });
-      expect(result.current.step).toBe(2); // still stuck on step 2
+      expect(result.current.step).toBe(4); // still stuck on step 4
       expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
         toastCallsBeforeRetry,
       );
@@ -282,7 +306,7 @@ describe("useWizardForm", () => {
       await act(async () => {
         await result.current.handleNext();
       });
-      expect(result.current.step).toBe(3);
+      expect(result.current.step).toBe(5); // -> step 5 (Priority, last)
     });
 
     it("shows a remaining-time error on the priority step when the requested duration doesn't fit, and clears once it does", async () => {
@@ -316,16 +340,22 @@ describe("useWizardForm", () => {
       );
 
       await act(async () => {
-        await result.current.handleNext(); // -> step 1
+        await result.current.handleNext(); // -> step 1 (Time)
       });
       act(() => result.current.patch({ breakFrequency: "balanced" }));
       await act(async () => {
-        await result.current.handleNext(); // -> step 2
+        await result.current.handleNext(); // -> step 2 (Appointments)
       });
       await act(async () => {
-        await result.current.handleNext(); // -> step 3
+        await result.current.handleNext(); // -> step 3 (Meals)
       });
-      expect(result.current.step).toBe(3);
+      await act(async () => {
+        await result.current.handleNext(); // -> step 4 (Breaks)
+      });
+      await act(async () => {
+        await result.current.handleNext(); // -> step 5 (Priority)
+      });
+      expect(result.current.step).toBe(5);
       expect(result.current.stepError).toBeUndefined(); // priorityDurationMinutes is 0 by default
 
       act(() => result.current.patch({ priorityDurationMinutes: 200 }));
@@ -363,7 +393,13 @@ describe("useWizardForm", () => {
         await result.current.handleNext(); // 1 -> 2
       });
       await act(async () => {
-        await result.current.handleNext(); // 2 -> 3 (last step, totalSteps=4)
+        await result.current.handleNext(); // 2 -> 3
+      });
+      await act(async () => {
+        await result.current.handleNext(); // 3 -> 4
+      });
+      await act(async () => {
+        await result.current.handleNext(); // 4 -> 5 (last step, totalSteps=6)
       });
 
       expect(result.current.isLastStep()).toBe(true);
@@ -372,53 +408,59 @@ describe("useWizardForm", () => {
         await result.current.handleNext(); // submit
       });
 
-      expect(WizardPromptBuilder.build).toHaveBeenCalledWith(
-        result.current.form,
-      );
-      // The hook now routes to the generation screen instead of invoking the
-      // AI service directly (the generate call is currently commented out).
-      expect(mockRouterReplace).toHaveBeenCalledWith("/schedule/generation");
+      // The prompt is NOT built here — generation is deferred to the
+      // generation screen, so build() should not be invoked by the hook.
+      expect(WizardPromptBuilder.build).not.toHaveBeenCalled();
+      // The hook hands the form to the AI context and routes to generation.
+      expect(mockSetInputForm).toHaveBeenCalledWith(result.current.form);
+      expect(mockRouterPush).toHaveBeenCalledWith("/schedule/generation");
       expect(mockGenerateSchedule).not.toHaveBeenCalled();
       // Submitting doesn't advance past the last step index.
-      expect(result.current.step).toBe(3);
+      expect(result.current.step).toBe(5);
     });
   });
 
   describe("event flow", () => {
-    it("uses EVENT_TOTAL_STEPS and surfaces event validation (e.g. a fixed-time item outside the window) on step 2, blocking Next", async () => {
+    it("uses EVENT_TOTAL_STEPS and surfaces event validation (e.g. a fixed-time item outside the window) on step 3 (Items), blocking Next", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() => result.current.patch({ scheduleType: "event" }));
 
       expect(result.current.isEvent).toBe(true);
-      expect(result.current.totalSteps).toBe(3); // mocked EVENT_TOTAL_STEPS
+      expect(result.current.totalSteps).toBe(4); // mocked EVENT_TOTAL_STEPS
 
-      // Steps 0 and 1 don't gate on event-schedule validation, so no toast
+      // Steps 0, 1 and 2 don't gate on event-schedule validation, so no toast
       // and no stepError there.
       expect(result.current.stepError).toBeUndefined();
       await act(async () => {
-        await result.current.handleNext(); // -> step 1
+        await result.current.handleNext(); // -> step 1 (Details)
       });
       expect(result.current.step).toBe(1);
       expect(result.current.stepError).toBeUndefined();
       expect(Toast.show).not.toHaveBeenCalled();
 
-      // The event details step (step 2) requires an eventType to be chosen.
+      // The event details step (step 1) requires an eventType to be chosen.
       act(() => result.current.patch({ eventType: "birthday" }));
       await act(async () => {
-        await result.current.handleNext(); // -> step 2
+        await result.current.handleNext(); // -> step 2 (Time)
       });
       expect(result.current.step).toBe(2);
 
-      // Window 08:00–20:00. Add a fixed-time item at 21:00 — outside the
-      // window. This exercises EventScheduleValidator.validateEventConflicts,
-      // which now checks fixed-time blocks against the window.
+      // Window 08:00–20:00 on the time step.
       act(() =>
         result.current.patch({
           startTime: new Date("2026-07-07T08:00:00"),
           endTime: new Date("2026-07-07T20:00:00"),
         }),
       );
+      await act(async () => {
+        await result.current.handleNext(); // -> step 3 (Items)
+      });
+      expect(result.current.step).toBe(3);
+
+      // Add a fixed-time item at 21:00 — outside the window. This exercises
+      // EventScheduleValidator.validateEventConflicts, which checks fixed-time
+      // blocks against the window.
       act(() =>
         result.current.eventItemsState.patchEventItem({
           visible: true,
@@ -441,12 +483,12 @@ describe("useWizardForm", () => {
         }),
       );
 
-      // Tapping Next with the conflict unfixed re-toasts and stays on step 2.
+      // Tapping Next with the conflict unfixed re-toasts and stays on step 3.
       const toastCallsBeforeRetry = (Toast.show as jest.Mock).mock.calls.length;
       await act(async () => {
         await result.current.handleNext();
       });
-      expect(result.current.step).toBe(2);
+      expect(result.current.step).toBe(3);
       expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
         toastCallsBeforeRetry,
       );
@@ -584,7 +626,7 @@ describe("useWizardForm", () => {
   });
 
   describe("step 1 validation errors (appointments / meals / conflicts)", () => {
-    it("surfaces an appointment-overlap conflict on step 1 and blocks Next", async () => {
+    it("surfaces an appointment-overlap conflict on step 2 (Appointments) and blocks Next", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() =>
@@ -612,9 +654,12 @@ describe("useWizardForm", () => {
       );
 
       await act(async () => {
-        await result.current.handleNext(); // 0 -> 1
+        await result.current.handleNext(); // 0 -> 1 (Time)
       });
-      expect(result.current.step).toBe(1);
+      await act(async () => {
+        await result.current.handleNext(); // 1 -> 2 (Appointments)
+      });
+      expect(result.current.step).toBe(2);
       expect(result.current.stepError).toContain("conflicts with");
       expect(Toast.show).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -623,12 +668,12 @@ describe("useWizardForm", () => {
       );
 
       // Tapping Next again with the conflict unfixed should re-toast and
-      // NOT advance past step 1.
+      // NOT advance past step 2.
       const toastCallsBeforeRetry = (Toast.show as jest.Mock).mock.calls.length;
       await act(async () => {
         await result.current.handleNext();
       });
-      expect(result.current.step).toBe(1);
+      expect(result.current.step).toBe(2);
       expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
         toastCallsBeforeRetry,
       );
@@ -643,7 +688,7 @@ describe("useWizardForm", () => {
       expect(Toast.hide).toHaveBeenCalled();
     });
 
-    it("surfaces a fixed-time meal placed outside the window on step 1", async () => {
+    it("surfaces a fixed-time meal placed outside the window on step 2 (Appointments) and blocks Next", async () => {
       const { result } = renderHook(() => useWizardForm());
 
       act(() =>
@@ -664,9 +709,12 @@ describe("useWizardForm", () => {
       );
 
       await act(async () => {
-        await result.current.handleNext(); // 0 -> 1
+        await result.current.handleNext(); // 0 -> 1 (Time)
       });
-      expect(result.current.step).toBe(1);
+      await act(async () => {
+        await result.current.handleNext(); // 1 -> 2 (Appointments)
+      });
+      expect(result.current.step).toBe(2);
       expect(result.current.stepError).toContain(
         "outside the schedule time window",
       );
@@ -674,6 +722,17 @@ describe("useWizardForm", () => {
         expect.objectContaining({
           text2: expect.stringContaining("outside the schedule time window"),
         }),
+      );
+
+      // Tapping Next again with the meal outside the window re-toasts and
+      // stays on step 2.
+      const toastCallsBeforeRetry = (Toast.show as jest.Mock).mock.calls.length;
+      await act(async () => {
+        await result.current.handleNext();
+      });
+      expect(result.current.step).toBe(2);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
       );
 
       // Moving the fixed meal inside the window clears the error.

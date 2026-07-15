@@ -5,12 +5,14 @@ const TimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format");
 
-const ScheduleItemSchema = z.object({
+export const ScheduleItemSchema = z.object({
   start_time: TimeSchema,
   end_time: TimeSchema,
   activity: z.string(),
   enabled: z.boolean().optional(),
 });
+
+export type ScheduleItem = z.infer<typeof ScheduleItemSchema>;
 
 export const ScheduleSchema = z.object({
   id: z.string(), // ULID

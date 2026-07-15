@@ -13,13 +13,21 @@ import { Colors, Radius, Shadow } from "@/type/theme";
 import { useWizardForm } from "@/features/schedule/hooks/useWizardForm";
 
 import { TypeStep } from "@/features/schedule/components/wizard/TypeStep";
-import { PersonalTimeStep } from "@/features/schedule/components/wizard/PersonalTimeStep";
+import { TimeWindowSettings } from "@/features/schedule/components/wizard/TimeWindowSettings";
 import { BreaksStep } from "@/features/schedule/components/wizard/BreaksStep";
 import { PriorityStep } from "@/features/schedule/components/wizard/PriorityStep";
+import { AppointmentsSection } from "@/features/schedule/components/wizard/AppointmentsSection";
+import { MealsSection } from "@/features/schedule/components/wizard/MealsSection";
 
 import { EventTimeStep } from "@/features/schedule/components/wizard/EventTimeStep";
+import { EventItemsStep } from "@/features/schedule/components/wizard/EventItemsStep";
 import { StepIndicator } from "@/components/StepIndecator";
 import { EventDetailsStep } from "@/features/schedule/components/wizard/EventDetialsStep";
+import {
+  SummaryCard,
+  personalSummaryItems,
+  eventSummaryItems,
+} from "@/features/schedule/components/wizard/SummaryCard";
 import {
   EVENT_STEP_LABELS,
   PERSONAL_STEP_LABELS,
@@ -42,29 +50,21 @@ export default function AddScheduleScreen() {
     if (w.isEvent) {
       if (w.step === 1)
         return <EventDetailsStep form={w.form} patch={w.patch} />;
-      if (w.step === 2)
-        return (
-          <EventTimeStep form={w.form} patch={w.patch} {...w.eventItemsState} />
-        );
+      if (w.step === 2) return <EventTimeStep form={w.form} patch={w.patch} />;
+      if (w.step === 3) return <EventItemsStep {...w.eventItemsState} />;
     } else {
       if (w.step === 1)
-        return (
-          <PersonalTimeStep
-            form={w.form}
-            patch={w.patch}
-            apptState={w.apptState}
-            mealsState={w.mealsState}
-            fixedScheduleDuration={w.fixedScheduleDuration}
-          />
-        );
-      if (w.step === 2)
+        return <TimeWindowSettings form={w.form} patch={w.patch} />;
+      if (w.step === 2) return <AppointmentsSection {...w.apptState} />;
+      if (w.step === 3) return <MealsSection {...w.mealsState} />;
+      if (w.step === 4)
         return (
           <BreaksStep
             breakFrequency={w.form.breakFrequency}
             onChange={(v) => w.patch({ breakFrequency: v })}
           />
         );
-      if (w.step === 3) return <PriorityStep form={w.form} patch={w.patch} />;
+      if (w.step === 5) return <PriorityStep form={w.form} patch={w.patch} />;
     }
   };
 
@@ -80,22 +80,28 @@ export default function AddScheduleScreen() {
           <Ionicons name="arrow-back" size={20} color={Colors.textSecondary} />
         </TouchableOpacity>
         <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>New Schedule</Text>
-          <Text style={s.headerSub}>
-            Step {w.step + 1} of {w.totalSteps}
-          </Text>
+          {w.step === 0 ? (
+            <Text style={s.headerTitle}>Choose a schedule type</Text>
+          ) : (
+            <>
+              <Text style={s.headerTitle}>New Schedule</Text>
+              <Text style={s.headerSub}>
+                Step {w.step + 1} of {w.totalSteps}
+              </Text>
+            </>
+          )}
         </View>
         {/* Spacer to keep title centred */}
         <View style={{ width: 38 }} />
       </View>
 
-      {/* ── Step indicator ─────────────────────────────────────────────── */}
-      <StepIndicator step={w.step} labels={stepLabels} />
+      {/* ── Step indicator (hidden on the type-selection step) ──────────── */}
+      {w.step > 0 && <StepIndicator step={w.step - 1} labels={stepLabels} />}
 
       {/* ── Content ────────────────────────────────────────────────────── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
         keyboardVerticalOffset={0}
       >
         <ScrollView
@@ -104,6 +110,16 @@ export default function AddScheduleScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {w.step > 0 &&
+            (w.isEvent
+              ? w.eventSummary && (
+                  <SummaryCard items={eventSummaryItems(w.eventSummary)} />
+                )
+              : w.personalSummary && (
+                  <SummaryCard
+                    items={personalSummaryItems(w.personalSummary)}
+                  />
+                ))}
           {renderStep()}
           <View style={{ height: 32 }} />
         </ScrollView>

@@ -115,7 +115,8 @@ export class TimeFormatter {
   static formatDuration(start?: string, end?: string): string {
     if (!start || !end) return "";
 
-    const diff = TimeFormatter.timeToMinutes(end) - TimeFormatter.timeToMinutes(start);
+    const diff =
+      TimeFormatter.timeToMinutes(end) - TimeFormatter.timeToMinutes(start);
     if (diff <= 0) return "";
 
     return TimeFormatter.formatMinutes(diff);
