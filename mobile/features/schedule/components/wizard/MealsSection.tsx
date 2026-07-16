@@ -17,8 +17,8 @@ import { UseMealsStateType } from "../../hooks/useMeals";
 
 const MEAL_TYPES = [
   {
-    key: "breakfast" as MealType,
-    label: "Breakfast",
+    key: "breakfast / morning outine" as MealType,
+    label: "Breakfast / Morning Routine",
     icon: "sunny-outline",
     defaultMins: 30,
   },

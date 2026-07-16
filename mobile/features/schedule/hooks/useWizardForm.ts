@@ -71,6 +71,8 @@ export function useWizardForm() {
     const breakMinutes = form.breakFrequency
       ? validator.getBreakWindowMin()
       : 0;
+
+
     const remainingMinutes = Math.max(
       0,
       windowMinutes -

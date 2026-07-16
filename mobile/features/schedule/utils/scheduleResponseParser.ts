@@ -1,9 +1,6 @@
 import { ulid } from "ulid";
 import { z } from "zod";
-import {
-  ScheduleItem,
-  ScheduleItemSchema,
-} from "@/src/models/schedule.model";
+import { ScheduleItem, ScheduleItemSchema } from "@/src/models/schedule.model";
 import {
   ScheduleSummary,
   ScheduleSummarySchema,
@@ -55,28 +52,6 @@ export function parseScheduleResponse(raw: unknown): GenerationResult {
   const scheduleId = ulid();
   const summary: ScheduleSummary[] = [];
   const subSummary: SubSummary[] = [];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
 
   parsed.summary.categories.forEach((category) => {
     const summaryId = ulid();

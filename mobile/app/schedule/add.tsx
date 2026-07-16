@@ -32,7 +32,6 @@ import {
   EVENT_STEP_LABELS,
   PERSONAL_STEP_LABELS,
 } from "@/features/schedule/contants/wizardOptions";
-import { EventItemDraft } from "@/type/NewScheduleTypes";
 
 export default function AddScheduleScreen() {
   const w = useWizardForm();
@@ -101,7 +100,7 @@ export default function AddScheduleScreen() {
       {/* ── Content ────────────────────────────────────────────────────── */}
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={0}
       >
         <ScrollView

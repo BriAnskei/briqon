@@ -1,15 +1,19 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Platform,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
-
 import { appointmentLabel } from "../../utils/wizardHelpers";
 import { TimeFormatter } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Platform, StyleSheet, TextInput } from "react-native";
 import { APPOINTMENT_TYPES } from "../../contants/wizardOptions";
 import { UseAppointmentsStateType } from "../../hooks/useAppointments";
-
 type Props = UseAppointmentsStateType;
 
 export function AppointmentsSection({

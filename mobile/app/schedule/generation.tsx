@@ -60,7 +60,7 @@ export default function GenerateScheduleScreen() {
 
         {error && <ErrorCard error={error} onRetry={handleRegenerate} />}
 
-        {isGenerating && result && (
+        {!isGenerating && result && (
           <View style={s.resultSection}>
             {showRegenerateCard && (
               <RegenerateCard

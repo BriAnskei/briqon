@@ -1,10 +1,8 @@
 import SplashScreen from "@/components/SplashScreen";
 import { toastConfig } from "@/components/toastConfig";
-import { AIProvider, useAI } from "@/context/AIContext";
+import { AIProvider } from "@/context/AIContext";
 import { ScheduleProvider } from "@/context/ScheduleContext";
-
 import { initializeDb } from "@/src/database/init";
-
 import { Stack } from "expo-router";
 import { useState, useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -25,13 +23,12 @@ export default function RootLayout() {
 
 function ScreenStack() {
   const [isReady, setIsReady] = useState(false);
-  const { ready } = useAI();
 
   useEffect(() => {
     initializeDb().finally(() => setIsReady(true));
   }, []);
 
-  if (!isReady && !ready) {
+  if (!isReady) {
     return <SplashScreen />;
   }
   return (

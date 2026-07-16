@@ -1,26 +1,15 @@
 export type ScheduleType = "personal" | "event" | null;
 export type BreakFrequency =
-  | "few-long"
-  | "balanced"
-  | "many-short"
-  | "none"
-  | null;
+  "few-long" | "balanced" | "many-short" | "none" | null;
 export type AppointmentType = "work" | "school" | "medical" | "custom";
 export type EventType =
-  | "birthday"
-  | "wedding"
-  | "conference"
-  | "concert"
-  | "other"
-  | null;
+  "birthday" | "wedding" | "conference" | "concert" | "other" | null;
 
-export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+export type MealType =
+  "breakfast / morning outine" | "lunch" | "dinner" | "snack";
 
 export type MealPlacement =
-  | "flexible"
-  | "anchor_first"
-  | "anchor_last"
-  | "fixed_time";
+  "flexible" | "anchor_first" | "anchor_last" | "fixed_time";
 
 export interface Appointment {
   id: string;

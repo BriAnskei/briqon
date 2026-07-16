@@ -1,7 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Step, UNDERSTANDING_DELAY } from "./constants";
-import { ScheduleResult } from "./types";
-import { mockGenerateScheduleRequest } from "./mock";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect } from "react";
 import { useAI } from "@/context/AIContext";
 
 export function useScheduleGeneration() {

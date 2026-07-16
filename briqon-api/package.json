@@ -12,9 +12,11 @@
   "type": "commonjs",
   "dependencies": {
     "@google/genai": "^2.10.0",
+    "jsonwebtoken": "^9.0.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "vercel": "^54.21.1"
   }
 }

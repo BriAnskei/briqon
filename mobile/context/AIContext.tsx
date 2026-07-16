@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable import/no-named-as-default-member */
 import { api } from "@/api/client";
 import { Step } from "@/features/schedule/components/GenerateScheduleScreen/constants";
 import {
@@ -12,6 +14,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from "react";
 
@@ -44,26 +47,27 @@ export function AIProvider({ children }: { children: ReactNode }) {
 
   const generateSchedule = useCallback(async () => {
     if (!inputForm) return setError("no data in form");
+    setCompletedSteps(["sending"]);
 
     setIsGenerating(true);
-    setCompletedSteps(["sending"]);
 
     const { prompt, systemInstruction } = WizardPromptBuilder.build(inputForm);
 
     try {
       setCompletedSteps((prev) => [...prev, "understanding"]);
-
-      await delay(1200);
-      setCompletedSteps((prev) => [...prev, "creating"]);
+      await delay(900);
 
       const res = await api.post("/api/generate", {
         prompt,
         systemInstruction,
       });
 
-    const parsed = parseScheduleResponse(res.data.res);
+      await delay(900);
+
+      const parsed = parseScheduleResponse(res.data.res);
 
       setResult(parsed);
+      setCompletedSteps((prev) => [...prev, "creating"]);
     } catch (err) {
       console.log("Failed:");
       console.error(err);
@@ -82,7 +86,6 @@ export function AIProvider({ children }: { children: ReactNode }) {
   }, [inputForm]);
 
   const handleRegenerate = useCallback(() => {
-    if (!inputForm) return;
     resetSteps();
     generateSchedule();
   }, [inputForm, generateSchedule]);
