@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
   BreakFrequency,
-  PriorityFocus,
   AppointmentType,
   EventType,
 } from "@/type/NewScheduleTypes";
@@ -40,36 +39,6 @@ export const BREAK_FREQUENCY_OPTIONS: {
     icon: "remove-circle-outline",
     desc: "Uninterrupted flow — no scheduled breaks",
     color: "#94A3B8",
-  },
-];
-
-export const PRIORITY_OPTIONS: {
-  key: Exclude<PriorityFocus, null>;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  desc: string;
-  color: string;
-}[] = [
-  {
-    key: "productivity",
-    label: "Productivity",
-    icon: "rocket-outline",
-    desc: "Focused on output, tasks & deep work",
-    color: "#7B6FFF",
-  },
-  {
-    key: "socializing",
-    label: "Socializing",
-    icon: "people-outline",
-    desc: "People-centered, networking & connection",
-    color: "#5BB8FF",
-  },
-  {
-    key: "rest and recovery",
-    label: "Rest & Recovery",
-    icon: "moon-outline",
-    desc: "Recharge, unwind & restore energy",
-    color: "#1FD8A0",
   },
 ];
 

@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable import/no-named-as-default-member */
 import { api } from "@/api/client";
+import { getTokenAsync } from "@/features/schedule/auth/auth.service";
 import { Step } from "@/features/schedule/components/GenerateScheduleScreen/constants";
 import {
   GenerationResult,
@@ -57,10 +58,21 @@ export function AIProvider({ children }: { children: ReactNode }) {
       setCompletedSteps((prev) => [...prev, "understanding"]);
       await delay(900);
 
-      const res = await api.post("/api/generate", {
-        prompt,
-        systemInstruction,
-      });
+      const token = await getTokenAsync();
+
+      const res = await api.post(
+        "/api/generate",
+        {
+          prompt,
+          systemInstruction,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
       await delay(900);
 

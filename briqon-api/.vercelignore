@@ -1,0 +1,3 @@
+# Tests and test tooling must not be deployed as serverless functions
+**/*.test.ts
+jest.config.js

@@ -40,12 +40,6 @@ export function useWizardForm() {
   const router = useRouter();
   const { setInputForm } = useAI();
 
-  const {
-    handleScheduleGeneration,
-    prevScheduleForm,
-    setPrevScheduleFormInput,
-  } = useSchedule();
-
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
 
@@ -71,7 +65,6 @@ export function useWizardForm() {
     const breakMinutes = form.breakFrequency
       ? validator.getBreakWindowMin()
       : 0;
-
 
     const remainingMinutes = Math.max(
       0,

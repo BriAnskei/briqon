@@ -3,16 +3,25 @@ import {
   GeminiScheduleSchema,
 } from "../schema/Schedule.schema";
 import { ai } from "../util/ai";
+import { withAuth } from "./middleware/auth";
+import { withRateLimit } from "./middleware/rateLimit";
 
-export default async function handler(req: any, res: any) {
+export async function generateHanlder(req: any, res: any) {
   if (req.method !== "POST") {
-  return res.status(405).json({
+    return res.status(405).json({
       success: false,
       error: "Method not allowed",
     });
   }
 
   const { prompt, systemInstruction } = req.body;
+
+  if (!prompt || !systemInstruction) {
+    return res.status(400).json({
+      success: false,
+      error: "Missing fields",
+    });
+  }
 
   try {
     let MAX_ATTEMPS = 2;
@@ -26,6 +35,7 @@ export default async function handler(req: any, res: any) {
           responseMimeType: "application/json",
           responseSchema: GeminiScheduleSchema,
         },
+
         contents: prompt,
       });
 
@@ -40,7 +50,6 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      console.error(parsed.error);
       MAX_ATTEMPS--;
     }
 
@@ -57,3 +66,5 @@ export default async function handler(req: any, res: any) {
     });
   }
 }
+
+export default withAuth(withRateLimit(generateHanlder));
