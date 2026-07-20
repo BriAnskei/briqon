@@ -1,5 +1,8 @@
 import z from "zod";
+import { ulid } from "ulid";
 
-export function validate<T>(schema: z.ZodSchema<T>, input: unknown): T {
-  return schema.parse(input);
+export function mapSchema<T>(input: object): {
+return {
+  ...input,
+}
 }

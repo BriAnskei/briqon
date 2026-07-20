@@ -8,9 +8,10 @@
 	"files": {
 		"ignoreUnknown": false
 	},
-"formatter": {
+	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"lineWidth": 80
 	},
 	"linter": {
 		"enabled": true,

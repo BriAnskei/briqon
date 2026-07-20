@@ -7,20 +7,27 @@ import { RegenerateCard } from "@/features/schedule/components/GenerateScheduleS
 import { ScheduleTimeline } from "@/features/schedule/components/GenerateScheduleScreen/components/ScheduleTimeline";
 import { ScreenHeader } from "@/features/schedule/components/GenerateScheduleScreen/components/ScreenHeader";
 import { SummaryCard } from "@/features/schedule/components/GenerateScheduleScreen/components/SummaryCard";
-import { useScheduleGeneration } from "@/features/schedule/hooks/useScheduleGeneration";
+
 import { Colors } from "@/type/theme";
 import { useRouter } from "expo-router";
 import { useState, useEffect } from "react";
 import { ScrollView, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useGenerateScheduleScreen } from "@/features/schedule/hooks/generation/useGenerateScheduleScreen";
+import { SaveScheduleModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SaveScheduleModal";
 
 export default function GenerateScheduleScreen() {
   const s = useSStyles();
   const router = useRouter();
-  const { handleRegenerate, completedSteps, result, error, isGenerating } =
-    useScheduleGeneration();
-
-  const [setActiveModalVisible, setSetActiveModalVisible] = useState(false);
+  const {
+    handleRegenerate,
+    completedSteps,
+    result,
+    error,
+    isGenerating,
+    saveScheduleModalState,
+    resetSteps
+  } = useGenerateScheduleScreen();
 
   const [showRegenerateCard, setShowRegenerateCard] = useState(false);
   useEffect(() => {
@@ -33,20 +40,16 @@ export default function GenerateScheduleScreen() {
   }, [isGenerating]);
 
   const handleGoHome = () => {
+    resetSteps()
     router.replace("/");
   };
 
   const handleBackToForm = () => {
+    resetSteps()
     router.back();
   };
 
-  const handleSave = () => {
-    // TODO: wire to your actual save flow using CreateSchedule
-  };
-
-  const handleSetActive = () => {
-    setSetActiveModalVisible(true);
-  };
+  const handleSetActive = () => { };
 
   return (
     <SafeAreaView style={s.root} edges={["top", "bottom"]}>
@@ -84,9 +87,22 @@ export default function GenerateScheduleScreen() {
         <View style={{ height: 32 }} />
       </ScrollView>
 
-      {isGenerating && result && (
-        <GenerationFooter onSave={handleSave} onSetActive={handleSetActive} />
+      {!isGenerating && result && (
+        <GenerationFooter
+          onSave={saveScheduleModalState.openSaveSchedModal}
+          onSetActive={handleSetActive}
+        />
       )}
+
+      {/*Modals*/}
+      <SaveScheduleModal
+        visible={saveScheduleModalState.isSaveModalOpen}
+        onClose={saveScheduleModalState.closeSaveSchedModal}
+        handleSave={saveScheduleModalState.handleSaveSchedule}
+        setName={saveScheduleModalState.setName}
+        name={saveScheduleModalState.name}
+        isSaving={saveScheduleModalState.isSaving}
+      />
 
       {/* <SetActiveModal
         visible={setActiveModalVisible}
@@ -101,13 +117,13 @@ function useSStyles() {
   return useMemo(
     () =>
       StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.bg },
+        root: { flex: 1, backgroundColor: Colors.bg },
 
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
+        scroll: { flex: 1 },
+        scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
 
-  resultSection: { marginTop: 20, gap: 20 },
-}),
+        resultSection: { marginTop: 20, gap: 20 },
+      }),
     [colors],
   );
-};
+}

@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import { CreateScheduleItemArraySchema } from "../models/schedule.model";
+
 import axios from "axios";
 
 const SYSTEM_PROMPT = `
@@ -57,87 +57,85 @@ No explanation.
 `.trim();
 
 type Message = {
-  role: "system" | "user" | "assistant";
-  content: string;
+	role: "system" | "user" | "assistant";
+	content: string;
 };
 
 export class AIService {
-  private readonly maxRetries = 3;
+	private readonly maxRetries = 3;
 
-  async generateSchedule(prompt: string) {
-    const messages: Message[] = [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT,
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ];
+	async generateSchedule(prompt: string) {
+		const messages: Message[] = [
+			{
+				role: "system",
+				content: SYSTEM_PROMPT,
+			},
+			{
+				role: "user",
+				content: prompt,
+			},
+		];
 
-    for (let attempt = 0; attempt < this.maxRetries; attempt++) {
-      const response = await this.requestCompletion(messages);
+		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
+			const response = await this.requestCompletion(messages);
 
-      const schedule = this.validateSchedule(response);
+			const schedule = this.validateSchedule(response);
 
-      console.log("generated schedule: ", schedule);
+			console.log("generated schedule: ", schedule);
 
-      if (schedule) {
-        return schedule;
-      }
+			if (schedule) {
+				return schedule;
+			}
 
-      messages.push(
-        {
-          role: "assistant",
-          content: response,
-        },
-        {
-          role: "user",
-          content: RETRY_MESSAGE,
-        },
-      );
-    }
+			messages.push(
+				{
+					role: "assistant",
+					content: response,
+				},
+				{
+					role: "user",
+					content: RETRY_MESSAGE,
+				},
+			);
+		}
 
-    throw new Error("Unable to generate a valid schedule");
-  }
+		throw new Error("Unable to generate a valid schedule");
+	}
 
-  private async requestCompletion(messages: Message[]) {
-    const maxRetry = 10;
+	private async requestCompletion(messages: Message[]) {
+		const maxRetry = 10;
 
-    for (let attemp = 1; attemp <= maxRetry; attemp++) {
-      try {
-        const apiKey = Constants.expoConfig?.extra?.OPENROUTER_API_KEY;
+		for (let attemp = 1; attemp <= maxRetry; attemp++) {
+			try {
+				const apiKey = Constants.expoConfig?.extra?.OPENROUTER_API_KEY;
 
-        const result = await axios.post(
-          "https://openrouter.ai/api/v1/chat/completions",
-          {
-            model: "openai/gpt-oss-120b:free",
-            messages,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
+				const result = await axios.post(
+					"https://openrouter.ai/api/v1/chat/completions",
+					{
+						model: "openai/gpt-oss-120b:free",
+						messages,
+					},
+					{
+						headers: {
+							Authorization: `Bearer ${apiKey}`,
+							"Content-Type": "application/json",
+						},
+					},
+				);
 
-        return JSON.parse(result.data.choices[0].message.content);
-      } catch (error) {
-        console.log("failed: ", error);
-        continue;
-      }
-    }
-  }
+				return JSON.parse(result.data.choices[0].message.content);
+			} catch (error) {
+				console.log("failed: ", error);
+				continue;
+			}
+		}
+	}
 
-  private validateSchedule(content: string) {
-    try {
-      const json = JSON.parse(content);
-
-      return CreateScheduleItemArraySchema.parse(json);
-    } catch {
-      return null;
-    }
-  }
+	private validateSchedule(content: string) {
+		try {
+			const json = JSON.parse(content);
+		} catch {
+			return null;
+		}
+	}
 }

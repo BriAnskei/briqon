@@ -1,4 +1,4 @@
 export type ValidatorResType = {
-  message?: string;
-  valid: boolean;
+	message?: string;
+	valid: boolean;
 };

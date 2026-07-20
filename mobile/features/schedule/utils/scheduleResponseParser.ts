@@ -1,38 +1,12 @@
-import { ulid } from "ulid";
-import { z } from "zod";
-import { ScheduleItem, ScheduleItemSchema } from "@/src/models/schedule.model";
+import { ScheduleItemSchema } from "@/src/models/schedule.model";
+import { RawScheduleResponseSchema } from "@/src/models/scheduleApiResponse.model";
 import {
-  ScheduleSummary,
-  ScheduleSummarySchema,
-} from "@/src/models/schedule_summary.model";
-import { SubSummary, SubSummarySchema } from "@/src/models/sub_summary.model";
-
-// ── Raw API response (mirrors the briqon-api serverless response) ──────────
-const TimeSchema = z
-  .string()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time format");
-
-const RawScheduleItemSchema = z.object({
-  start_time: TimeSchema,
-  end_time: TimeSchema,
-  activity: z.string(),
-});
-
-const RawSubActivitySchema = z.object({
-  name: z.string(),
-  total: z.string(),
-});
-
-const RawCategorySchema = z.object({
-  name: z.string(),
-  total: z.string(),
-  sub_activity: RawSubActivitySchema.array().optional(),
-});
-
-const RawScheduleResponseSchema = z.object({
-  summary: z.object({ categories: RawCategorySchema.array() }),
-  schedule: RawScheduleItemSchema.array(),
-});
+  SubSummariesSchema,
+  SubSummary,
+} from "@/src/models/sub_summaries.model";
+import { ScheduleSummary, SummariesSchema } from "@/src/models/summaries.model";
+import { ScheduleItem } from "@/type/MessageTypes";
+import { ulid } from "ulid";
 
 // ── Client-model result (relational shape for UI / SQLite) ─────────────────
 export type GenerationResult = {
@@ -49,16 +23,15 @@ export type GenerationResult = {
 export function parseScheduleResponse(raw: unknown): GenerationResult {
   const parsed = RawScheduleResponseSchema.parse(raw);
 
-  const scheduleId = ulid();
   const summary: ScheduleSummary[] = [];
   const subSummary: SubSummary[] = [];
 
   parsed.summary.categories.forEach((category) => {
     const summaryId = ulid();
     summary.push(
-      ScheduleSummarySchema.parse({
+      SummariesSchema.parse({
         id: summaryId,
-        schedule_id: scheduleId,
+        schedule_id: '2',
         name: category.name,
         total: category.total,
       }),
@@ -66,7 +39,7 @@ export function parseScheduleResponse(raw: unknown): GenerationResult {
 
     category.sub_activity?.forEach((sub) => {
       subSummary.push(
-        SubSummarySchema.parse({
+        SubSummariesSchema.parse({
           id: ulid(),
           summary_id: summaryId,
           name: sub.name,

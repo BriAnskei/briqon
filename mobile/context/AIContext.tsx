@@ -15,7 +15,6 @@ import {
   ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from "react";
 
@@ -23,11 +22,11 @@ type AIContextProvider = {
   generateSchedule: () => Promise<any>;
   setInputForm: (form: NewScheduleFormState) => void;
   handleRegenerate: () => void;
-
   completedSteps: Step[];
   isGenerating: boolean;
   error: string | null;
   result: GenerationResult | null;
+  resetSteps: () => void
 };
 
 const AIContext = createContext<AIContextProvider | null>(null);
@@ -45,6 +44,13 @@ export function AIProvider({ children }: { children: ReactNode }) {
   const delay = (ms: number) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
+
+  const resetSteps = () => {
+    setCompletedSteps([]);
+    setError(null)
+  };
+
+
 
   const generateSchedule = useCallback(async () => {
     if (!inputForm) return setError("no data in form");
@@ -102,9 +108,6 @@ export function AIProvider({ children }: { children: ReactNode }) {
     generateSchedule();
   }, [inputForm, generateSchedule]);
 
-  const resetSteps = () => {
-    setCompletedSteps([]);
-  };
 
   return (
     <AIContext.Provider
@@ -116,6 +119,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
         setInputForm,
         handleRegenerate,
         result,
+        resetSteps
       }}
     >
       {children}

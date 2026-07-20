@@ -1,12 +1,10 @@
 import { getDatabase } from "./db";
 
 export const migrateDatabase = async () => {
-  const db = await getDatabase();
+	const db = await getDatabase();
 
-  await db.execAsync(`
+	await db.execAsync(`
     PRAGMA journal_mode = WAL;
-   
-
 
     CREATE TABLE IF NOT EXISTS schedules (
       id TEXT PRIMARY KEY NOT NULL,
@@ -15,7 +13,41 @@ export const migrateDatabase = async () => {
       temporary INTEGER NOT NULL
     );
 
-   
+
+    CREATE TABLE IF NOT EXISTS summaries (
+        id TEXT PRIMARY KEY NOT NULL,
+        schedule_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        total TEXT NOT NULL,
+
+        FOREIGN KEY (schedule_id)
+            REFERENCES schedules(id)
+            ON DELETE CASCADE
+    );
+
+
+    CREATE INDEX IF NOT EXISTS idx_summaries_schedule_id
+    ON summaries(schedule_id);
+
+
+    CREATE TABLE IF NOT EXISTS sub_summaries (
+        id TEXT PRIMARY KEY NOT NULL,
+        summary_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        total TEXT NOT NULL,
+
+        FOREIGN KEY (summary_id)
+            REFERENCES summaries(id)
+            ON DELETE CASCADE
+    );
+
+
+    CREATE INDEX IF NOT EXISTS idx_sub_summaries_summary_id
+    ON sub_summaries(summary_id);
+
+
+
+
     CREATE TABLE IF NOT EXISTS active_schedules (
       id TEXT PRIMARY KEY NOT NULL,
       schedule_id TEXT NOT NULL,
@@ -46,7 +78,7 @@ export const migrateDatabase = async () => {
     CREATE INDEX IF NOT EXISTS idx_active_schedule_days_active_schedule_id
       ON active_schedule_days(active_schedule_id);
 
-      CREATE INDEX IF NOT EXISTS idx_active_schedule_days_weekday_active_schedule_id
+    CREATE INDEX IF NOT EXISTS idx_active_schedule_days_weekday_active_schedule_id
       ON active_schedule_days(weekday, active_schedule_id);
 
 
