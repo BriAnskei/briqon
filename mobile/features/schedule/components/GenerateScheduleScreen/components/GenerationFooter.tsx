@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +11,7 @@ interface GenerationFooterProps {
 }
 
 export function GenerationFooter({ onSave, onSetActive }: GenerationFooterProps) {
+  const s = useSStyles();
   return (
     <View style={s.footer}>
       <TouchableOpacity
@@ -40,7 +43,11 @@ export function GenerationFooter({ onSave, onSetActive }: GenerationFooterProps)
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   footer: {
     flexDirection: "row",
     gap: 12,
@@ -73,4 +80,7 @@ const s = StyleSheet.create({
     color: Colors.bg,
     letterSpacing: 0.2,
   },
-});
+}),
+    [colors],
+  );
+};

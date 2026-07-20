@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -40,6 +42,7 @@ function getFormattedTime() {
 // ─── PulsingRing ──────────────────────────────────────────────────────────────
 
 function PulsingRing({ size, delay }: { size: number; delay: number }) {
+  const s = useSStyles();
   const anim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -79,6 +82,7 @@ function PulsingRing({ size, delay }: { size: number; delay: number }) {
 // ─── AlarmScreen ─────────────────────────────────────────────────────────────
 
 export default function AlarmScreen() {
+  const s = useSStyles();
   const params = useLocalSearchParams<AlarmParams>();
 
   const {
@@ -272,7 +276,11 @@ export default function AlarmScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.bg,
@@ -487,4 +495,7 @@ const s = StyleSheet.create({
     fontWeight: "800",
     color: Colors.textPrimary,
   },
-});
+}),
+    [colors],
+  );
+};

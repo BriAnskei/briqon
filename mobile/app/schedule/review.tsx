@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   View,
@@ -18,6 +20,7 @@ import { SaveScheduleModal } from "@/features/schedule-conversation/components/r
 import { ScheduleActivatedModal } from "@/features/schedule-conversation/components/review/modal/ScheduleActivedModal";
 
 export default function ReviewScreen() {
+  const s = useSStyles();
   const insets = useSafeAreaInsets();
   const {
     scheduleItems,
@@ -123,7 +126,11 @@ export default function ReviewScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   header: {
     flexDirection: "row",
@@ -193,4 +200,7 @@ const s = StyleSheet.create({
     ...Shadow.accent,
   },
   activeBtnText: { fontSize: 14, fontWeight: "700", color: Colors.white },
-});
+}),
+    [colors],
+  );
+};

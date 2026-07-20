@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export function PriorityStep({ form, patch }: Props) {
+  const s = useSStyles();
   const breakLabel =
     BREAK_FREQUENCY_OPTIONS.find((b) => b.key === form.breakFrequency)?.label ??
     "-";
@@ -166,7 +169,11 @@ export function PriorityStep({ form, patch }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -257,4 +264,7 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     marginBottom: 4,
   },
-});
+}),
+    [colors],
+  );
+};

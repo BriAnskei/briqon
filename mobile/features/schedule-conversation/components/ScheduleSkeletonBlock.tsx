@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Animated, {
@@ -30,6 +32,7 @@ function PulseBar({ style }: { style: object }) {
 }
 
 export function ScheduleSkeletonBlock() {
+  const s = useSStyles();
   return (
     <View style={s.block}>
       <View style={s.timeline}>
@@ -61,7 +64,11 @@ export function ScheduleSkeletonBlock() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   block: {
     borderRadius: Radius.lg,
     borderWidth: 1,
@@ -155,4 +162,7 @@ const s = StyleSheet.create({
     flex: 1,
     lineHeight: 16,
   },
-});
+}),
+    [colors],
+  );
+};

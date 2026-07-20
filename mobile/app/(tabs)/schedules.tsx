@@ -1,7 +1,10 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Colors } from "../../type/theme";
 
 export default function SchedulesScreen() {
+  const s = useSStyles();
   return (
     <View style={s.root}>
       {/* Header matches the app's style */}
@@ -19,7 +22,11 @@ export default function SchedulesScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   header: {
     paddingHorizontal: 24,
@@ -44,4 +51,7 @@ const s = StyleSheet.create({
   body: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
   label: { fontSize: 24, fontWeight: "700", color: Colors.textPrimary },
   sub: { fontSize: 13, color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

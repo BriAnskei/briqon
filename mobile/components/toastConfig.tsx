@@ -1,40 +1,22 @@
 import { View, Text, StyleSheet } from "react-native";
+import { useMemo } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ToastConfig, ToastConfigParams } from "react-native-toast-message";
-import { Colors, Radius, Shadow } from "@/type/theme";
+import { Radius, Shadow } from "@/type/theme";
+import { useTheme } from "@/context/ThemeContext";
 
 // ── Per-type design tokens ────────────────────────────────────────────────────
 
 type ToastVariant = "success" | "error" | "info" | "warning";
 
-const VARIANT: Record<
+const ICONS: Record<
   ToastVariant,
-  {
-    accent: string;
-    soft: string;
-    icon: keyof typeof MaterialCommunityIcons.glyphMap;
-  }
+  keyof typeof MaterialCommunityIcons.glyphMap
 > = {
-  success: {
-    accent: Colors.success,
-    soft: Colors.successSoft,
-    icon: "check-circle-outline",
-  },
-  error: {
-    accent: Colors.danger,
-    soft: Colors.dangerSoft,
-    icon: "robot-confused-outline",
-  },
-  info: {
-    accent: Colors.accent,
-    soft: Colors.accentSoft,
-    icon: "information-outline",
-  },
-  warning: {
-    accent: Colors.warning,
-    soft: Colors.warningSoft,
-    icon: "alert-circle-outline",
-  },
+  success: "check-circle-outline",
+  error: "robot-confused-outline",
+  info: "information-outline",
+  warning: "alert-circle-outline",
 };
 
 // ── Shared toast card ─────────────────────────────────────────────────────────
@@ -44,16 +26,71 @@ function ToastCard({
   text1,
   text2,
 }: ToastConfigParams<unknown> & { type: ToastVariant }) {
-  const v = VARIANT[type];
+  const { colors } = useTheme();
+
+  const s = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          flexDirection: "row",
+          alignItems: "center",
+          width: "90%",
+          backgroundColor: colors.bgCard,
+          borderRadius: Radius.lg,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: "hidden",
+          minHeight: 64,
+        },
+        accentBar: {
+          width: 4,
+          alignSelf: "stretch",
+        },
+        iconWrap: {
+          width: 40,
+          height: 40,
+          borderRadius: Radius.md,
+          alignItems: "center",
+          justifyContent: "center",
+          marginHorizontal: 12,
+          flexShrink: 0,
+        },
+        textWrap: {
+          flex: 1,
+          paddingVertical: 12,
+          paddingRight: 14,
+          gap: 2,
+        },
+        title: {
+          fontSize: 13,
+          fontWeight: "700",
+          color: colors.textPrimary,
+          letterSpacing: 0.1,
+        },
+        body: {
+          fontSize: 12,
+          color: colors.textSecondary,
+          lineHeight: 17,
+        },
+      }),
+    [colors],
+  );
+
+  const tokens = {
+    success: { accent: colors.success, soft: colors.successSoft },
+    error: { accent: colors.danger, soft: colors.dangerSoft },
+    info: { accent: colors.accent, soft: colors.accentSoft },
+    warning: { accent: colors.warning, soft: colors.warningSoft },
+  }[type];
 
   return (
     <View style={[s.card, Shadow.card]}>
       {/* Left accent bar */}
-      <View style={[s.accentBar, { backgroundColor: v.accent }]} />
+      <View style={[s.accentBar, { backgroundColor: tokens.accent }]} />
 
       {/* Icon bubble */}
-      <View style={[s.iconWrap, { backgroundColor: v.soft }]}>
-        <MaterialCommunityIcons name={v.icon} size={22} color={v.accent} />
+      <View style={[s.iconWrap, { backgroundColor: tokens.soft }]}>
+        <MaterialCommunityIcons name={ICONS[type]} size={22} color={tokens.accent} />
       </View>
 
       {/* Text */}
@@ -73,57 +110,14 @@ function ToastCard({
   );
 }
 
-// ── Exported config ───────────────────────────────────────────────────────────
+// ── Exported config builder ───────────────────────────────────────────────────
+// Returned fresh on each render so the toast picks up the current theme.
 
-export const toastConfig: ToastConfig = {
-  success: (props) => <ToastCard {...props} type="success" />,
-  error: (props) => <ToastCard {...props} type="error" />,
-  info: (props) => <ToastCard {...props} type="info" />,
-  warning: (props) => <ToastCard {...props} type="warning" />,
-};
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-const s = StyleSheet.create({
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "90%",
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: "hidden",
-    minHeight: 64,
-  },
-  accentBar: {
-    width: 4,
-    alignSelf: "stretch",
-  },
-  iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 12,
-    flexShrink: 0,
-  },
-  textWrap: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingRight: 14,
-    gap: 2,
-  },
-  title: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: Colors.textPrimary,
-    letterSpacing: 0.1,
-  },
-  body: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 17,
-  },
-});
+export function buildToastConfig(): ToastConfig {
+  return {
+    success: (props) => <ToastCard {...props} type="success" />,
+    error: (props) => <ToastCard {...props} type="error" />,
+    info: (props) => <ToastCard {...props} type="info" />,
+    warning: (props) => <ToastCard {...props} type="warning" />,
+  };
+}

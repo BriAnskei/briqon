@@ -1,6 +1,7 @@
 import SplashScreen from "@/components/SplashScreen";
-import { toastConfig } from "@/components/toastConfig";
+import { buildToastConfig } from "@/components/toastConfig";
 import { AIProvider } from "@/context/AIContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { ScheduleProvider } from "@/context/ScheduleContext";
 import { initializeDb } from "@/src/database/init";
 import { Stack } from "expo-router";
@@ -11,12 +12,14 @@ import Toast from "react-native-toast-message";
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ScheduleProvider>
-        <AIProvider>
-          <ScreenStack />
-        </AIProvider>
-      </ScheduleProvider>
-      <Toast config={toastConfig} />
+      <ThemeProvider>
+        <ScheduleProvider>
+          <AIProvider>
+            <ScreenStack />
+          </AIProvider>
+        </ScheduleProvider>
+      </ThemeProvider>
+      <Toast config={buildToastConfig()} />
     </SafeAreaProvider>
   );
 }

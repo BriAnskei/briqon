@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   Modal,
@@ -44,6 +46,7 @@ export function ScheduleActivatedModal({
   schedule,
   goHome,
 }: Props) {
+  const s = useSStyles();
   const isSaved =
     schedule && !schedule.temporary && schedule.name.trim() !== "";
   const activeDays = formatActiveDays(activeSchedule);
@@ -132,7 +135,11 @@ export function ScheduleActivatedModal({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.60)",
@@ -272,4 +279,7 @@ const s = StyleSheet.create({
     fontWeight: "700",
     color: Colors.white,
   },
-});
+}),
+    [colors],
+  );
+};

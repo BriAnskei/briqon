@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   Modal,
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export function SaveScheduleModal({ visible, onClose }: Props) {
+  const s = useSStyles();
   const [name, setName] = React.useState("");
   const { handleSave, isSaving } = useSaveScheduleModal({
     onSuccess: () => {
@@ -122,7 +125,11 @@ export function SaveScheduleModal({ visible, onClose }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.60)",
@@ -234,4 +241,7 @@ const s = StyleSheet.create({
   },
   saveText: { fontSize: 15, fontWeight: "700", color: Colors.white },
   saveTextDisabled: { color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Colors, Radius } from "@/type/theme";
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export function OptionPill({ label, selected, onPress }: Props) {
+  const s = useSStyles();
   return (
     <TouchableOpacity
       style={[s.pill, selected && s.active]}
@@ -20,7 +23,11 @@ export function OptionPill({ label, selected, onPress }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -35,4 +42,7 @@ const s = StyleSheet.create({
   },
   text: { fontSize: 13, fontWeight: "500", color: Colors.textSecondary },
   textActive: { color: Colors.accent, fontWeight: "600" },
-});
+}),
+    [colors],
+  );
+};

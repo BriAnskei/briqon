@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,6 +8,7 @@ import { Colors } from "@/type/theme";
 type Props = { step: number; labels: string[] };
 
 export function StepIndicator({ step, labels }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.row}>
       {labels.map((label, i) => {
@@ -39,7 +42,11 @@ export function StepIndicator({ step, labels }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -71,4 +78,7 @@ const s = StyleSheet.create({
     marginBottom: 14,
   },
   lineDone: { backgroundColor: Colors.accent },
-});
+}),
+    [colors],
+  );
+};

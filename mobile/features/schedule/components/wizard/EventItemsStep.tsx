@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -23,6 +25,7 @@ export function EventItemsStep({
   toggleFixedTimePicker,
   eventScheduleItems,
 }: UseEventItemsStateType) {
+  const s = useSStyles();
   return (
     <View style={s.body}>
       <Text style={s.title}>Schedule Items</Text>
@@ -254,7 +257,11 @@ export function EventItemsStep({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -425,4 +432,7 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
-});
+}),
+    [colors],
+  );
+};

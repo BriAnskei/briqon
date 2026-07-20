@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   View,
@@ -22,6 +24,7 @@ const CHAR_LIMIT = 200;
 const countChars = (text: string): number => text.length;
 
 export function EditScheduleScreen() {
+  const s = useSStyles();
   const {
     items,
     isSubmitting,
@@ -310,7 +313,11 @@ export function EditScheduleScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   disabled: { opacity: 0.4 },
 
@@ -582,4 +589,7 @@ const s = StyleSheet.create({
   empty: { flex: 1, alignItems: "center", justifyContent: "center" },
   emptyText: { fontSize: 14, color: Colors.textMuted },
   bottomSpacer: { height: 40 },
-});
+}),
+    [colors],
+  );
+};

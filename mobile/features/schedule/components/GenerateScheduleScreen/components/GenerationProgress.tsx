@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +11,7 @@ interface GenerationProgressProps {
 }
 
 export function GenerationProgress({ completedSteps }: GenerationProgressProps) {
+  const s = useSStyles();
   return (
     <View style={s.progressCard}>
       {STEP_ORDER.map((key) => {
@@ -41,7 +44,11 @@ export function GenerationProgress({ completedSteps }: GenerationProgressProps) 
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   progressCard: { padding: 18, gap: 14 },
   stepRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   stepIconDone: {
@@ -62,4 +69,7 @@ const s = StyleSheet.create({
   },
   stepLabel: { fontSize: 13, color: Colors.textMuted },
   stepLabelDone: { color: Colors.textPrimary, fontWeight: "600" },
-});
+}),
+    [colors],
+  );
+};

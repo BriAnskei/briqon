@@ -1,15 +1,14 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo, Fragment } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Fragment } from "react";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { TimeFormatter } from "@/utils/TimeFormatter";
-import {
-  PersonalSummary,
-  EventSummary,
-} from "@/features/schedule/hooks/useWizardForm";
+import { PersonalSummary, EventSummary } from "@/features/schedule/hooks/useWizardForm";
 
 export type SummaryItem = { label: string; value: string };
 
 export function SummaryCard({ items }: { items: SummaryItem[] }) {
+  const s = useSStyles();
   return (
     <View style={s.card}>
       {items.map((it, i) => (
@@ -60,26 +59,33 @@ export function eventSummaryItems(s: EventSummary): SummaryItem[] {
   ];
 }
 
-const s = StyleSheet.create({
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.bgCard,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    marginBottom: 20,
-    ...Shadow.card,
-  },
-  item: { flex: 1, alignItems: "center" },
-  divider: { width: 1, height: 28, backgroundColor: Colors.borderLight },
-  value: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: Colors.textPrimary,
-    marginBottom: 2,
-  },
-  label: { fontSize: 11, fontWeight: "600", color: Colors.textSecondary },
-});
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: Colors.bgCard,
+          borderRadius: Radius.lg,
+          borderWidth: 1,
+          borderColor: Colors.border,
+          paddingVertical: 14,
+          paddingHorizontal: 8,
+          marginBottom: 20,
+          ...Shadow.card,
+        },
+        item: { flex: 1, alignItems: "center" },
+        divider: { width: 1, height: 28, backgroundColor: Colors.borderLight },
+        value: {
+          fontSize: 16,
+          fontWeight: "800",
+          color: Colors.textPrimary,
+          marginBottom: 2,
+        },
+        label: { fontSize: 11, fontWeight: "600", color: Colors.textSecondary },
+      }),
+    [colors],
+  );
+}

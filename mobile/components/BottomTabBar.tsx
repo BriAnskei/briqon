@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -40,6 +42,7 @@ const TABS: TabDef[] = [
 ];
 
 export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
+  const s = useSStyles();
   const router = useRouter();
 
   const activeRouteKey = state.index === 0 ? "alarm" : "schedules";
@@ -85,7 +88,11 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   tabBar: {
     flexDirection: "row",
     backgroundColor: Colors.bgCard,
@@ -115,4 +122,7 @@ const s = StyleSheet.create({
     backgroundColor: Colors.accent,
     marginTop: 1,
   },
-});
+}),
+    [colors],
+  );
+};

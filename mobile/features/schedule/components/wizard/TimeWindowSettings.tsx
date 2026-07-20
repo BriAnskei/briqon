@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -25,6 +27,7 @@ function endsNextDay(start: Date, end: Date) {
 }
 
 export function TimeWindowSettings({ form, patch }: Props) {
+  const s = useSStyles();
   const overnight = endsNextDay(form.startTime, form.endTime);
 
   return (
@@ -88,7 +91,11 @@ export function TimeWindowSettings({ form, patch }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -126,4 +133,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 4,
   },
   durationText: { fontSize: 12, color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

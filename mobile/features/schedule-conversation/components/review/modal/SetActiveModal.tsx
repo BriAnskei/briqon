@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   Modal,
@@ -39,6 +41,7 @@ export function SetActiveModal({
   isScheduleAlreadySave,
   setIsSchedActivatedModalOpen,
 }: Props) {
+  const s = useSStyles();
   const {
     isVisible: isConflictModalVisible,
     conflictError,
@@ -325,6 +328,7 @@ export function SetActiveModal({
 }
 
 function Radio({ active }: { active: boolean }) {
+  const s = useSStyles();
   return (
     <View style={[s.radioOuter, active && s.radioOuterActive]}>
       {active && <View style={s.radioInner} />}
@@ -332,7 +336,11 @@ function Radio({ active }: { active: boolean }) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.60)",
@@ -544,4 +552,7 @@ const s = StyleSheet.create({
   },
   confirmText: { fontSize: 15, fontWeight: "700", color: Colors.white },
   confirmTextDisabled: { color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

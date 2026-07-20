@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -34,6 +36,7 @@ import {
 } from "@/features/schedule/contants/wizardOptions";
 
 export default function AddScheduleScreen() {
+  const s = useSStyles();
   const w = useWizardForm();
   const stepLabels = w.isEvent ? EVENT_STEP_LABELS : PERSONAL_STEP_LABELS;
 
@@ -146,7 +149,11 @@ export default function AddScheduleScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
 
   header: {
@@ -201,4 +208,7 @@ const s = StyleSheet.create({
     color: Colors.bg,
     letterSpacing: 0.2,
   },
-});
+}),
+    [colors],
+  );
+};

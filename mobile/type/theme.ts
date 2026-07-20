@@ -1,4 +1,7 @@
-export const Colors = {
+import { Appearance } from "react-native";
+
+// Dark palette — the app's current flat, high-contrast look.
+const darkTheme = {
   // Pure black base — flat, minimal, high contrast
   bg: "#000000", // main background
   bgCard: "#111111", // surface: cards, sections
@@ -33,6 +36,45 @@ export const Colors = {
   white: "#FFFFFF",
 };
 
+// Light palette — inverse of the dark grayscale, with dark text.
+const lightTheme = {
+  bg: "#FFFFFF", // main background
+  bgCard: "#F5F5F5", // surface: cards, sections
+  bgElevated: "#ECECEC", // elevated surfaces: inputs, pills, badges
+  bgModal: "#FFFFFF", // modal sheet background
+  border: "#DADADA", // standard border
+  borderLight: "#C4C4C4", // secondary/active borders
+  divider: "#E6E6E6", // hairline dividers between rows/sections
+
+  accent: "#3A3A3A", // dimmed near-black — softer glare on buttons/highlights
+  accentGlow: "rgba(0, 0, 0, 0.08)",
+  accentSoft: "rgba(0, 0, 0, 0.04)",
+  success: "#16A34A",
+  successSoft: "rgba(22, 163, 74, 0.12)",
+  successGlow: "rgba(22, 163, 74, 0.18)",
+
+  danger: "#DC2626",
+  dangerSoft: "rgba(220, 38, 38, 0.10)",
+
+  warning: "#6B6B6B",
+  warningSoft: "rgba(0, 0, 0, 0.05)",
+
+  diff: "#6B6B6B",
+  diffSoft: "rgba(0, 0, 0, 0.05)",
+
+  textPrimary: "#0A0A0A",
+  textSecondary: "#555555",
+  textMuted: "#9A9A9A",
+  disabled: "#9A9A9A",
+  white: "#FFFFFF",
+};
+
+export type Theme = typeof darkTheme;
+export type ColorScheme = "light" | "dark";
+
+export const lightThemePalette = lightTheme;
+export const darkThemePalette = darkTheme;
+
 export const Radius = {
   sm: 8,
   md: 12,
@@ -64,3 +106,28 @@ export const Shadow = {
     elevation: 3,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Reactive color store.
+//
+// `Colors` is a live proxy: every `Colors.x` read returns the value for the
+// *currently active* color scheme. This lets the existing inline usages
+// (e.g. `color={Colors.accent}`) follow the device theme automatically, and
+// lets module-scope `StyleSheet.create({... Colors.x ...})` blocks be turned
+// into render-time `useStyles()` hooks (see @/context/ThemeContext).
+// ---------------------------------------------------------------------------
+
+let activeScheme: ColorScheme =
+  (Appearance.getColorScheme() ?? "dark") === "dark" ? "dark" : "light";
+
+let activeTheme: Theme = activeScheme === "dark" ? darkTheme : lightTheme;
+
+export function setActiveTheme(scheme: ColorScheme) {
+  if (scheme === activeScheme) return;
+  activeScheme = scheme;
+  activeTheme = scheme === "dark" ? darkTheme : lightTheme;
+}
+
+export const Colors = new Proxy({} as Theme, {
+  get: (_target, prop: string) => (activeTheme as Record<string, unknown>)[prop],
+}) as Theme;

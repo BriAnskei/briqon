@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors, Radius, Shadow } from "@/type/theme";
@@ -8,6 +10,7 @@ interface ScheduleTimelineProps {
 }
 
 export function ScheduleTimeline({ schedule }: ScheduleTimelineProps) {
+  const s = useSStyles();
   return (
     <>
       <Text style={s.timelineTitle}>Your Schedule</Text>
@@ -35,7 +38,11 @@ export function ScheduleTimeline({ schedule }: ScheduleTimelineProps) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   timelineTitle: {
     fontSize: 15,
     fontWeight: "700",
@@ -83,4 +90,7 @@ const s = StyleSheet.create({
     color: Colors.textPrimary,
   },
   scheduleTime: { fontSize: 12, color: Colors.textMuted, flexShrink: 0 },
-});
+}),
+    [colors],
+  );
+};

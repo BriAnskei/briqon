@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +11,7 @@ interface ScreenHeaderProps {
 }
 
 export function ScreenHeader({ onBack, onHome }: ScreenHeaderProps) {
+  const s = useSStyles();
   return (
     <View style={s.header}>
       <TouchableOpacity
@@ -43,7 +46,11 @@ export function ScreenHeader({ onBack, onHome }: ScreenHeaderProps) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -67,4 +74,7 @@ const s = StyleSheet.create({
   headerTextGroup: { flex: 1 },
   headerTitle: { fontSize: 18, fontWeight: "700", color: Colors.textPrimary },
   headerSub: { fontSize: 12, color: Colors.textMuted, marginTop: 4 },
-});
+}),
+    [colors],
+  );
+};

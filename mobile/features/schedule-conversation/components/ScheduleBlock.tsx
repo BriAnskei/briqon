@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
@@ -25,6 +27,7 @@ export function ScheduleBlock({
   onAskAbout,
   isSelectedForQuestion,
 }: Props) {
+  const s = useSStyles();
   const router = useRouter();
   const { setEditTarget } = useSchedule();
 
@@ -108,7 +111,11 @@ export function ScheduleBlock({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   block: {
     borderRadius: Radius.lg,
     borderWidth: 1,
@@ -180,4 +187,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
     color: Colors.accent,
   },
-});
+}),
+    [colors],
+  );
+};

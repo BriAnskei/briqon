@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   Modal,
@@ -55,6 +57,7 @@ interface DayRowProps {
 }
 
 function DayRow({ scheduleDays, conflictingDays }: DayRowProps) {
+  const s = useSStyles();
   const conflictSet = new Set(conflictingDays);
 
   return (
@@ -102,6 +105,7 @@ function ConflictCard({
   data,
   newScheduleDays,
 }: ConflictCardProps) {
+  const s = useSStyles();
   const isRecurring = activeSchedule.recurring;
   const isDays = isDaysData(data);
 
@@ -200,6 +204,7 @@ export function ConflictActivationModal({
   onClose,
   onProceed,
 }: ConflictActivationModalProps) {
+  const s = useSStyles();
   if (!error) return null;
 
   const conflicts = error.context.conflicts;
@@ -321,7 +326,11 @@ export function ConflictActivationModal({
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.70)",
@@ -554,4 +563,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
     color: Colors.textSecondary,
   },
-});
+}),
+    [colors],
+  );
+};

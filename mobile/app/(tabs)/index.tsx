@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -103,6 +105,7 @@ function AlarmRow({
   index: number;
   onToggle: (id: string) => void;
 }) {
+  const s = useSStyles();
   const color = CATEGORY_COLORS[alarm.category] ?? Colors.textMuted;
 
   return (
@@ -134,6 +137,7 @@ function AlarmRow({
 // ─── EmptyState ───────────────────────────────────────────────────────────────
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  const s = useSStyles();
   return (
     <View style={s.emptyCard}>
       <View style={s.emptyIconWrap}>
@@ -163,6 +167,7 @@ function DotMenu({
   onTurnOffAll: () => void;
   onDelete: () => void;
 }) {
+  const s = useSStyles();
   return (
     <Modal
       visible={visible}
@@ -232,6 +237,7 @@ function DotMenu({
 // ─── HomeScreen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
+  const s = useSStyles();
   const router = useRouter();
 
   // DB implementation sample usage
@@ -425,7 +431,11 @@ export default function HomeScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   header: {
     flexDirection: "row",
@@ -654,4 +664,7 @@ const s = StyleSheet.create({
     backgroundColor: Colors.border,
     marginHorizontal: 16,
   },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius } from "@/type/theme";
@@ -9,6 +11,7 @@ type Props = {
 };
 
 export function SummaryRow({ icon, label, value }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.row}>
       <View style={s.iconWrap}>
@@ -22,7 +25,11 @@ export function SummaryRow({ icon, label, value }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -42,4 +49,7 @@ const s = StyleSheet.create({
   body: { flex: 1 },
   label: { fontSize: 11, color: Colors.textMuted, marginBottom: 2 },
   value: { fontSize: 14, fontWeight: "600", color: Colors.textPrimary },
-});
+}),
+    [colors],
+  );
+};

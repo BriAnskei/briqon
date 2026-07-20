@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors, Radius } from "@/type/theme";
@@ -13,6 +15,7 @@ export function SummaryCard({
   summaries,
   subSummaries,
 }: SummaryCardProps) {
+  const s = useSStyles();
   return (
     <View style={s.summaryCard}>
       <Text style={s.summaryLabel}>Summary</Text>
@@ -52,7 +55,11 @@ export function SummaryCard({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   summaryCard: {
     borderWidth: 1,
     borderColor: Colors.border,
@@ -101,4 +108,7 @@ const s = StyleSheet.create({
     color: Colors.textMuted,
     fontWeight: "500",
   },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
@@ -26,6 +28,7 @@ const OPTIONS = [
 ];
 
 export function TypeStep({ scheduleType, onChange }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.body}>
       <Text style={s.title}>What kind of schedule?</Text>
@@ -81,7 +84,11 @@ export function TypeStep({ scheduleType, onChange }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -137,4 +144,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -19,6 +21,7 @@ type Props = {
 };
 
 export function EventTimeStep({ form, patch }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.body}>
       <Text style={s.title}>Time & schedule</Text>
@@ -75,7 +78,11 @@ export function EventTimeStep({ form, patch }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -99,4 +106,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 4,
   },
   durationText: { fontSize: 12, color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

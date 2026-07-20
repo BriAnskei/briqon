@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Colors } from "@/type/theme";
@@ -5,6 +7,7 @@ import { Colors } from "@/type/theme";
 // ─── Logo Mark ────────────────────────────────────────────────────────────────
 
 function LogoMark() {
+  const logo = useLogoStyles();
   return (
     <View style={logo.card}>
       {/* Accent top bar */}
@@ -37,7 +40,11 @@ function LogoMark() {
   );
 }
 
-const logo = StyleSheet.create({
+function useLogoStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   card: {
     width: 96,
     height: 96,
@@ -143,11 +150,15 @@ const logo = StyleSheet.create({
   },
   bellLeft: { left: 12 },
   bellRight: { right: 12 },
-});
+}),
+    [colors],
+  );
+};
 
 // ─── SplashScreen ─────────────────────────────────────────────────────────────
 
 export default function SplashScreen() {
+  const s = useSStyles();
   return (
     <View style={s.root}>
       {/* ── Ambient blobs ── */}
@@ -166,7 +177,11 @@ export default function SplashScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.bg,
@@ -211,4 +226,7 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     marginTop: -6,
   },
-});
+}),
+    [colors],
+  );
+};

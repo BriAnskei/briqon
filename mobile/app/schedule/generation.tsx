@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { ErrorCard } from "@/features/schedule/components/GenerateScheduleScreen/components/ErrorCard";
 import { GenerationFooter } from "@/features/schedule/components/GenerateScheduleScreen/components/GenerationFooter";
 import { GenerationProgress } from "@/features/schedule/components/GenerateScheduleScreen/components/GenerationProgress";
@@ -13,6 +15,7 @@ import { ScrollView, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function GenerateScheduleScreen() {
+  const s = useSStyles();
   const router = useRouter();
   const { handleRegenerate, completedSteps, result, error, isGenerating } =
     useScheduleGeneration();
@@ -93,11 +96,18 @@ export default function GenerateScheduleScreen() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
 
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
 
   resultSection: { marginTop: 20, gap: 20 },
-});
+}),
+    [colors],
+  );
+};

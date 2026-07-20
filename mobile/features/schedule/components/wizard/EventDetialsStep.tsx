@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -17,6 +19,7 @@ type Props = {
 };
 
 export function EventDetailsStep({ form, patch }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.body}>
       <Text style={s.title}>What's the occasion?</Text>
@@ -94,7 +97,11 @@ export function EventDetailsStep({ form, patch }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   body: { paddingTop: 8 },
   title: {
     fontSize: 22,
@@ -174,4 +181,7 @@ const s = StyleSheet.create({
     paddingVertical: 11,
   },
   inputField: { flex: 1, fontSize: 14, color: Colors.textPrimary, padding: 0 },
-});
+}),
+    [colors],
+  );
+};

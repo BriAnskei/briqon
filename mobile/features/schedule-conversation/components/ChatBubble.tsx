@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Markdown from "react-native-markdown-display";
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export function ChatBubble({ turn }: Props) {
+  const s = useSStyles();
   const isUser = turn.role === "user";
   const text =
     turn.role === "user"
@@ -31,7 +34,11 @@ export function ChatBubble({ turn }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   bubble: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -70,7 +77,10 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     flex: 1,
   },
-});
+}),
+    [colors],
+  );
+};
 
 // Markdown styles mirror your existing AI text style
 const markdownStyles = {

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   View,
@@ -31,6 +33,7 @@ export function DayRangeExpanded({
   onStartsAtChange,
   onStartsAtPickerDismiss,
 }: Props) {
+  const s = useSStyles();
   const formattedDate = startsAt.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -104,7 +107,11 @@ export function DayRangeExpanded({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   container: {
     borderTopWidth: 1,
     borderTopColor: Colors.border,
@@ -167,4 +174,7 @@ const s = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: "500", color: Colors.textSecondary },
   chipTextActive: { color: Colors.white, fontWeight: "600" },
   chipTextDisabled: { color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

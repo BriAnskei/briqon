@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -48,6 +50,7 @@ export function MealsSection({
   toggleTimePicker,
   meals,
 }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.section}>
       <View style={s.sectionHeader}>
@@ -205,7 +208,11 @@ export function MealsSection({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   section: { marginTop: 0 },
   sectionHeader: {
     flexDirection: "row",
@@ -365,4 +372,7 @@ const s = StyleSheet.create({
   },
   segmentText: { fontSize: 11, fontWeight: "600", color: Colors.textMuted },
   segmentTextActive: { color: Colors.accent },
-});
+}),
+    [colors],
+  );
+};

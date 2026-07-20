@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import {
   View,
   Text,
@@ -25,6 +27,7 @@ export function AppointmentsSection({
   commitAppointment,
   removeAppointment,
 }: Props) {
+  const s = useSStyles();
   return (
     <View style={s.section}>
       <View style={s.sectionHeader}>
@@ -191,7 +194,11 @@ export function AppointmentsSection({
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   section: { marginTop: 0, marginBottom: 24 },
   sectionHeader: {
     flexDirection: "row",
@@ -315,4 +322,7 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors } from "@/type/theme";
@@ -10,6 +12,7 @@ interface Props {
 }
 
 export function ScheduleListItem({ item, index }: Props) {
+  const s = useSStyles();
   const color = ACCENT_COLORS[index % ACCENT_COLORS.length];
 
   return (
@@ -26,7 +29,11 @@ export function ScheduleListItem({ item, index }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -50,4 +57,7 @@ const s = StyleSheet.create({
     marginBottom: 3,
   },
   time: { fontSize: 12, color: Colors.textMuted },
-});
+}),
+    [colors],
+  );
+};

@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
 import { Colors } from "@/type/theme";
@@ -8,6 +10,7 @@ const ANIMATION_DURATION = 400;
 const STAGGER_DELAY = 150;
 
 function BouncingDot({ delay }: { delay: number }) {
+  const s = useSStyles();
   const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,6 +39,7 @@ function BouncingDot({ delay }: { delay: number }) {
 }
 
 export function MessageLoadingIndicator() {
+  const s = useSStyles();
   return (
     <View style={s.container}>
       <BouncingDot delay={0} />
@@ -45,7 +49,11 @@ export function MessageLoadingIndicator() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -61,4 +69,7 @@ const s = StyleSheet.create({
     borderRadius: DOT_SIZE / 2,
     backgroundColor: Colors.textMuted,
   },
-});
+}),
+    [colors],
+  );
+};

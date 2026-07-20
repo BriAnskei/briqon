@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +11,7 @@ interface RegenerateCardProps {
 }
 
 export function RegenerateCard({ onRegenerate, isGenerating }: RegenerateCardProps) {
+  const s = useSStyles();
   return (
     <View style={s.regenerateCard}>
       <Ionicons
@@ -36,7 +39,11 @@ export function RegenerateCard({ onRegenerate, isGenerating }: RegenerateCardPro
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   regenerateCard: {
     flexDirection: "row",
     gap: 10,
@@ -65,4 +72,7 @@ const s = StyleSheet.create({
     borderColor: Colors.accent,
   },
   regenerateBtnText: { fontSize: 12, fontWeight: "700", color: Colors.accent },
-});
+}),
+    [colors],
+  );
+};

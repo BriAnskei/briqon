@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors, Radius } from "@/type/theme";
@@ -12,6 +14,7 @@ type Props = {
 };
 
 export function TimelineItem({ item, index, isLast }: Props) {
+  const s = useSStyles();
   const color = toneForIndex(index);
   const dur = TimeFormatter.formatDuration(item.start_time!, item.end_time!);
 
@@ -40,7 +43,11 @@ export function TimelineItem({ item, index, isLast }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   tlRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 2 },
   tlLeft: {
     width: 64,
@@ -88,4 +95,7 @@ const s = StyleSheet.create({
     marginBottom: 3,
   },
   tlMeta: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
-});
+}),
+    [colors],
+  );
+};

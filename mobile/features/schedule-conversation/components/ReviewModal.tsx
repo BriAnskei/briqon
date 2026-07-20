@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React from "react";
 import {
   Modal,
@@ -21,6 +23,7 @@ type Props = {
 };
 
 export function ReviewModal({ visible, items, onClose, onConfirm }: Props) {
+  const s = useSStyles();
   return (
     <Modal
       visible={visible}
@@ -95,7 +98,11 @@ export function ReviewModal({ visible, items, onClose, onConfirm }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.60)",
@@ -188,4 +195,7 @@ const s = StyleSheet.create({
     ...Shadow.accent,
   },
   confirmText: { fontSize: 15, fontWeight: "600", color: Colors.white },
-});
+}),
+    [colors],
+  );
+};

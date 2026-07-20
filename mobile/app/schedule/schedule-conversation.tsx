@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -24,6 +26,7 @@ import { useConversationScreen } from "@/features/schedule-conversation/hooks/us
 const MAX_INPUT_HEIGHT = 120;
 
 export default function ScheduleConversation() {
+  const s = useSStyles();
   const {
     router,
     conversation,
@@ -204,7 +207,11 @@ export default function ScheduleConversation() {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.bg },
   disabledOpacity: { opacity: 0.4 },
   header: {
@@ -300,4 +307,7 @@ const s = StyleSheet.create({
     elevation: 0,
   },
   sendBtnIcon: { fontSize: 17, color: Colors.white, fontWeight: "700" },
-});
+}),
+    [colors],
+  );
+};

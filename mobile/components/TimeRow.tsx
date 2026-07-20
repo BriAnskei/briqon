@@ -1,3 +1,5 @@
+import { useTheme } from "@/context/ThemeContext";
+import { useMemo } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
@@ -11,6 +13,7 @@ type Props = {
 };
 
 export function TimeRow({ label, icon, time, onPress }: Props) {
+  const s = useSStyles();
   const safeTime = time instanceof Date ? time : new Date(time as any);
   return (
     <TouchableOpacity style={s.row} onPress={onPress} activeOpacity={0.8}>
@@ -26,7 +29,11 @@ export function TimeRow({ label, icon, time, onPress }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+function useSStyles() {
+  const { colors } = useTheme();
+  return useMemo(
+    () =>
+      StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -49,4 +56,7 @@ const s = StyleSheet.create({
   body: { flex: 1 },
   label: { fontSize: 12, color: Colors.textMuted, marginBottom: 3 },
   time: { fontSize: 17, fontWeight: "700", color: Colors.textPrimary },
-});
+}),
+    [colors],
+  );
+};
