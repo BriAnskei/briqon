@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { durationText } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
@@ -71,7 +71,7 @@ export function EventTimeStep({ form, patch }: Props) {
 			<View style={s.durationHint}>
 				<Ionicons name="hourglass-outline" size={14} color={Colors.textMuted} />
 				<Text style={s.durationText}>
-					{TimeFormatter.durationText(form.startTime, form.endTime)}
+					{durationText(form.startTime, form.endTime)}
 				</Text>
 			</View>
 		</View>

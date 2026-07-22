@@ -1,10 +1,10 @@
-import { ActiveScheduleService } from "./active-schedule.service";
-import { ActiveScheduleRepository } from "../repository/active-schedule.repository";
+import { ActiveScheduleService } from "./activeSchedule.service";
+import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ScheduleRepository } from "../repository/schedule.repository";
-import { ActiveScheduleDaysRepository } from "../repository/active-schedule-days.repository";
+import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import { ConflicActivationError } from "../errors/scheduleActivationConflic.error";
-import { ActiveSchedule } from "../models/active_schedule.model";
+import { ActiveSchedule } from "../models/activeSchedule.model";
 
 // Mock repositories
 jest.mock("../repository/active-schedule.repository");

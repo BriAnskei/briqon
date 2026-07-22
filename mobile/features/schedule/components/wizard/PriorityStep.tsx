@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
 import { appointmentLabel } from "../../utils/wizardHelpers";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatTime } from "@/utils/TimeFormatter";
 
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { BREAK_FREQUENCY_OPTIONS } from "../../contants/wizardOptions";
@@ -29,7 +29,7 @@ export function PriorityStep({ form, patch }: Props) {
 			: form.appointments
 					.map(
 						(a) =>
-							`${appointmentLabel(a)} · ${TimeFormatter.formatTime(a.startTime)}–${TimeFormatter.formatTime(a.endTime)}`,
+							`${appointmentLabel(a)} · ${formatTime(a.startTime)}–${formatTime(a.endTime)}`,
 					)
 					.join("\n");
 
@@ -139,7 +139,7 @@ export function PriorityStep({ form, patch }: Props) {
 					<SummaryRow
 						icon="time-outline"
 						label="Time Window"
-						value={`${TimeFormatter.formatTime(form.startTime)} – ${TimeFormatter.formatTime(form.endTime)}`}
+						value={`${formatTime(form.startTime)} – ${formatTime(form.endTime)}`}
 					/>
 					{form.appointments.length > 0 && (
 						<SummaryRow

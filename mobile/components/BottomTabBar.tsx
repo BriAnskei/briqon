@@ -1,10 +1,10 @@
-import { useTheme } from "@/context/ThemeContext";
-import { useMemo } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
-import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { useMemo } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "@/type/theme";
 
 type TabKey = "alarm" | "schedules" | "add";

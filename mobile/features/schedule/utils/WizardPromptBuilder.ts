@@ -4,7 +4,7 @@ import {
 	EventType,
 	NewScheduleFormState,
 } from "@/type/NewScheduleTypes";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatTime, getDurationMins } from "@/utils/TimeFormatter";
 
 // ─── Break frequency → natural language instruction ───────────────────────────
 const BREAK_FREQUENCY_INSTRUCTIONS: Record<
@@ -122,9 +122,9 @@ export class WizardPromptBuilder {
 
 	// ─── PERSONAL ──────────────────────────────────────────────────────────────
 	private static buildPersonalPrompt(state: NewScheduleFormState): BuiltPrompt {
-		const wake = TimeFormatter.formatTime(state.startTime);
-		const sleep = TimeFormatter.formatTime(state.endTime);
-		const totalMins = TimeFormatter.getDurationMins(
+		const wake = formatTime(state.startTime);
+		const sleep = formatTime(state.endTime);
+		const totalMins = getDurationMins(
 			state.startTime,
 			state.endTime,
 		);
@@ -162,9 +162,9 @@ export class WizardPromptBuilder {
 		if (state.appointments.length > 0) {
 			lines.push("\nFixed appointments (block these times exactly):");
 			for (const appt of state.appointments) {
-				const start = TimeFormatter.formatTime(appt.startTime);
-				const end = TimeFormatter.formatTime(appt.endTime);
-				const dur = TimeFormatter.getDurationMins(appt.startTime, appt.endTime);
+				const start = formatTime(appt.startTime);
+				const end = formatTime(appt.endTime);
+				const dur = getDurationMins(appt.startTime, appt.endTime);
 				lines.push(
 					`  • ${appointmentLabel(appt)}: ${start} – ${end} (${dur} min)`,
 				);
@@ -179,7 +179,7 @@ export class WizardPromptBuilder {
 				const label = meal.type.charAt(0).toUpperCase() + meal.type.slice(1);
 				const fixed =
 					meal.placement === "fixed_time" && meal.fixedTime
-						? ` at ${TimeFormatter.formatTime(meal.fixedTime)}`
+						? ` at ${formatTime(meal.fixedTime)}`
 						: "";
 				lines.push(
 					`  • ${label}: ${meal.durationMinutes} min${fixed} — ${MEAL_PLACEMENT_INSTRUCTIONS[placement](label)}`,
@@ -207,9 +207,9 @@ export class WizardPromptBuilder {
 
 	// ─── EVENT ─────────────────────────────────────────────────────────────────
 	private static buildEventPrompt(state: NewScheduleFormState): BuiltPrompt {
-		const start = TimeFormatter.formatTime(state.startTime);
-		const end = TimeFormatter.formatTime(state.endTime);
-		const totalMins = TimeFormatter.getDurationMins(
+		const start = formatTime(state.startTime);
+		const end = formatTime(state.endTime);
+		const totalMins = getDurationMins(
 			state.startTime,
 			state.endTime,
 		);
@@ -240,7 +240,7 @@ export class WizardPromptBuilder {
 
 				const fixedPart =
 					item.isFixedTime && item.fixedTime
-						? ` — fixed at ${TimeFormatter.formatTime(item.fixedTime)}, do not move`
+						? ` — fixed at ${formatTime(item.fixedTime)}, do not move`
 						: "";
 
 				lines.push(`  • ${item.name}${durPart}${fixedPart}`);

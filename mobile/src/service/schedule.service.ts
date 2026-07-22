@@ -1,12 +1,10 @@
-import { Schedule, CreateSchedule } from "../models/schedule.model";
-import { ScheduleRepository } from "../repository/schedule.repository";
-import { ScheduleSummary } from "../models/summaries.model";
-import { CreateSubSummary, SubSummary } from "../models/sub_summaries.model";
 import { ulid } from "ulid";
-import { ScheduleItem } from "@/features/schedule/components/GenerateScheduleScreen/types";
-import { buildEntity } from "../models/factories/base.factory";
-import { SummariesRepository } from "../repository/summaries.repo";
+import type { Schedule } from "../models/schedule.model";
+import type { SubSummary } from "../models/sub_summaries.model";
+import type { ScheduleSummary } from "../models/summaries.model";
+import { ScheduleRepository } from "../repository/schedule.repository";
 import { SubSummariesRepository } from "../repository/subSummary.repo";
+import { SummariesRepository } from "../repository/summaries.repo";
 
 export type CreateSchedulePayloadType = {
 	schedule: Schedule;
@@ -20,14 +18,7 @@ export class ScheduleService {
 	private subSumRepo = new SubSummariesRepository();
 
 	async createSchedule(payload: CreateSchedulePayloadType) {
-		let { schedule, summaries, subSummaries } = payload;
-
-		// initialize id
-		const scheduleId = ulid();
-		schedule = { ...schedule, id: scheduleId };
-		summaries.forEach((s) => {
-			s.schedule_id = scheduleId;
-		});
+		const { schedule, summaries, subSummaries } = payload;
 
 		this.repo.transaction(async (db) => {
 			this.repo.create(schedule, db);
@@ -38,7 +29,8 @@ export class ScheduleService {
 
 	async findById(id: string): Promise<Schedule> {
 		const schedule = await this.repo.findById(id);
-		return schedule!;
+		if (!schedule) throw new Error("Schedule does not exist");
+		return schedule;
 	}
 
 	async fetchAll(): Promise<Schedule[]> {

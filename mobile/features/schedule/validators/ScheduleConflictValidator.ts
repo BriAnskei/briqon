@@ -1,6 +1,6 @@
 import { MealPlacement, NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { ValidatorResType } from "../types/FormValidatorTypes";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { getMinutesOfDay, normalizeMinute } from "@/utils/TimeFormatter";
 
 type TimeBlock = {
 	id: string;
@@ -41,17 +41,17 @@ export default class ScheduleConflictValidator {
 	public validateTimeBlocksWithinWindow(): ValidatorResType {
 		const blocks = this.getTimeBlocks();
 
-		const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
+		const windowStart = getMinutesOfDay(this.form.startTime);
 		const windowEnd = windowStart + this.getWindowMinutes();
 
 		for (const block of blocks) {
-			let start = TimeFormatter.normalizeMinute(
-				TimeFormatter.getMinutesOfDay(block.start),
+			let start = normalizeMinute(
+				getMinutesOfDay(block.start),
 				windowStart,
 			);
 
-			let end = TimeFormatter.normalizeMinute(
-				TimeFormatter.getMinutesOfDay(block.end),
+			let end = normalizeMinute(
+				getMinutesOfDay(block.end),
 				windowStart,
 			);
 

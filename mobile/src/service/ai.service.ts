@@ -1,141 +1,46 @@
-import Constants from "expo-constants";
-
-import axios from "axios";
-
-const SYSTEM_PROMPT = `
-You are Briqon, a specialized AI assistant that focuses on generating schedules.
-
-Your capabilities include:
-- Creating daily schedules
-- Planning routines
-- Organizing time-based activities
-
-
-Scheduling priorities:
-
-1. Never violate fixed appointments or fixed meal times.
-2. Stay within the schedule window.
-3. Respect requested priority focus duration when possible.
-4. Place meals and breaks around fixed commitments.
-5. Adjust break duration and placement based on remaining available time.
-6. Maintain a realistic human schedule.
-
-
-- Use 24-hour format (HH:MM).
-- Return ONLY valid JSON.
-- Do not include markdown or explanations outside JSON.
-Format:
-{
-  "summary": "A short summary of the generated schedule.",
-  "schedule": [
-    {
-      "start_time": "HH:MM",
-      "end_time": "HH:MM",
-      "activity": "string"
-    }
-  ]
-}
-`.trim();
-
-const RETRY_MESSAGE = `
-The previous response was invalid.
-
-Requirements:
-{
-  "summary": "A short summary of the generated schedule.",
-  "schedule": [
-    {
-      "start_time": "HH:MM",
-      "end   e_time": "HH:MM",
-      "activity": "string"
-    }
-  ]
-
-Return only valid JSON.
-No markdown.
-No explanation.
-`.trim();
-
-type Message = {
-	role: "system" | "user" | "assistant";
-	content: string;
-};
+import { ulid } from "ulid";
+import { api } from "@/api/client";
+import { getTokenAsync } from "@/features/schedule/auth/auth.service";
+import type { Step } from "@/features/schedule/components/GenerateScheduleScreen/constants";
+import {
+	type GenerationResult,
+	parseScheduleResponse,
+} from "@/features/schedule/utils/scheduleResponseParser";
+import { WizardPromptBuilder } from "@/features/schedule/utils/WizardPromptBuilder";
+import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 export class AIService {
-	private readonly maxRetries = 3;
+	async generateSchedule(
+		formState: NewScheduleFormState,
+		onStepProgress: (s: Step) => void,
+	): Promise<{ generationResult: GenerationResult; newScheduleId: string }> {
+		onStepProgress("creating");
 
-	async generateSchedule(prompt: string) {
-		const messages: Message[] = [
+		const formRequestPrompt = WizardPromptBuilder.build(formState);
+		const token = await getTokenAsync();
+
+		onStepProgress("understanding");
+		const res = await api.post(
+			`/api/generate`,
+			{ ...formRequestPrompt },
 			{
-				role: "system",
-				content: SYSTEM_PROMPT,
-			},
-			{
-				role: "user",
-				content: prompt,
-			},
-		];
-
-		for (let attempt = 0; attempt < this.maxRetries; attempt++) {
-			const response = await this.requestCompletion(messages);
-
-			const schedule = this.validateSchedule(response);
-
-			console.log("generated schedule: ", schedule);
-
-			if (schedule) {
-				return schedule;
-			}
-
-			messages.push(
-				{
-					role: "assistant",
-					content: response,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
 				},
-				{
-					role: "user",
-					content: RETRY_MESSAGE,
-				},
-			);
-		}
+			},
+		);
 
-		throw new Error("Unable to generate a valid schedule");
-	}
+		if (!res.data.success)
+			throw new Error(res.data.error ?? "Failed to generate schedule");
 
-	private async requestCompletion(messages: Message[]) {
-		const maxRetry = 10;
+		onStepProgress("parsing");
 
-		for (let attemp = 1; attemp <= maxRetry; attemp++) {
-			try {
-				const apiKey = Constants.expoConfig?.extra?.OPENROUTER_API_KEY;
+		const newScheduleId = ulid();
 
-				const result = await axios.post(
-					"https://openrouter.ai/api/v1/chat/completions",
-					{
-						model: "openai/gpt-oss-120b:free",
-						messages,
-					},
-					{
-						headers: {
-							Authorization: `Bearer ${apiKey}`,
-							"Content-Type": "application/json",
-						},
-					},
-				);
-
-				return JSON.parse(result.data.choices[0].message.content);
-			} catch (error) {
-				console.log("failed: ", error);
-				continue;
-			}
-		}
-	}
-
-	private validateSchedule(content: string) {
-		try {
-			const json = JSON.parse(content);
-		} catch {
-			return null;
-		}
+		return {
+			generationResult: parseScheduleResponse(res.data.res, newScheduleId),
+			newScheduleId,
+		};
 	}
 }

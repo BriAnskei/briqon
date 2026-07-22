@@ -1,5 +1,5 @@
 import { ScheduleItem } from "../../type/MessageTypes";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { timeToMinutes, minutesToTime } from "@/utils/TimeFormatter";
 
 export interface FixedAppointment {
 	activity: string;
@@ -46,8 +46,8 @@ export class ScheduleEngine {
 		// ---------------------------------------------------------------------
 		//  Prepare the fixed timeline (appointments + optional auto‑inserted meals)
 		// ---------------------------------------------------------------------
-		const startMins = TimeFormatter.timeToMinutes(dayStart);
-		let endMins = TimeFormatter.timeToMinutes(dayEnd);
+		const startMins = timeToMinutes(dayStart);
+		let endMins = timeToMinutes(dayEnd);
 		if (endMins <= startMins) {
 			endMins += 24 * 60; // handle overnight wrap‑around
 		}
@@ -62,8 +62,8 @@ export class ScheduleEngine {
 		const sanitizedFixed = fixed
 			.filter((f) => f.activity && f.start_time && f.end_time)
 			.map((f) => {
-				let start = TimeFormatter.timeToMinutes(f.start_time);
-				let end = TimeFormatter.timeToMinutes(f.end_time);
+				let start = timeToMinutes(f.start_time);
+				let end = timeToMinutes(f.end_time);
 				if (end <= start) end += 24 * 60;
 				return { activity: f.activity, start, end };
 			})
@@ -110,14 +110,14 @@ export class ScheduleEngine {
 				if (nextFixed.start > currentTime) {
 					result.push({
 						activity: "Rest & Recovery",
-						start_time: TimeFormatter.minutesToTime(currentTime % 1440),
-						end_time: TimeFormatter.minutesToTime(nextFixed.start % 1440),
+						start_time: minutesToTime(currentTime % 1440),
+						end_time: minutesToTime(nextFixed.start % 1440),
 					});
 				}
 				result.push({
 					activity: nextFixed.activity,
-					start_time: TimeFormatter.minutesToTime(nextFixed.start % 1440),
-					end_time: TimeFormatter.minutesToTime(nextFixed.end % 1440),
+					start_time: minutesToTime(nextFixed.start % 1440),
+					end_time: minutesToTime(nextFixed.end % 1440),
 				});
 				currentTime = nextFixed.end;
 			}
@@ -130,8 +130,8 @@ export class ScheduleEngine {
 		if (currentTime < endMins) {
 			result.push({
 				activity: "Wind Down / Sleep Prep",
-				start_time: TimeFormatter.minutesToTime(currentTime % 1440),
-				end_time: TimeFormatter.minutesToTime(endMins % 1440),
+				start_time: minutesToTime(currentTime % 1440),
+				end_time: minutesToTime(endMins % 1440),
 			});
 		}
 
@@ -211,8 +211,8 @@ export class ScheduleEngine {
 		if (startMins + breakfast < endMins) {
 			meals.push({
 				activity: "Breakfast/Morning Routine",
-				start_time: TimeFormatter.minutesToTime(startMins % 1440),
-				end_time: TimeFormatter.minutesToTime((startMins + breakfast) % 1440),
+				start_time: minutesToTime(startMins % 1440),
+				end_time: minutesToTime((startMins + breakfast) % 1440),
 			});
 		}
 
@@ -224,8 +224,8 @@ export class ScheduleEngine {
 		if (lunchStart + lunch < endMins) {
 			meals.push({
 				activity: "Lunch",
-				start_time: TimeFormatter.minutesToTime(lunchStart % 1440),
-				end_time: TimeFormatter.minutesToTime((lunchStart + lunch) % 1440),
+				start_time: minutesToTime(lunchStart % 1440),
+				end_time: minutesToTime((lunchStart + lunch) % 1440),
 			});
 		}
 
@@ -237,8 +237,8 @@ export class ScheduleEngine {
 		if (dinnerStart + dinner < endMins) {
 			meals.push({
 				activity: "Dinner",
-				start_time: TimeFormatter.minutesToTime(dinnerStart % 1440),
-				end_time: TimeFormatter.minutesToTime((dinnerStart + dinner) % 1440),
+				start_time: minutesToTime(dinnerStart % 1440),
+				end_time: minutesToTime((dinnerStart + dinner) % 1440),
 			});
 		}
 
@@ -285,8 +285,8 @@ export class ScheduleEngine {
 				if (nextFixed) {
 					result.push({
 						activity: nextFixed.activity,
-						start_time: TimeFormatter.minutesToTime(nextFixed.start % 1440),
-						end_time: TimeFormatter.minutesToTime(nextFixed.end % 1440),
+						start_time: minutesToTime(nextFixed.start % 1440),
+						end_time: minutesToTime(nextFixed.end % 1440),
 					});
 					setCurrentTime(nextFixed.end);
 					setFixedIdx(fixed.indexOf(nextFixed) + 1);
@@ -307,8 +307,8 @@ export class ScheduleEngine {
 
 			result.push({
 				activity: label,
-				start_time: TimeFormatter.minutesToTime(now % 1440),
-				end_time: TimeFormatter.minutesToTime((now + chunk) % 1440),
+				start_time: minutesToTime(now % 1440),
+				end_time: minutesToTime((now + chunk) % 1440),
 			});
 
 			// Advance time.
@@ -323,8 +323,8 @@ export class ScheduleEngine {
 			if (spaceForBreak >= breakLength) {
 				result.push({
 					activity: "Break",
-					start_time: TimeFormatter.minutesToTime(afterChunk % 1440),
-					end_time: TimeFormatter.minutesToTime(
+					start_time: minutesToTime(afterChunk % 1440),
+					end_time: minutesToTime(
 						(afterChunk + breakLength) % 1440,
 					),
 				});

@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { appointmentLabel } from "../../utils/wizardHelpers";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatTime } from "@/utils/TimeFormatter";
 import { TimeRow } from "@/components/TimeRow";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { APPOINTMENT_TYPES } from "../../contants/wizardOptions";
@@ -58,8 +58,8 @@ export function AppointmentsSection({
 						<View style={s.apptBody}>
 							<Text style={s.apptTitle}>{appointmentLabel(appt)}</Text>
 							<Text style={s.apptTime}>
-								{TimeFormatter.formatTime(appt.startTime)} –{" "}
-								{TimeFormatter.formatTime(appt.endTime)}
+								{formatTime(appt.startTime)} –{" "}
+								{formatTime(appt.endTime)}
 							</Text>
 						</View>
 						<TouchableOpacity

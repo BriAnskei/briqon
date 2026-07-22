@@ -1,6 +1,6 @@
 import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { ValidatorResType } from "../types/FormValidatorTypes";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { getMinutesOfDay, normalizeMinute } from "@/utils/TimeFormatter";
 
 type TimeBlock = {
 	id: string;
@@ -67,7 +67,7 @@ export default class EventScheduleValidator {
 
 		if (fixedBlocks.length === 0) return { valid: true };
 
-		const windowStart = TimeFormatter.getMinutesOfDay(this.form.startTime);
+		const windowStart = getMinutesOfDay(this.form.startTime);
 		// windowStart plus the full window duration. Using getWindowMinutes()
 		// (which returns 1440 for an equal 00:00->00:00 "full day" window)
 		// avoids normalizeMinute collapsing a 00:00 end back to 0, which made
@@ -80,12 +80,12 @@ export default class EventScheduleValidator {
 
 		for (let i = 0; i < sorted.length; i++) {
 			const block = sorted[i];
-			const start = TimeFormatter.normalizeMinute(
-				TimeFormatter.getMinutesOfDay(block.start),
+			const start = normalizeMinute(
+				getMinutesOfDay(block.start),
 				windowStart,
 			);
-			let end = TimeFormatter.normalizeMinute(
-				TimeFormatter.getMinutesOfDay(block.end),
+			let end = normalizeMinute(
+				getMinutesOfDay(block.end),
 				windowStart,
 			);
 

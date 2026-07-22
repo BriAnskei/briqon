@@ -11,7 +11,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatMinutes, formatTime } from "@/utils/TimeFormatter";
 import { UseEventItemsStateType } from "../../hooks/form/useEventItems";
 
 export function EventItemsStep({
@@ -69,10 +69,10 @@ export function EventItemsStep({
 								<Text style={s.itemSub}>
 									{[
 										item.durationMinutes != null
-											? TimeFormatter.formatMinutes(item.durationMinutes)
+											? formatMinutes(item.durationMinutes)
 											: null,
 										item.isFixedTime && item.fixedTime
-											? `at ${TimeFormatter.formatTime(item.fixedTime)}`
+											? `at ${formatTime(item.fixedTime)}`
 											: null,
 									]
 										.filter(Boolean)
@@ -202,7 +202,7 @@ export function EventItemsStep({
 									/>
 									<Text style={s.inputField}>
 										{eventItemDraft.fixedTime
-											? TimeFormatter.formatTime(eventItemDraft.fixedTime)
+											? formatTime(eventItemDraft.fixedTime)
 											: "Set time"}
 									</Text>
 								</TouchableOpacity>

@@ -1,17 +1,16 @@
-import { useTheme } from "@/context/ThemeContext";
-import { useMemo } from "react";
-import React from "react";
+import React, { useMemo } from "react";
 import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
 	Modal,
-	View,
+	Platform,
+	StyleSheet,
 	Text,
 	TextInput,
 	TouchableOpacity,
-	Platform,
-	StyleSheet,
-	KeyboardAvoidingView,
-	ActivityIndicator,
+	View,
 } from "react-native";
+import { useTheme } from "@/context/ThemeContext";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
 interface Props {

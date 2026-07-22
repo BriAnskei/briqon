@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatTime } from "@/utils/TimeFormatter";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { MealPlacement, MealType } from "@/type/NewScheduleTypes";
@@ -180,7 +180,7 @@ export function MealsSection({
 											/>
 											<Text style={s.inputField}>
 												{meal.fixedTime
-													? TimeFormatter.formatTime(meal.fixedTime)
+													? formatTime(meal.fixedTime)
 													: "Set time"}
 											</Text>
 										</TouchableOpacity>

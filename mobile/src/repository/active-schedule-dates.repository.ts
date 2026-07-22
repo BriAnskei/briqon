@@ -1,6 +1,6 @@
-import { ActiveScheduleDates } from "../models/active_schedule_dates.model";
+import type * as SQLite from "expo-sqlite";
+import type { ActiveScheduleDates } from "../models/active_schedule_dates.model";
 import { BaseRepository } from "./base.repository";
-import * as SQLite from "expo-sqlite";
 
 export class ActiveScheduleDatesRepository extends BaseRepository {
 	private mapRow(row: any): ActiveScheduleDates {

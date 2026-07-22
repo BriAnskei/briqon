@@ -1,12 +1,20 @@
-import { ScheduleActivationError, ConflictContext } from "./business.error";
+import type { ActiveSchedule } from "../models/activeSchedule.model";
+import { BaseError } from "./business.error";
 
-export type ConflictActivationContext = ConflictContext<Date | number[]>;
+export type ScheduleConflict = {
+	id: string;
+	scheduleName: string;
+	scheduleId: string;
+	activeType: ActiveSchedule["active_type"];
+	recurring: boolean;
 
-export class ConflicActivationError extends ScheduleActivationError<ConflictActivationContext> {
-	constructor(context: ConflictActivationContext) {
-		super(
-			"Schedule activation conflict with an existing active schedule",
-			context,
-		);
-	}
-}
+	startsAt?: Date;
+	endsAt?: Date;
+
+	selectedDays?: number[];
+	selectedDate?: string;
+};
+
+
+
+export class ScheduleConflictError extends BaseError<ScheduleConflict[]> {}

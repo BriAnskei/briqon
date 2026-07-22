@@ -2,7 +2,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useMemo, Fragment } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Colors, Radius, Shadow } from "@/type/theme";
-import { TimeFormatter } from "@/utils/TimeFormatter";
+import { formatMinutes } from "@/utils/TimeFormatter";
 import {
 	PersonalSummary,
 	EventSummary,
@@ -29,21 +29,21 @@ export function SummaryCard({ items }: { items: SummaryItem[] }) {
 
 export function personalSummaryItems(s: PersonalSummary): SummaryItem[] {
 	return [
-		{ label: "Window", value: TimeFormatter.formatMinutes(s.windowMinutes) },
+		{ label: "Window", value: formatMinutes(s.windowMinutes) },
 		...(s.appointmentMinutes > 0
 			? [
 					{
 						label: "Appts",
-						value: TimeFormatter.formatMinutes(s.appointmentMinutes),
+						value: formatMinutes(s.appointmentMinutes),
 					},
 				]
 			: []),
 		...(s.mealMinutes > 0
-			? [{ label: "Meals", value: TimeFormatter.formatMinutes(s.mealMinutes) }]
+			? [{ label: "Meals", value: formatMinutes(s.mealMinutes) }]
 			: []),
 		{
 			label: "Remaining",
-			value: TimeFormatter.formatMinutes(s.remainingMinutes),
+			value: formatMinutes(s.remainingMinutes),
 		},
 	];
 }
@@ -52,12 +52,12 @@ export function eventSummaryItems(s: EventSummary): SummaryItem[] {
 	return [
 		{
 			label: "Event Hours",
-			value: TimeFormatter.formatMinutes(s.windowMinutes),
+			value: formatMinutes(s.windowMinutes),
 		},
 		{ label: "Items", value: String(s.totalItems) },
 		{
 			label: "Remaining",
-			value: TimeFormatter.formatMinutes(s.remainingMinutes),
+			value: formatMinutes(s.remainingMinutes),
 		},
 	];
 }

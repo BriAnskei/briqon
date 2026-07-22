@@ -15,7 +15,6 @@ import { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { useRouter } from "expo-router";
 
 import { AiInstance } from "@/src/ai/ai.instance";
-import { TimeFormatter } from "@/utils/TimeFormatter";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
