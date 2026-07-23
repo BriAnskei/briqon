@@ -1,6 +1,5 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { ulid } from "ulid";
-import { id } from "zod/v4/locales";
 import {
 	type ScheduleConflict,
 	ScheduleConflictError,
@@ -32,8 +31,8 @@ import { ScheduleRepository } from "../repository/schedule.repository";
 
 type CreationPayload = {
 	newActiveSchedule: ActiveSchedule;
-	selectedDays: number[];
-	selectedDate: Date;
+	selectedDays?: number[];
+	selectedDate?: Date;
 };
 
 export class ActiveScheduleService {
@@ -83,10 +82,15 @@ export class ActiveScheduleService {
 
 				this.activeScheduleDaysRepo.create(activeDays, db);
 			} else if (payload.newActiveSchedule.active_type === "date") {
+				const selectedDate = payload.selectedDate;
+
+				if (selectedDate === undefined)
+					throw new Error("No data for the date selection");
+
 				const activeDate: ActiveScheduleDates = {
 					id: ulid(),
 					active_schedule_id: activeScheduleId,
-					date: payload.selectedDate,
+					date: selectedDate,
 				};
 
 				this.activeScheduleDateRepo.create(activeDate, db);
@@ -111,7 +115,9 @@ export class ActiveScheduleService {
 		);
 
 		if (recurring) {
-			dayRangeConflict = await this.repo.findDayConflicts(payload.selectedDays);
+			dayRangeConflict = await this.repo.findDayConflicts(
+				payload.selectedDays ?? [],
+			);
 		}
 
 		return {

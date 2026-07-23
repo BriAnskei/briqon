@@ -15,6 +15,4 @@ export type ScheduleConflict = {
 	selectedDate?: string;
 };
 
-
-
 export class ScheduleConflictError extends BaseError<ScheduleConflict[]> {}

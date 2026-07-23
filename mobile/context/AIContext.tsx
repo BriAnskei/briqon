@@ -21,7 +21,8 @@ type AIContextProvider = {
 	isGenerating: boolean;
 	error: string | null;
 	result: GenerationResult | null;
-	resetSteps: () => void;
+	resetRegeneration: () => void;
+	generatedScheduleId: string | null;
 };
 
 const AIContext = createContext<AIContextProvider | null>(null);
@@ -31,16 +32,18 @@ export function AIProvider({ children }: { children: ReactNode }) {
 
 	const [completedSteps, setCompletedSteps] = useState<Step[]>([]);
 	const [error, setError] = useState<string | null>(null);
-	const [isGenerating, setIsGenerating] = useState(false);
-	const [result, setResult] = useState<GenerationResult | null>(null);
+	const [isGenerating, setIsGenerating] = useState(true);
 
 	const [inputForm, setInputForm] = useState<NewScheduleFormState | undefined>(
 		undefined,
 	);
 
-	const generatedScheduleId = useRef<string | undefined>(null);
+	const generateScheduleIdRef = useRef<string | undefined>(null);
+	const [result, setResult] = useState<GenerationResult | null>(null);
 
-	const resetSteps = useCallback(() => {
+	const resetRegeneration = useCallback(() => {
+		generateScheduleIdRef.current = null;
+		setResult(null);
 		setCompletedSteps([]);
 		setError(null);
 	}, []);
@@ -54,7 +57,7 @@ export function AIProvider({ children }: { children: ReactNode }) {
 					setCompletedSteps((prev) => [...prev, s]),
 				);
 
-			generatedScheduleId.current = newScheduleId;
+			generateScheduleIdRef.current = newScheduleId;
 			setResult(generationResult);
 		} catch (err) {
 			console.log("Failed:");
@@ -73,9 +76,9 @@ export function AIProvider({ children }: { children: ReactNode }) {
 	}, [inputForm, aiService]);
 
 	const handleRegenerate = useCallback(() => {
-		resetSteps();
+		resetRegeneration();
 		generateSchedule();
-	}, [resetSteps, generateSchedule]);
+	}, [resetRegeneration, generateSchedule]);
 	return (
 		<AIContext.Provider
 			value={{
@@ -86,7 +89,8 @@ export function AIProvider({ children }: { children: ReactNode }) {
 				setInputForm,
 				handleRegenerate,
 				result,
-				resetSteps,
+				resetRegeneration,
+				generatedScheduleId: generateScheduleIdRef.current ?? null,
 			}}
 		>
 			{children}

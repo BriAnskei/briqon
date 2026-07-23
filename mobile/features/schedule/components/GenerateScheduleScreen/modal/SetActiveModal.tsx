@@ -1,7 +1,5 @@
-import DateTimePicker, {
-	type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useMemo } from "react";
 import {
 	Modal,
 	Platform,
@@ -13,6 +11,10 @@ import {
 	View,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
+import {
+	DAYS,
+	useSetActiveModal,
+} from "@/features/schedule/hooks/generation/useSetActiveModal";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
 interface Props {
@@ -20,140 +22,34 @@ interface Props {
 	close: () => void;
 }
 
-type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
-
-const DAYS = [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday",
-];
-
 export function SetActiveModal({ isOpen, close }: Props) {
 	const s = useSStyles();
 
-	const [dateMode, setDateMode] = useState<DateMode>(null);
-
-	// "range" (days of week) state
-	const [selectedDays, setSelectedDays] = useState<string[]>([]);
-	const [disabledDays] = useState<string[]>([]);
-	const [rangeStartsAt, setRangeStartsAt] = useState<Date>(new Date());
-	const [showRangeStartsPicker, setShowRangeStartsPicker] = useState(false);
-
-	// "specific" date state
-	const [specificDate, setSpecificDate] = useState<Date>(new Date());
-	const [showDatePicker, setShowDatePicker] = useState(false);
-
-	const [recurring, setRecurring] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-
-	const resetState = useCallback(() => {
-		setDateMode(null);
-		setSelectedDays([]);
-		setRangeStartsAt(new Date());
-		setShowRangeStartsPicker(false);
-		setSpecificDate(new Date());
-		setShowDatePicker(false);
-		setRecurring(false);
-		setIsSubmitting(false);
-	}, []);
-
-	const handleClose = useCallback(() => {
-		resetState();
-		close();
-	}, [resetState, close]);
-
-	const handleModeSelect = useCallback((mode: Exclude<DateMode, null>) => {
-		setDateMode(mode);
-		if (mode !== "range") {
-			setShowRangeStartsPicker(false);
-		}
-		if (mode === "specific") {
-			setShowDatePicker(true);
-		} else {
-			setShowDatePicker(false);
-		}
-	}, []);
-
-	const toggleDay = useCallback(
-		(day: string) => {
-			if (disabledDays.includes(day)) return;
-			setSelectedDays((prev) =>
-				prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-			);
-		},
-		[disabledDays],
-	);
-
-	const handleRangeStartsAtChange = useCallback(
-		(event: DateTimePickerEvent, selectedTime?: Date) => {
-			if (Platform.OS === "android") {
-				setShowRangeStartsPicker(false);
-			}
-			if (event.type === "set" && selectedTime) {
-				setRangeStartsAt(selectedTime);
-			}
-		},
-		[],
-	);
-
-	const handleDateChange = useCallback(
-		(event: DateTimePickerEvent, selectedDate?: Date) => {
-			if (Platform.OS === "android") {
-				setShowDatePicker(false);
-			}
-			if (event.type === "set" && selectedDate) {
-				setSpecificDate(selectedDate);
-			}
-		},
-		[],
-	);
-
-	const isConfirmBlocked = useMemo(() => {
-		if (isSubmitting) return true;
-		if (dateMode === null) return true;
-		if (dateMode === "range" && selectedDays.length === 0) return true;
-		return false;
-	}, [isSubmitting, dateMode, selectedDays]);
-
-	const summary = useMemo(() => {
-		if (dateMode === "today") {
-			return recurring ? "Today, repeating weekly" : "Active today";
-		}
-		if (dateMode === "tomorrow") {
-			return recurring ? "Tomorrow, repeating weekly" : "Active tomorrow";
-		}
-		if (dateMode === "range") {
-			if (selectedDays.length === 0) return "Select at least one day";
-			const dayList = selectedDays.join(", ");
-			return `${dayList} · starts at ${formatTime(rangeStartsAt)}${
-				recurring ? " · repeats weekly" : ""
-			}`;
-		}
-		if (dateMode === "specific") {
-			return `Active on ${formatDate(specificDate)}`;
-		}
-		return "";
-	}, [dateMode, recurring, selectedDays, rangeStartsAt, specificDate]);
-
-	const handleConfirm = useCallback(() => {
-		if (isConfirmBlocked) return;
-		setIsSubmitting(true);
-
-		// TODO: wire real activation/save logic here.
-		// TODO: run conflict validation (e.g. ScheduleConflictValidator) before
-		// committing, and surface a conflict-resolution modal if a clash is found.
-
-		setTimeout(() => {
-			resetState();
-			close();
-		}, 400);
-	}, [isConfirmBlocked, resetState, close]);
-
-	useEffect(() => {}, []);
+	const {
+		dateMode,
+		selectedDays,
+		disabledDays,
+		specificDate,
+		showDatePicker,
+		rangeAnchorDate,
+		showRangeDatePicker,
+		rangeResolvedStart,
+		rangeResolvedEnd,
+		recurring,
+		isSubmitting,
+		summary,
+		isConfirmBlocked,
+		isTodayAvailable,
+		setRecurring,
+		setShowDatePicker,
+		setShowRangeDatePicker,
+		handleModeSelect,
+		toggleDay,
+		handleDateChange,
+		handleRangeDateChange,
+		handleClose,
+		handleConfirm,
+	} = useSetActiveModal({ isOpen, close });
 
 	return (
 		<Modal
@@ -196,11 +92,13 @@ export function SetActiveModal({ isOpen, close }: Props) {
 						{/* Quick picks */}
 						<Text style={s.sectionLabel}>Quick Pick</Text>
 						<View style={s.pillRow}>
-							<OptionPill
-								label="Today"
-								selected={dateMode === "today"}
-								onPress={() => handleModeSelect("today")}
-							/>
+							{isTodayAvailable && (
+								<OptionPill
+									label="Today"
+									selected={dateMode === "today"}
+									onPress={() => handleModeSelect("today")}
+								/>
+							)}
 							<OptionPill
 								label="Tomorrow"
 								selected={dateMode === "tomorrow"}
@@ -232,13 +130,13 @@ export function SetActiveModal({ isOpen, close }: Props) {
 									selectedDays={selectedDays}
 									onToggleDay={toggleDay}
 									disabledDays={disabledDays}
-									startsAt={rangeStartsAt}
-									showStartsPicker={showRangeStartsPicker}
-									onOpenStartsPicker={() => setShowRangeStartsPicker(true)}
-									onStartsAtChange={handleRangeStartsAtChange}
-									onStartsAtPickerDismiss={() =>
-										setShowRangeStartsPicker(false)
-									}
+									recurring={recurring}
+									rangeAnchorDate={rangeAnchorDate}
+									showRangeDatePicker={showRangeDatePicker}
+									rangeResolvedStart={rangeResolvedStart}
+									rangeResolvedEnd={rangeResolvedEnd}
+									onOpenRangeDatePicker={() => setShowRangeDatePicker(true)}
+									onRangeDateChange={handleRangeDateChange}
 								/>
 							)}
 						</View>
@@ -365,24 +263,65 @@ function DayRangeExpanded({
 	selectedDays,
 	onToggleDay,
 	disabledDays,
-	startsAt,
-	showStartsPicker,
-	onOpenStartsPicker,
-	onStartsAtChange,
-	onStartsAtPickerDismiss,
+	recurring,
+	rangeAnchorDate,
+	showRangeDatePicker,
+	rangeResolvedStart,
+	rangeResolvedEnd,
+	onOpenRangeDatePicker,
+	onRangeDateChange,
 }: {
 	selectedDays: string[];
 	onToggleDay: (day: string) => void;
 	disabledDays: string[];
-	startsAt: Date;
-	showStartsPicker: boolean;
-	onOpenStartsPicker: () => void;
-	onStartsAtChange: (event: DateTimePickerEvent, date?: Date) => void;
-	onStartsAtPickerDismiss: () => void;
+	recurring: boolean;
+	rangeAnchorDate: Date;
+	showRangeDatePicker: boolean;
+	rangeResolvedStart: Date | null;
+	rangeResolvedEnd: Date | null;
+	onOpenRangeDatePicker: () => void;
+	onRangeDateChange: (
+		event: import("@react-native-community/datetimepicker").DateTimePickerEvent,
+		selectedDate?: Date,
+	) => void;
 }) {
 	const s = useSStyles();
+
+	const isSingleDay =
+		rangeResolvedStart &&
+		rangeResolvedEnd &&
+		rangeResolvedStart.toDateString() === rangeResolvedEnd.toDateString();
+
 	return (
 		<View style={s.dayRangeWrap}>
+			{/* "Starts From" now renders first for non-recurring schedules —
+			    day chips stay disabled until a start date is confirmed here. */}
+			{!recurring && (
+				<View style={s.rangeStartWrap}>
+					<Text style={s.rangeStartLabel}>Starts From</Text>
+
+					{showRangeDatePicker ? (
+						<DateTimePicker
+							value={rangeAnchorDate}
+							mode="date"
+							display={Platform.OS === "ios" ? "inline" : "default"}
+							minimumDate={new Date()}
+							onChange={onRangeDateChange}
+						/>
+					) : (
+						<TouchableOpacity
+							style={s.changeDateBtn}
+							onPress={onOpenRangeDatePicker}
+							activeOpacity={0.8}
+						>
+							<Text style={s.changeDateText}>
+								📅 {formatDate(rangeAnchorDate)} · Tap to change
+							</Text>
+						</TouchableOpacity>
+					)}
+				</View>
+			)}
+
 			<View style={s.dayChipRow}>
 				{DAYS.map((day) => {
 					const active = selectedDays.includes(day);
@@ -413,30 +352,12 @@ function DayRangeExpanded({
 				})}
 			</View>
 
-			<View style={s.startsAtRow}>
-				<Text style={s.startsAtLabel}>Starts at</Text>
-				{showStartsPicker ? (
-					<DateTimePicker
-						value={startsAt}
-						mode="time"
-						display={Platform.OS === "ios" ? "spinner" : "default"}
-						onChange={(e, d) => {
-							onStartsAtChange(e, d);
-							if (Platform.OS === "ios" && e.type === "dismissed") {
-								onStartsAtPickerDismiss();
-							}
-						}}
-					/>
-				) : (
-					<TouchableOpacity
-						style={s.startsAtBtn}
-						onPress={onOpenStartsPicker}
-						activeOpacity={0.8}
-					>
-						<Text style={s.startsAtText}>{formatTime(startsAt)}</Text>
-					</TouchableOpacity>
-				)}
-			</View>
+			{!recurring && rangeResolvedStart && rangeResolvedEnd && (
+				<Text style={s.rangeResolvedHint}>
+					Active {formatDate(rangeResolvedStart)}
+					{!isSingleDay ? ` – ${formatDate(rangeResolvedEnd)}` : ""}
+				</Text>
+			)}
 		</View>
 	);
 }
@@ -455,13 +376,6 @@ function formatDate(date: Date): string {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
-	});
-}
-
-function formatTime(date: Date): string {
-	return date.toLocaleTimeString(undefined, {
-		hour: "numeric",
-		minute: "2-digit",
 	});
 }
 
@@ -640,28 +554,22 @@ function useSStyles() {
 				},
 				dayChipTextActive: { color: Colors.white },
 				dayChipTextDisabled: { color: Colors.textMuted },
-				startsAtRow: {
-					flexDirection: "row",
-					alignItems: "center",
-					justifyContent: "space-between",
+				rangeStartWrap: {
+					borderBottomWidth: 1,
+					borderBottomColor: Colors.border,
+					paddingBottom: 12,
+					gap: 8,
 				},
-				startsAtLabel: {
-					fontSize: 13,
-					fontWeight: "600",
-					color: Colors.textPrimary,
+				rangeStartLabel: {
+					fontSize: 12,
+					fontWeight: "700",
+					color: Colors.textSecondary,
 				},
-				startsAtBtn: {
-					paddingHorizontal: 14,
-					paddingVertical: 8,
-					backgroundColor: Colors.bgElevated,
-					borderRadius: Radius.md,
-					borderWidth: 1,
-					borderColor: Colors.accent,
-				},
-				startsAtText: {
-					fontSize: 13,
-					fontWeight: "600",
-					color: Colors.accent,
+				rangeResolvedHint: {
+					fontSize: 12,
+					fontWeight: "500",
+					color: Colors.textMuted,
+					marginTop: 2,
 				},
 				datePickerWrap: {
 					borderTopWidth: 1,
