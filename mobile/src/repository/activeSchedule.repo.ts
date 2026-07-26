@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import { parseLocalISODate, toLocalISODate } from "@/utils/TimeFormatter";
 import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "../models/activeSchedule.model";
 import { BaseRepository } from "./base.repository";
@@ -55,9 +56,11 @@ export class ActiveScheduleRepository extends BaseRepository {
 					activeType: row.active_type,
 					recurring: Boolean(row.recurring),
 
-					startsAt: row.starts_at ? new Date(row.starts_at) : undefined,
+					startsAt: row.starts_at
+						? parseLocalISODate(row.starts_at)
+						: undefined,
 
-					endsAt: row.ends_at ? new Date(row.ends_at) : undefined,
+					endsAt: row.ends_at ? parseLocalISODate(row.ends_at) : undefined,
 
 					selectedDays:
 						row.selected_day !== null ? [row.selected_day] : undefined,
@@ -85,6 +88,7 @@ export class ActiveScheduleRepository extends BaseRepository {
 
 		return Array.from(conflicts.values());
 	}
+
 	async create(activeSchedule: ActiveSchedule, db?: SQLite.SQLiteDatabase) {
 		return await this.run(
 			`
@@ -103,8 +107,10 @@ export class ActiveScheduleRepository extends BaseRepository {
 				activeSchedule.schedule_id,
 				activeSchedule.active_type,
 				activeSchedule.recurring,
-				activeSchedule.starts_at?.toISOString() ?? null,
-				activeSchedule.ends_at?.toISOString() ?? null,
+				activeSchedule.starts_at
+					? toLocalISODate(activeSchedule.starts_at)
+					: null,
+				activeSchedule.ends_at ? toLocalISODate(activeSchedule.ends_at) : null,
 			],
 			db ?? undefined,
 		);
@@ -243,7 +249,6 @@ export class ActiveScheduleRepository extends BaseRepository {
 
 		return updated;
 	}
-
 
 	async delete(id: string) {
 		await this.run(`DELETE FROM active_schedules WHERE id = ?`, [id]);

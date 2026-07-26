@@ -4,6 +4,9 @@ export function withAuth(handler: Function) {
   return async (req: any, res: any) => {
     const authHeader = req.headers.authorization;
 
+
+    console.log("on request: ", authHeader)
+
     if (!authHeader)
       return res.status(401).json({
         success: false,

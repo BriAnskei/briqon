@@ -1,34 +1,47 @@
 import { useEffect } from "react";
-import { useAI } from "@/context/AIContext";
+import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import useAi from "@/hooks/useAi";
 import useSaveScheduleModal from "./useSaveScheduleModal";
+import { useSetActiveModal } from "./useSetActiveModal";
 
 export function useGenerateScheduleScreen() {
+	const { inputForm } = useNewScheduleForm();
+
 	const {
-		completedSteps,
 		result,
+		handleGenerateSchedule,
+		completedSteps,
 		isGenerating,
 		error,
-		handleRegenerate,
-		generateSchedule,
-		resetSteps,
-	} = useAI();
+		resetState,
+	} = useAi();
+
 	const saveScheduleModalState = useSaveScheduleModal({
 		summaries: result?.summary ?? [],
 		subSummaries: result?.subSummary ?? [],
 		scheduleItem: result?.schedule ?? [],
 	});
 
+	const setActiveModalState = useSetActiveModal();
+
 	useEffect(() => {
-		generateSchedule();
-	}, [generateSchedule]);
+		handleGenerateSchedule(inputForm);
+	}, [handleGenerateSchedule, inputForm]);
+
+	const handleRegenerate = () => {
+		resetState();
+		handleGenerateSchedule;
+	};
 
 	return {
 		handleRegenerate,
+		handleGenerateSchedule,
 		completedSteps,
 		result,
 		error,
 		isGenerating,
 		saveScheduleModalState,
-		resetSteps,
+		setActiveModalState,
+		resetRegeneration: resetState,
 	};
 }

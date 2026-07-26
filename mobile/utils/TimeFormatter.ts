@@ -155,3 +155,74 @@ export function minutesToTime(totalMinutes: number): string {
 export function addMinutes(time: string, minutes: number): string {
 	return minutesToTime(timeToMinutes(time) + minutes);
 }
+
+// ── date helpers ─────────────────────────────────────────────────────────
+
+export function startOfDay(date: Date): Date {
+	const d = new Date(date);
+	d.setHours(0, 0, 0, 0);
+	return d;
+}
+
+export function addDays(date: Date, days: number): Date {
+	const d = new Date(date);
+	d.setDate(d.getDate() + days);
+	return d;
+}
+
+/** First date on/after `anchor` (inclusive) whose weekday is one of
+ * `selectedIndices`. Scans a 7-day window, so it always finds a match
+ * as long as at least one weekday is selected. */
+export function resolveRangeStart(
+	anchor: Date,
+	selectedIndices: number[],
+): Date | null {
+	if (selectedIndices.length === 0) return null;
+	const anchorDay = startOfDay(anchor);
+	for (let offset = 0; offset < 7; offset++) {
+		const candidate = addDays(anchorDay, offset);
+		if (selectedIndices.includes(candidate.getDay())) return candidate;
+	}
+	return null;
+}
+
+/** Last date within the 7-day window starting at `start` (inclusive) whose
+ * weekday is one of `selectedIndices` — i.e. the final occurrence of the
+ * selected days before the pattern would repeat. */
+export function resolveRangeEnd(
+	start: Date | null,
+	selectedIndices: number[],
+): Date | null {
+	if (!start || selectedIndices.length === 0) return null;
+	for (let offset = 6; offset >= 0; offset--) {
+		const candidate = addDays(start, offset);
+		if (selectedIndices.includes(candidate.getDay())) return candidate;
+	}
+	return start;
+}
+
+export function formatCompact(date: Date): string {
+	return date.toLocaleDateString(undefined, {
+		month: "short",
+		day: "numeric",
+	});
+}
+
+export function isSameDay(a: Date, b: Date): boolean {
+	return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
+export function toLocalISODate(date?: Date): string {
+	if (!date) throw new Error("No Date input");
+	return [
+		date.getFullYear(),
+		String(date.getMonth() + 1).padStart(2, "0"),
+		String(date.getDate()).padStart(2, "0"),
+	].join("-");
+}
+
+export function parseLocalISODate(date: string): Date {
+	const [year, month, day] = date.split("-").map(Number);
+
+	return new Date(year, month - 1, day);
+}

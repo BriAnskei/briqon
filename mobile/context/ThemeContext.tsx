@@ -1,12 +1,12 @@
+import * as NavigationBar from "expo-navigation-bar";
+import { StatusBar } from "expo-status-bar";
 import { createContext, useContext, useEffect } from "react";
 import { useColorScheme } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import * as NavigationBar from "expo-navigation-bar";
 import {
+	type ColorScheme,
 	darkThemePalette,
 	lightThemePalette,
 	setActiveTheme,
-	type ColorScheme,
 	type Theme,
 } from "@/type/theme";
 

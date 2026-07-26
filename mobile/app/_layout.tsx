@@ -1,22 +1,22 @@
-import SplashScreen from "@/components/SplashScreen";
-import { buildToastConfig } from "@/components/toastConfig";
-import { AIProvider } from "@/context/AIContext";
-import { ThemeProvider } from "@/context/ThemeContext";
-import { ScheduleProvider } from "@/context/ScheduleContext";
-import { initializeDb } from "@/src/database/init";
 import { Stack } from "expo-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import SplashScreen from "@/components/SplashScreen";
+import { buildToastConfig } from "@/components/toastConfig";
+import { NewScheduleFormProvider } from "@/context/NewScheduleFormContext";
+import { ScheduleProvider } from "@/context/ScheduleContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { initializeDb } from "@/src/database/init";
 
 export default function RootLayout() {
 	return (
 		<SafeAreaProvider>
 			<ThemeProvider>
 				<ScheduleProvider>
-					<AIProvider>
+					<NewScheduleFormProvider>
 						<ScreenStack />
-					</AIProvider>
+					</NewScheduleFormProvider>
 				</ScheduleProvider>
 			</ThemeProvider>
 			<Toast config={buildToastConfig()} />

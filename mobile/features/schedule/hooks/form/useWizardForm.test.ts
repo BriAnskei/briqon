@@ -1,11 +1,11 @@
-import { renderHook, act } from "@testing-library/react-native";
-import Toast from "react-native-toast-message";
+import { act, renderHook } from "@testing-library/react-native";
 import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
+import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
 import { useSchedule } from "@/context/ScheduleContext";
-import { useAI } from "@/context/AIContext";
+import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { WizardPromptBuilder } from "../../utils/WizardPromptBuilder";
 import { useWizardForm } from "./useWizardForm";
-import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 // ---------------------------------------------------------------------
 // Mocks
@@ -57,9 +57,9 @@ jest.mock("../contants/wizardOptions", () => ({
 }));
 
 import {
-	defaultForm,
-	defaultEventItemDraft,
 	defaultAppointmentDraft,
+	defaultEventItemDraft,
+	defaultForm,
 } from "../../utils/wizardHelpers";
 
 // ---------------------------------------------------------------------
@@ -128,7 +128,7 @@ beforeEach(() => {
 		setPrevScheduleFormInput: mockSetPrevScheduleFormInput,
 	});
 
-	(useAI as jest.Mock).mockReturnValue({
+	(useNewScheduleForm as jest.Mock).mockReturnValue({
 		service: { generateSchedule: mockGenerateSchedule },
 		setInputForm: mockSetInputForm,
 	});

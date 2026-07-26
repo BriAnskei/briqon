@@ -1,39 +1,37 @@
-import { useTheme } from "@/context/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 import { useMemo } from "react";
 import {
-	View,
-	Text,
-	TouchableOpacity,
-	ScrollView,
-	StyleSheet,
 	KeyboardAvoidingView,
 	Platform,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { Colors, Radius, Shadow } from "@/type/theme";
-import { useWizardForm } from "@/features/schedule/hooks/form/useWizardForm";
-
-import { TypeStep } from "@/features/schedule/components/wizard/TypeStep";
-import { TimeWindowSettings } from "@/features/schedule/components/wizard/TimeWindowSettings";
-import { BreaksStep } from "@/features/schedule/components/wizard/BreaksStep";
-import { PriorityStep } from "@/features/schedule/components/wizard/PriorityStep";
-import { AppointmentsSection } from "@/features/schedule/components/wizard/AppointmentsSection";
-import { MealsSection } from "@/features/schedule/components/wizard/MealsSection";
-
-import { EventTimeStep } from "@/features/schedule/components/wizard/EventTimeStep";
-import { EventItemsStep } from "@/features/schedule/components/wizard/EventItemsStep";
 import { StepIndicator } from "@/components/StepIndecator";
+import { useTheme } from "@/context/ThemeContext";
+import { AppointmentsSection } from "@/features/schedule/components/wizard/AppointmentsSection";
+import { BreaksStep } from "@/features/schedule/components/wizard/BreaksStep";
 import { EventDetailsStep } from "@/features/schedule/components/wizard/EventDetialsStep";
+import { EventItemsStep } from "@/features/schedule/components/wizard/EventItemsStep";
+import { EventTimeStep } from "@/features/schedule/components/wizard/EventTimeStep";
+import { MealsSection } from "@/features/schedule/components/wizard/MealsSection";
+import { PriorityStep } from "@/features/schedule/components/wizard/PriorityStep";
 import {
-	SummaryCard,
-	personalSummaryItems,
 	eventSummaryItems,
+	personalSummaryItems,
+	SummaryCard,
 } from "@/features/schedule/components/wizard/SummaryCard";
+import { TimeWindowSettings } from "@/features/schedule/components/wizard/TimeWindowSettings";
+import { TypeStep } from "@/features/schedule/components/wizard/TypeStep";
 import {
 	EVENT_STEP_LABELS,
 	PERSONAL_STEP_LABELS,
 } from "@/features/schedule/contants/wizardOptions";
+import { useWizardForm } from "@/features/schedule/hooks/form/useWizardForm";
+import { Colors, Radius, Shadow } from "@/type/theme";
 
 export default function AddScheduleScreen() {
 	const s = useSStyles();

@@ -1,19 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useMemo, useState } from "react";
+
 import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
-import { NewScheduleFormState } from "@/type/NewScheduleTypes";
-import { defaultForm } from "../../utils/wizardHelpers";
+import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import {
 	EVENT_TOTAL_STEPS,
 	PERSONAL_TOTAL_STEPS,
 } from "../../contants/wizardOptions";
-import { useAI } from "@/context/AIContext";
-import useMeals from "./useMeal";
+import { defaultForm } from "../../utils/wizardHelpers";
 import useAppointments from "./useAppointments";
-
-import { useWizardValidation } from "./useScheduleFormValidator";
 import useEventItems from "./useEventItems";
+import useMeals from "./useMeal";
+import { useWizardValidation } from "./useScheduleFormValidator";
 
 export type FixedScheduleDuration = {
 	appMinutes: number;
@@ -37,7 +37,7 @@ export type EventSummary = {
 
 export function useWizardForm() {
 	const router = useRouter();
-	const { setInputForm } = useAI();
+	const { setInputForm } = useNewScheduleForm();
 
 	const [step, setStep] = useState(0);
 	const [form, setForm] = useState<NewScheduleFormState>(defaultForm());

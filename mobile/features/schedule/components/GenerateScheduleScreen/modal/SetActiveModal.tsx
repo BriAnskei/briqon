@@ -13,16 +13,11 @@ import {
 import { useTheme } from "@/context/ThemeContext";
 import {
 	DAYS,
-	useSetActiveModal,
+	type UseSetActiveModalState,
 } from "@/features/schedule/hooks/generation/useSetActiveModal";
 import { Colors, Radius, Shadow } from "@/type/theme";
 
-interface Props {
-	isOpen: boolean;
-	close: () => void;
-}
-
-export function SetActiveModal({ isOpen, close }: Props) {
+export function SetActiveModal(state: UseSetActiveModalState) {
 	const s = useSStyles();
 
 	const {
@@ -49,7 +44,8 @@ export function SetActiveModal({ isOpen, close }: Props) {
 		handleRangeDateChange,
 		handleClose,
 		handleConfirm,
-	} = useSetActiveModal({ isOpen, close });
+		isOpen,
+	} = state;
 
 	return (
 		<Modal

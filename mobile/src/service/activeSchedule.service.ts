@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from "expo-sqlite";
 import { ulid } from "ulid";
+import { toLocalISODate } from "@/utils/TimeFormatter";
 import {
 	type ScheduleConflict,
 	ScheduleConflictError,
@@ -29,7 +30,7 @@ import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import { ScheduleRepository } from "../repository/schedule.repository";
 
-type CreationPayload = {
+export type CreationPayload = {
 	newActiveSchedule: ActiveSchedule;
 	selectedDays?: number[];
 	selectedDate?: Date;
@@ -69,7 +70,10 @@ export class ActiveScheduleService {
 		const activeScheduleId = ulid();
 
 		this.repo.transaction(async (db) => {
-			this.repo.create(payload.newActiveSchedule, db);
+			this.repo.create(
+				{ ...payload.newActiveSchedule, id: activeScheduleId },
+				db,
+			);
 
 			if (payload.newActiveSchedule.active_type === "days") {
 				const activeDays: ActiveScheduleDays[] = (
@@ -110,8 +114,8 @@ export class ActiveScheduleService {
 		// this will usually return a data if the new active schedule
 		// is non repeating and it has a non repeating conflicts
 		const rangeConflicts = await this.repo.findRangeOverlaps(
-			starts_at?.toISOString(),
-			ends_at?.toISOString(),
+			toLocalISODate(starts_at),
+			toLocalISODate(ends_at),
 		);
 
 		if (recurring) {

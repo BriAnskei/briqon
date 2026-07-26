@@ -11,6 +11,7 @@ import { ScheduleTimeline } from "@/features/schedule/components/GenerateSchedul
 import { ScreenHeader } from "@/features/schedule/components/GenerateScheduleScreen/components/ScreenHeader";
 import { SummaryCard } from "@/features/schedule/components/GenerateScheduleScreen/components/SummaryCard";
 import { SaveScheduleModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SaveScheduleModal";
+import { SetActiveModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import { useGenerateScheduleScreen } from "@/features/schedule/hooks/generation/useGenerateScheduleScreen";
 import { Colors } from "@/type/theme";
 
@@ -24,7 +25,8 @@ export default function GenerateScheduleScreen() {
 		error,
 		isGenerating,
 		saveScheduleModalState,
-		resetSteps,
+		setActiveModalState,
+		resetRegeneration,
 	} = useGenerateScheduleScreen();
 
 	const [showRegenerateCard, setShowRegenerateCard] = useState(false);
@@ -38,16 +40,18 @@ export default function GenerateScheduleScreen() {
 	}, [isGenerating]);
 
 	const handleGoHome = () => {
-		resetSteps();
+		resetRegeneration();
 		router.replace("/");
 	};
 
 	const handleBackToForm = () => {
-		resetSteps();
+		resetRegeneration();
 		router.back();
 	};
 
-	const handleSetActive = () => {};
+	const handleSetActive = () => {
+		setActiveModalState.open();
+	};
 
 	return (
 		<SafeAreaView style={s.root} edges={["top", "bottom"]}>
@@ -62,7 +66,9 @@ export default function GenerateScheduleScreen() {
 					<GenerationProgress completedSteps={completedSteps} />
 				)}
 
-				{error && <ErrorCard error={error} onRetry={handleRegenerate} />}
+				{error && !isGenerating && (
+					<ErrorCard error={error} onRetry={handleRegenerate} />
+				)}
 
 				{!isGenerating && result && (
 					<View style={s.resultSection}>
@@ -102,10 +108,7 @@ export default function GenerateScheduleScreen() {
 				isSaving={saveScheduleModalState.isSaving}
 			/>
 
-			{/* <SetActiveModal
-        visible={setActiveModalVisible}
-        onClose={() => setSetActiveModalVisible(false)}
-      /> */}
+			<SetActiveModal {...setActiveModalState} />
 		</SafeAreaView>
 	);
 }

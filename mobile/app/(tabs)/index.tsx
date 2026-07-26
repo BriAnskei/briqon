@@ -423,13 +423,6 @@ export default function HomeScreen() {
 				onTurnOffAll={handleTurnOffAll}
 				onDelete={handleDelete}
 			/>
-
-			<SetActiveModal
-				isOpen={true}
-				close={(): void => {
-					throw new Error("Function not implemented.");
-				}}
-			/>
 		</View>
 	);
 }

@@ -1,17 +1,26 @@
 import type { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
-import { useAI } from "@/context/AIContext";
+import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import useModal from "@/hooks/useModal";
+import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
-import { timeToMinutes } from "@/utils/TimeFormatter";
+import {
+	ActiveScheduleService,
+	type CreationPayload,
+} from "@/src/service/activeSchedule.service";
+import {
+	addDays,
+	formatCompact,
+	isSameDay,
+	resolveRangeEnd,
+	resolveRangeStart,
+	startOfDay,
+	timeToMinutes,
+	toLocalISODate,
+} from "@/utils/TimeFormatter";
 
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
-
-export type CreationPayload = {
-	newActiveSchedule: ActiveSchedule;
-	selectedDays?: number[];
-	selectedDate?: Date;
-};
 
 export const DAYS = [
 	"Sunday",
@@ -23,69 +32,45 @@ export const DAYS = [
 	"Saturday",
 ];
 
-// ── date helpers ─────────────────────────────────────────────────────────
-
-function startOfDay(date: Date): Date {
-	const d = new Date(date);
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
-
-function addDays(date: Date, days: number): Date {
-	const d = new Date(date);
-	d.setDate(d.getDate() + days);
-	return d;
-}
-
-/** First date on/after `anchor` (inclusive) whose weekday is one of
- * `selectedIndices`. Scans a 7-day window, so it always finds a match
- * as long as at least one weekday is selected. */
-function resolveRangeStart(
-	anchor: Date,
-	selectedIndices: number[],
-): Date | null {
-	if (selectedIndices.length === 0) return null;
-	const anchorDay = startOfDay(anchor);
-	for (let offset = 0; offset < 7; offset++) {
-		const candidate = addDays(anchorDay, offset);
-		if (selectedIndices.includes(candidate.getDay())) return candidate;
-	}
-	return null;
-}
-
-/** Last date within the 7-day window starting at `start` (inclusive) whose
- * weekday is one of `selectedIndices` — i.e. the final occurrence of the
- * selected days before the pattern would repeat. */
-function resolveRangeEnd(
-	start: Date | null,
-	selectedIndices: number[],
-): Date | null {
-	if (!start || selectedIndices.length === 0) return null;
-	for (let offset = 6; offset >= 0; offset--) {
-		const candidate = addDays(start, offset);
-		if (selectedIndices.includes(candidate.getDay())) return candidate;
-	}
-	return start;
-}
-
-function formatCompact(date: Date): string {
-	return date.toLocaleDateString(undefined, {
-		month: "short",
-		day: "numeric",
-	});
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-	return startOfDay(a).getTime() === startOfDay(b).getTime();
-}
-
-export interface UseSetActiveModalParams {
+export interface UseSetActiveModalState {
+	dateMode: DateMode;
+	selectedDays: string[];
+	disabledDays: string[];
+	specificDate: Date;
+	showDatePicker: boolean;
+	rangeAnchorDate: Date;
+	showRangeDatePicker: boolean;
+	rangeResolvedStart: Date | null;
+	rangeResolvedEnd: Date | null;
+	recurring: boolean;
+	isSubmitting: boolean;
+	error: unknown;
+	summary: string;
+	isConfirmBlocked: boolean;
+	isTodayAvailable: boolean;
+	setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
+	setShowRangeDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
+	handleModeSelect: (mode: Exclude<DateMode, null>) => void;
+	toggleDay: (day: string) => void;
+	handleDateChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
+	handleRangeDateChange: (
+		event: DateTimePickerEvent,
+		selectedDate?: Date,
+	) => void;
+	handleClose: () => void;
+	handleConfirm: () => Promise<void>;
+	buildPayload: () => CreationPayload;
 	isOpen: boolean;
-	close: () => void;
+	open: () => void;
 }
 
-export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
-	const { result, generatedScheduleId } = useAI();
+export function useSetActiveModal(): UseSetActiveModalState {
+	const { isOpen, open, close } = useModal();
+
+	const service = useMemo(() => new ActiveScheduleService(), []);
+
+	const { result, generatedScheduleId } = useNewScheduleForm();
 
 	const [dateMode, setDateMode] = useState<DateMode>(null);
 
@@ -100,7 +85,6 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 	// chips stay disabled (see `disabledDays`).
 	const [rangeAnchorDate, setRangeAnchorDate] = useState<Date>(new Date());
 	const [showRangeDatePicker, setShowRangeDatePicker] = useState(false);
-	const [hasConfirmedStartDate, setHasConfirmedStartDate] = useState(false);
 
 	// "specific" date state
 	const [specificDate, setSpecificDate] = useState<Date>(new Date());
@@ -115,7 +99,6 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 		setSelectedDays([]);
 		setRangeAnchorDate(new Date());
 		setShowRangeDatePicker(false);
-		setHasConfirmedStartDate(false);
 		setSpecificDate(new Date());
 		setShowDatePicker(false);
 		setRecurring(false);
@@ -146,30 +129,37 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 
 	const todayWeekdayIndex = useMemo(() => new Date().getDay(), []);
 
-	/** Day-chip disabling rule for "Select Days":
-	 *  - recurring       → nothing disabled, any day selectable.
-	 *  - non-recurring +
-	 *    no confirmed
-	 *    start date yet  → everything disabled (must pick a start date first).
-	 *  - non-recurring +
-	 *    start date
-	 *    confirmed       → nothing disabled (resolveRangeStart/End loop
-	 *                      forward from the anchor regardless of which
-	 *                      weekday it lands on). */
 	const disabledDays = useMemo(() => {
-		if (recurring) return [];
-		if (!hasConfirmedStartDate) return DAYS;
+		if (!recurring && !rangeAnchorDate) return DAYS;
 		return [];
-	}, [recurring, hasConfirmedStartDate]);
+	}, [recurring, rangeAnchorDate]);
 
 	const toggleDay = useCallback(
 		(day: string) => {
 			if (disabledDays.includes(day)) return;
-			setSelectedDays((prev) =>
-				prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-			);
+
+			setSelectedDays((prev) => {
+				const isAdding = !prev.includes(day);
+				const next = isAdding ? [...prev, day] : prev.filter((d) => d !== day);
+
+				// First day picked for a non-recurring range: snap the
+				// "Starts From" anchor to the resolved start for that day,
+				// so the field reflects what will actually be submitted
+				// (e.g. anchor Jul 26 + pick "Tue" -> anchor jumps to Jul 28).
+				// Re-arms any time the list goes back to empty and a new
+				// first day is picked.
+				if (!recurring && isAdding && prev.length === 0) {
+					const dayIndex = DAYS.indexOf(day);
+					const snappedStart = resolveRangeStart(rangeAnchorDate, [dayIndex]);
+					if (snappedStart) {
+						setRangeAnchorDate(snappedStart);
+					}
+				}
+
+				return next;
+			});
 		},
-		[disabledDays],
+		[disabledDays, recurring, rangeAnchorDate],
 	);
 
 	// ── "today" availability ────────────────────────────────────────────────
@@ -217,7 +207,8 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 			}
 			if (event.type === "set" && selectedDate) {
 				setRangeAnchorDate(selectedDate);
-				setHasConfirmedStartDate(true);
+
+				setSelectedDays([]);
 			}
 		},
 		[],
@@ -246,10 +237,9 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 		if (isSubmitting) return true;
 		if (dateMode === null) return true;
 		if (dateMode === "range" && selectedDays.length === 0) return true;
-		if (dateMode === "range" && !recurring && !hasConfirmedStartDate)
-			return true;
+
 		return false;
-	}, [isSubmitting, dateMode, selectedDays, recurring, hasConfirmedStartDate]);
+	}, [isSubmitting, dateMode, selectedDays]);
 
 	// ── summary text ────────────────────────────────────────────────────────
 
@@ -380,22 +370,29 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 		if (isConfirmBlocked) return;
 
 		const payload = buildPayload();
-		setIsSubmitting(true);
+		// setIsSubmitting(true);
 		setError(null);
 
 		try {
-			console.log("payload: ", payload);
+			console.log("payload stringified: ", JSON.stringify(payload, null, 2));
+			console.log(toLocalISODate(payload.newActiveSchedule.starts_at));
+			console.log(toLocalISODate(payload.newActiveSchedule.ends_at));
 
-			resetState();
-			close();
+			await service.createAsync(payload);
+
+			// resetState();
+			// close();
 		} catch (err) {
+			if (err instanceof ScheduleConflictError)
+				console.log("Conflict Error", err);
+
 			// Surface ScheduleConflictError (or any other failure) back to the
 			// caller instead of closing the modal. Conflict-resolution UI is
 			// wired up separately.
 			setError(err);
 			setIsSubmitting(false);
 		}
-	}, [isConfirmBlocked, buildPayload, resetState, close]);
+	}, [isConfirmBlocked, buildPayload, service]);
 
 	return {
 		// state
@@ -406,7 +403,6 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 		showDatePicker,
 		rangeAnchorDate,
 		showRangeDatePicker,
-		hasConfirmedStartDate,
 		rangeResolvedStart,
 		rangeResolvedEnd,
 		recurring,
@@ -429,5 +425,8 @@ export function useSetActiveModal({ isOpen, close }: UseSetActiveModalParams) {
 
 		// exposed for advanced use (e.g. conflict modal retry with overwrite)
 		buildPayload,
+
+		isOpen,
+		open,
 	};
 }
