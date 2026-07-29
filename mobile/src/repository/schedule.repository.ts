@@ -1,6 +1,6 @@
-import { Schedule } from "../models/schedule.model";
+import type * as SQLite from "expo-sqlite";
+import type { Schedule } from "../models/schedule.model";
 import { BaseRepository } from "./base.repository";
-import * as SQLite from "expo-sqlite";
 
 export class ScheduleRepository extends BaseRepository {
 	private mapRow(row: any): Schedule {
@@ -55,5 +55,19 @@ export class ScheduleRepository extends BaseRepository {
       `);
 
 		return rows.map((r) => this.mapRow(r));
+	}
+
+	async markAsPermanent(payload: { name: string; id: string }): Promise<void> {
+		const { name, id } = payload;
+		await this.run(
+			`
+      UPDATE schedules
+      SET
+        name = ?,
+        temporary = 0
+      WHERE id = ?
+      `,
+			[name, id],
+		);
 	}
 }

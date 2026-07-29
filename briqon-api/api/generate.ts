@@ -14,6 +14,8 @@ export async function generateHanlder(req: any, res: any) {
     });
   }
 
+  console.log("generating")
+
   const { prompt, systemInstruction } = req.body;
 
   if (!prompt || !systemInstruction) {
@@ -42,8 +44,9 @@ export async function generateHanlder(req: any, res: any) {
       const parsed = CreateScheduleResponseSchema.safeParse(
         JSON.parse(response.text as string),
       );
-
+      console.log("responseded")
       if (parsed.success) {
+        console.log("invalid scheama, retriying")
         return res.status(200).json({
           success: true,
           res: parsed.data,

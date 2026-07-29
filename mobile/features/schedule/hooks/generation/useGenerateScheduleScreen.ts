@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
 import useAi from "@/hooks/useAi";
 import useSaveScheduleModal from "./useSaveScheduleModal";
@@ -7,8 +7,13 @@ import { useSetActiveModal } from "./useSetActiveModal";
 export function useGenerateScheduleScreen() {
 	const { inputForm } = useNewScheduleForm();
 
+	const [isScheduleSavedDirectly, setIsScheduleSavedDirectly] = useState(false);
+	const [isScheduleSavedByActivation, setIsScheduleSavedByActivation] =
+		useState(false);
+
 	const {
 		result,
+		generatedScheduleId,
 		handleGenerateSchedule,
 		completedSteps,
 		isGenerating,
@@ -20,18 +25,29 @@ export function useGenerateScheduleScreen() {
 		summaries: result?.summary ?? [],
 		subSummaries: result?.subSummary ?? [],
 		scheduleItem: result?.schedule ?? [],
+		generatedScheduleId,
+		isScheduleSavedDirectly,
+		setIsScheduleSavedDirectly,
+		isScheduleSavedByActivation,
 	});
 
-	const setActiveModalState = useSetActiveModal();
+	const setActiveModalState = useSetActiveModal({
+		result,
+		generatedScheduleId,
+		scheduleItems: result?.schedule ?? [],
+		isScheduleSavedByActivation,
+		isScheduleSavedDirectly,
+		setIsScheduleSavedByActivation,
+	});
 
 	useEffect(() => {
 		handleGenerateSchedule(inputForm);
 	}, [handleGenerateSchedule, inputForm]);
 
-	const handleRegenerate = () => {
+	const handleRegenerate = useCallback(() => {
 		resetState();
-		handleGenerateSchedule;
-	};
+		handleGenerateSchedule(inputForm);
+	}, [handleGenerateSchedule, inputForm, resetState]);
 
 	return {
 		handleRegenerate,

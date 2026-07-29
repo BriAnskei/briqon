@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
 import useModal from "@/hooks/useModal";
 import type { Schedule } from "@/src/models/schedule.model";
@@ -11,8 +11,20 @@ const useSaveScheduleModal = (payload: {
 	summaries: ScheduleSummary[];
 	subSummaries: SubSummary[];
 	scheduleItem: ScheduleItem[];
+	generatedScheduleId?: string;
+	isScheduleSavedDirectly: boolean;
+	isScheduleSavedByActivation: boolean;
+	setIsScheduleSavedDirectly: (b: boolean) => void;
 }) => {
-	const { summaries, subSummaries, scheduleItem } = payload;
+	const {
+		summaries,
+		subSummaries,
+		scheduleItem,
+		isScheduleSavedByActivation,
+		isScheduleSavedDirectly,
+		setIsScheduleSavedDirectly,
+		generatedScheduleId,
+	} = payload;
 
 	const { isOpen, open, close } = useModal();
 	const service = useMemo(() => new ScheduleService(), []);
@@ -20,18 +32,52 @@ const useSaveScheduleModal = (payload: {
 	const [name, setName] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 
-	const handleSaveSchedule = async () => {
+	const closeSaveSchedModal = () => {
+		setName("");
+		close();
+	};
+
+	const buildSchedule = useCallback((): Schedule => {
+		if (!generatedScheduleId) throw new Error("No Schedule id");
+		if (scheduleItem.length === 0) throw new Error("No scheduleItem to save`");
+
+		return {
+			id: generatedScheduleId,
+			schedule_list: scheduleItem,
+			name,
+			temporary: false,
+		};
+	}, [generatedScheduleId, scheduleItem, name]);
+
+	const handleSaveSchedule = useCallback(async () => {
 		if (isSaving || name.length === 0) return;
+		if (isScheduleSavedDirectly && isScheduleSavedByActivation) {
+			Toast.show({
+				type: "info",
+				text1: "Already Saved",
+				text2: "This schedule has already been saved.",
+				position: "top",
+			});
+			return;
+		}
+
 		setIsSaving(true);
 
 		try {
 			const schedule = buildSchedule();
 
-			await service.createSchedule({
-				summaries,
-				subSummaries,
-				schedule,
-			});
+			if (!isScheduleSavedDirectly && !isScheduleSavedByActivation) {
+				await service.createSchedule({
+					summaries,
+					subSummaries,
+					schedule,
+				});
+			} else {
+				await service.markAsPermanent({
+					name: schedule.name,
+					id: schedule.id,
+				});
+			}
 
 			Toast.show({
 				type: "success",
@@ -39,7 +85,9 @@ const useSaveScheduleModal = (payload: {
 				text2: "Schedule saved successfully",
 				position: "top",
 			});
-			closeSaveSchedModal();
+
+			setName("");
+			close();
 		} catch (err) {
 			console.error(err);
 			Toast.show({
@@ -50,21 +98,21 @@ const useSaveScheduleModal = (payload: {
 			});
 		} finally {
 			setIsSaving(false);
+			setIsScheduleSavedDirectly(true);
 		}
-	};
+	}, [
+		setIsScheduleSavedDirectly,
+		service,
+		isScheduleSavedByActivation,
+		isScheduleSavedDirectly,
+		summaries,
+		subSummaries,
+		isSaving,
+		name,
+		close,
+		buildSchedule,
+	]);
 
-	const buildSchedule = (): Schedule => {
-		return {
-			id: "",
-			schedule_list: scheduleItem,
-			name,
-			temporary: false,
-		};
-	};
-	const closeSaveSchedModal = () => {
-		setName("");
-		close();
-	};
 	return {
 		isSaveModalOpen: isOpen,
 		openSaveSchedModal: open,

@@ -1,7 +1,6 @@
 import type { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
-import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
 import useModal from "@/hooks/useModal";
 import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
@@ -19,6 +18,11 @@ import {
 	timeToMinutes,
 	toLocalISODate,
 } from "@/utils/TimeFormatter";
+import type {
+	Schedule,
+	ScheduleItem,
+} from "../../../../src/models/schedule.model";
+import type { GenerationResult } from "../../utils/scheduleResponseParser";
 
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
 
@@ -44,7 +48,6 @@ export interface UseSetActiveModalState {
 	rangeResolvedEnd: Date | null;
 	recurring: boolean;
 	isSubmitting: boolean;
-	error: unknown;
 	summary: string;
 	isConfirmBlocked: boolean;
 	isTodayAvailable: boolean;
@@ -65,12 +68,25 @@ export interface UseSetActiveModalState {
 	open: () => void;
 }
 
-export function useSetActiveModal(): UseSetActiveModalState {
+export function useSetActiveModal(payload: {
+	result: GenerationResult | null;
+	generatedScheduleId?: string;
+	scheduleItems: ScheduleItem[];
+	setIsScheduleSavedByActivation: (b: boolean) => void;
+	isScheduleSavedDirectly: boolean;
+	isScheduleSavedByActivation: boolean;
+}): UseSetActiveModalState {
+	const {
+		result,
+		generatedScheduleId,
+		scheduleItems,
+		setIsScheduleSavedByActivation,
+		isScheduleSavedByActivation,
+		isScheduleSavedDirectly,
+	} = payload;
 	const { isOpen, open, close } = useModal();
 
 	const service = useMemo(() => new ActiveScheduleService(), []);
-
-	const { result, generatedScheduleId } = useNewScheduleForm();
 
 	const [dateMode, setDateMode] = useState<DateMode>(null);
 
@@ -92,7 +108,9 @@ export function useSetActiveModal(): UseSetActiveModalState {
 
 	const [recurring, setRecurring] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [error, setError] = useState<unknown>(null);
+
+	const isScheduleNeedsToSave =
+		!isScheduleSavedDirectly && !isScheduleSavedByActivation;
 
 	const resetState = useCallback(() => {
 		setDateMode(null);
@@ -103,7 +121,6 @@ export function useSetActiveModal(): UseSetActiveModalState {
 		setShowDatePicker(false);
 		setRecurring(false);
 		setIsSubmitting(false);
-		setError(null);
 	}, []);
 
 	// Reset whenever the modal is (re)opened, so stale selections from a
@@ -288,7 +305,18 @@ export function useSetActiveModal(): UseSetActiveModalState {
 
 	const buildPayload = useCallback((): CreationPayload => {
 		if (!generatedScheduleId) throw new Error("No generatedScheduleId");
-		const today = new Date();
+
+		if (isScheduleNeedsToSave && scheduleItems.length === 0)
+			throw new Error("No scheduleItem to save`");
+
+		const newSchedule: Schedule | undefined = !isScheduleNeedsToSave
+			? undefined
+			: {
+					id: generatedScheduleId,
+					name: "N/A",
+					schedule_list: scheduleItems,
+					temporary: true, // temporary saved
+				};
 
 		if (dateMode === "specific") {
 			const date = startOfDay(specificDate);
@@ -301,6 +329,8 @@ export function useSetActiveModal(): UseSetActiveModalState {
 				ends_at: date,
 			};
 			return {
+				isScheduleNeedsToSave,
+				newSchedule,
 				newActiveSchedule,
 				selectedDate: date,
 			};
@@ -310,6 +340,7 @@ export function useSetActiveModal(): UseSetActiveModalState {
 		let dayIndices: number[] = [];
 		let startsAt: Date | undefined;
 		let endsAt: Date | undefined;
+		const today = new Date();
 
 		if (dateMode === "today") {
 			dayIndices = [todayWeekdayIndex];
@@ -352,6 +383,8 @@ export function useSetActiveModal(): UseSetActiveModalState {
 		};
 
 		return {
+			isScheduleNeedsToSave,
+			newSchedule,
 			newActiveSchedule,
 			selectedDays: dayIndices,
 		};
@@ -364,35 +397,46 @@ export function useSetActiveModal(): UseSetActiveModalState {
 		todayWeekdayIndex,
 		rangeResolvedStart,
 		rangeResolvedEnd,
+		scheduleItems,
+		isScheduleNeedsToSave,
 	]);
 
 	const handleConfirm = useCallback(async () => {
 		if (isConfirmBlocked) return;
 
 		const payload = buildPayload();
-		// setIsSubmitting(true);
-		setError(null);
+		setIsSubmitting(true);
 
 		try {
 			console.log("payload stringified: ", JSON.stringify(payload, null, 2));
 			console.log(toLocalISODate(payload.newActiveSchedule.starts_at));
 			console.log(toLocalISODate(payload.newActiveSchedule.ends_at));
 
-			await service.createAsync(payload);
+			await service.createAsync(payload, true);
+
+			if (isScheduleNeedsToSave) {
+				setIsScheduleSavedByActivation(true);
+			}
 
 			// resetState();
 			// close();
 		} catch (err) {
+			console.log(err);
 			if (err instanceof ScheduleConflictError)
 				console.log("Conflict Error", err);
-
 			// Surface ScheduleConflictError (or any other failure) back to the
 			// caller instead of closing the modal. Conflict-resolution UI is
 			// wired up separately.
-			setError(err);
+		} finally {
 			setIsSubmitting(false);
 		}
-	}, [isConfirmBlocked, buildPayload, service]);
+	}, [
+		isConfirmBlocked,
+		buildPayload,
+		service,
+		isScheduleNeedsToSave,
+		setIsScheduleSavedByActivation,
+	]);
 
 	return {
 		// state
@@ -407,7 +451,6 @@ export function useSetActiveModal(): UseSetActiveModalState {
 		rangeResolvedEnd,
 		recurring,
 		isSubmitting,
-		error,
 		summary,
 		isConfirmBlocked,
 		isTodayAvailable,

@@ -9,22 +9,22 @@ const useAi = () => {
 
 	const [result, setResult] = useState<GenerationResult | null>(null);
 
-	const [isGenerating, setIsGenerating] = useState(true);
 	const [completedSteps, SetCompletedSteps] = useState<Step[]>([]);
 	const [error, setError] = useState<string | undefined>(undefined);
 
-	const newScheduleGeneratedIdRef = useRef<string | null>(null);
+	const isGeneratingRef = useRef(false);
+	const newScheduleGeneratedIdRef = useRef<string | undefined>(undefined);
 
 	const handleGenerateSchedule = useCallback(
 		async (formState: NewScheduleFormState | undefined): Promise<void> => {
+			if (isGeneratingRef.current) return;
 			if (!formState) {
 				setError("No Input state data");
 				return;
 			}
 
+			isGeneratingRef.current = true;
 			try {
-				setIsGenerating(true);
-
 				const { generationResult, newScheduleId } =
 					await aiService.generateSchedule(formState, (s) =>
 						SetCompletedSteps((prev) => [...prev, s]),
@@ -38,7 +38,7 @@ const useAi = () => {
 					err instanceof Error ? err.message : "Failed to generated Schedule",
 				);
 			} finally {
-				setIsGenerating(false);
+				isGeneratingRef.current = false;
 			}
 		},
 		[aiService],
@@ -48,14 +48,16 @@ const useAi = () => {
 		setError(undefined);
 		setResult(null);
 		SetCompletedSteps([]);
+		newScheduleGeneratedIdRef.current = undefined;
 	};
 
 	return {
 		result,
+		generatedScheduleId: newScheduleGeneratedIdRef.current,
 		handleGenerateSchedule,
 		resetState,
 		completedSteps,
-		isGenerating,
+		isGenerating: isGeneratingRef.current,
 		error,
 	};
 };

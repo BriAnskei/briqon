@@ -1,7 +1,7 @@
+import { fireEvent, render } from "@testing-library/react-native";
 import React from "react";
-import { render, fireEvent } from "@testing-library/react-native";
-import { SetActiveModal } from "../../../../schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import { useSetActiveModal } from "@/features/schedule-conversation/hooks/review/useSetActiveModal";
+import { SetActiveModal } from "../../../../schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 
 // Mock the hook
 jest.mock("@/features/schedule-conversation/hooks/review/useSetActiveModal");

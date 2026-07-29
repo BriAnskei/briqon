@@ -1,9 +1,12 @@
-import { View, Text, StyleSheet } from "react-native";
-import { useMemo } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { ToastConfig, ToastConfigParams } from "react-native-toast-message";
-import { Radius, Shadow } from "@/type/theme";
+import { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import type {
+	ToastConfig,
+	ToastConfigParams,
+} from "react-native-toast-message";
 import { useTheme } from "@/context/ThemeContext";
+import { Radius, Shadow } from "@/type/theme";
 
 // ── Per-type design tokens ────────────────────────────────────────────────────
 

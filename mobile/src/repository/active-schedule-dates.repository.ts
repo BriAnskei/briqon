@@ -1,4 +1,5 @@
 import type * as SQLite from "expo-sqlite";
+import { toLocalISODate } from "@/utils/TimeFormatter";
 import type { ActiveScheduleDates } from "../models/active_schedule_dates.model";
 import { BaseRepository } from "./base.repository";
 
@@ -26,7 +27,7 @@ export class ActiveScheduleDatesRepository extends BaseRepository {
 			[
 				activeScheduleDate.id,
 				activeScheduleDate.active_schedule_id,
-				activeScheduleDate.date.toISOString(),
+				toLocalISODate(activeScheduleDate.date),
 			],
 			db,
 		);

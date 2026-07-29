@@ -1,5 +1,5 @@
+import type * as SQLite from "expo-sqlite";
 import { getDatabase } from "../database/db";
-import * as SQLite from "expo-sqlite";
 
 export abstract class BaseRepository {
 	private dbPromise = getDatabase();

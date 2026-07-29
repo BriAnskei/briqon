@@ -18,19 +18,17 @@ import {
 import {
 	type ActiveSchedule,
 	CreateActivecheduleSchema,
-	type CreateActiveSchedule,
 } from "../models/activeSchedule.model";
 import { buildEntity } from "../models/factories/base.factory";
-import {
-	type CreateSchedule,
-	CreateScheduleSchema,
-} from "../models/schedule.model";
+import type { Schedule } from "../models/schedule.model";
 import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import { ScheduleRepository } from "../repository/schedule.repository";
 
 export type CreationPayload = {
+	isScheduleNeedsToSave: boolean;
+	newSchedule?: Schedule;
 	newActiveSchedule: ActiveSchedule;
 	selectedDays?: number[];
 	selectedDate?: Date;
@@ -47,7 +45,7 @@ export class ActiveScheduleService {
 			await this.checkScheduleActivationConflicts(payload);
 
 		if (
-			!overWrite &&
+			(!overWrite || overWrite === undefined) &&
 			(recurringConflict.length > 0 || nonRecurringConflict.length > 0)
 		) {
 			const overAllConflictArr = [
@@ -68,8 +66,11 @@ export class ActiveScheduleService {
 		});
 
 		const activeScheduleId = ulid();
-
 		this.repo.transaction(async (db) => {
+			if (payload.isScheduleNeedsToSave && payload.newSchedule) {
+				await this.scheduleRepo.create(payload.newSchedule, db);
+			}
+
 			this.repo.create(
 				{ ...payload.newActiveSchedule, id: activeScheduleId },
 				db,
@@ -84,7 +85,7 @@ export class ActiveScheduleService {
 					weekday: d,
 				}));
 
-				this.activeScheduleDaysRepo.create(activeDays, db);
+				await this.activeScheduleDaysRepo.create(activeDays, db);
 			} else if (payload.newActiveSchedule.active_type === "date") {
 				const selectedDate = payload.selectedDate;
 
@@ -97,7 +98,7 @@ export class ActiveScheduleService {
 					date: selectedDate,
 				};
 
-				this.activeScheduleDateRepo.create(activeDate, db);
+				await this.activeScheduleDateRepo.create(activeDate, db);
 			}
 		});
 	}
@@ -155,43 +156,21 @@ export class ActiveScheduleService {
 		for (const conflict of overAllConflictArr) {
 			// delete selected days
 			if (conflict.activeType === "date") {
-				this.repo.delete(conflict.id);
+				await this.repo.delete(conflict.id);
 			} else if (conflict.activeType === "days") {
-				const ramainingDays =
-					conflict.selectedDays ??
-					[].filter((d) => !(newActiveScheduleDays ?? []).includes(d));
+				const ramainingDays = (conflict.selectedDays ?? []).filter(
+					(d) => !(newActiveScheduleDays ?? []).includes(d),
+				);
 
-				if (ramainingDays.length === 0) this.repo.delete(conflict.id);
+				if (ramainingDays.length === 0) await this.repo.delete(conflict.id);
 				else {
 					await this.activeScheduleDaysRepo.removeActiveScheduleDays(
 						conflict.id,
-						conflict.selectedDays ?? [],
+						newActiveScheduleDays ?? [],
 					);
 				}
 			}
 		}
-	}
-
-	private validateActivationPayload(payload: {
-		activeSchedule: CreateActiveSchedule;
-		schedule: CreateSchedule;
-		dayOfWeeks?: number[]; // number[]
-		date?: Date; // date
-	}) {
-		const { activeSchedule, schedule, dayOfWeeks, date } = payload;
-		const validatedSchedule = validate(CreateScheduleSchema, schedule);
-		const validatedActiveSchedule = validate(
-			CreateActivecheduleSchema,
-			activeSchedule,
-		);
-
-		return {
-			validatedSchedule,
-			validatedActiveSchedule,
-
-			dayOfWeeks,
-			date,
-		};
 	}
 
 	private async handleActiveTypePersistence(payload: {

@@ -122,6 +122,18 @@ export class ActiveScheduleRepository extends BaseRepository {
 	): Promise<ScheduleConflict[]> {
 		if (!startsAt || !endsAt) return [];
 
+		const test = await this.all(`
+        SELECT id, starts_at, ends_at
+        FROM active_schedules
+    `);
+
+		console.log("ALL ACTIVE:", test);
+
+		console.log("SEARCHING RANGE:", {
+			startsAt,
+			endsAt,
+		});
+
 		const rows = await this.all<ConflictRow>(
 			`
 			SELECT
@@ -155,6 +167,8 @@ export class ActiveScheduleRepository extends BaseRepository {
 			`,
 			[endsAt, startsAt],
 		);
+
+		console.log("FOUND ROWS:", rows);
 
 		return this.groupConflicts(rows);
 	}

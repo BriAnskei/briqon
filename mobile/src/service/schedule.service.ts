@@ -1,4 +1,3 @@
-import { ulid } from "ulid";
 import type { Schedule } from "../models/schedule.model";
 import type { SubSummary } from "../models/sub_summaries.model";
 import type { ScheduleSummary } from "../models/summaries.model";
@@ -35,5 +34,9 @@ export class ScheduleService {
 
 	async fetchAll(): Promise<Schedule[]> {
 		return await this.repo.findAll();
+	}
+
+	async markAsPermanent(payload: { name: string; id: string }) {
+		await this.repo.markAsPermanent(payload);
 	}
 }
