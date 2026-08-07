@@ -6,37 +6,37 @@ import { SubSummariesRepository } from "../repository/subSummary.repo";
 import { SummariesRepository } from "../repository/summaries.repo";
 
 export type CreateSchedulePayloadType = {
-	schedule: Schedule;
-	summaries: ScheduleSummary[];
-	subSummaries: SubSummary[];
+  schedule: Schedule;
+  summaries: ScheduleSummary[];
+  subSummaries: SubSummary[];
 };
 
 export class ScheduleService {
-	private repo = new ScheduleRepository();
-	private sumRepo = new SummariesRepository();
-	private subSumRepo = new SubSummariesRepository();
+  private repo = new ScheduleRepository();
+  private sumRepo = new SummariesRepository();
+  private subSumRepo = new SubSummariesRepository();
 
-	async createSchedule(payload: CreateSchedulePayloadType) {
-		const { schedule, summaries, subSummaries } = payload;
+  async createSchedule(payload: CreateSchedulePayloadType) {
+    const { schedule, summaries, subSummaries } = payload;
 
-		this.repo.transaction(async (db) => {
-			this.repo.create(schedule, db);
-			this.sumRepo.create(summaries, db);
-			this.subSumRepo.create(subSummaries, db);
-		});
-	}
+    this.repo.transaction(async (db) => {
+      this.repo.create(schedule, db);
+      this.sumRepo.create(summaries, db);
+      this.subSumRepo.create(subSummaries, db);
+    });
+  }
 
-	async findById(id: string): Promise<Schedule> {
-		const schedule = await this.repo.findById(id);
-		if (!schedule) throw new Error("Schedule does not exist");
-		return schedule;
-	}
+  async findById(id: string): Promise<Schedule> {
+    const schedule = await this.repo.findById(id);
+    if (!schedule) throw new Error("Schedule does not exist");
+    return schedule;
+  }
 
-	async fetchAll(): Promise<Schedule[]> {
-		return await this.repo.findAll();
-	}
+  async fetchAll(): Promise<Schedule[]> {
+    return await this.repo.findAll();
+  }
 
-	async markAsPermanent(payload: { name: string; id: string }) {
-		await this.repo.markAsPermanent(payload);
-	}
+  async markAsPermanent(payload: { name: string; id: string }) {
+    await this.repo.markAsPermanent(payload);
+  }
 }

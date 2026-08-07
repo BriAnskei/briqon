@@ -86,14 +86,8 @@ describe("withRateLimit", () => {
   it("scopes the limit per installation (different installs => different keys)", async () => {
     mockedLimit.mockResolvedValue({ success: true });
 
-    await withRateLimit(jest.fn())(
-      makeReq({ user: { installationId: "A" } }),
-      makeRes(),
-    );
-    await withRateLimit(jest.fn())(
-      makeReq({ user: { installationId: "B" } }),
-      makeRes(),
-    );
+    await withRateLimit(jest.fn())(makeReq({ user: { installationId: "A" } }), makeRes());
+    await withRateLimit(jest.fn())(makeReq({ user: { installationId: "B" } }), makeRes());
 
     expect(mockedLimit).toHaveBeenNthCalledWith(1, "generateA:203.0.113.5");
     expect(mockedLimit).toHaveBeenNthCalledWith(2, "generateB:203.0.113.5");

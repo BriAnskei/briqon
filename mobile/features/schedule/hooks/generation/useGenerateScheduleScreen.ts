@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
 import useAi from "@/hooks/useAi";
@@ -5,59 +6,97 @@ import useSaveScheduleModal from "./useSaveScheduleModal";
 import { useSetActiveModal } from "./useSetActiveModal";
 
 export function useGenerateScheduleScreen() {
-	const { inputForm } = useNewScheduleForm();
+  const router = useRouter();
+  const { inputForm, resetState: resetFormState } = useNewScheduleForm();
 
-	const [isScheduleSavedDirectly, setIsScheduleSavedDirectly] = useState(false);
-	const [isScheduleSavedByActivation, setIsScheduleSavedByActivation] =
-		useState(false);
+  const [isScheduleSavedDirectly, setIsScheduleSavedDirectly] = useState(false);
+  const [isScheduleSavedByActivation, setIsScheduleSavedByActivation] = useState(false);
 
-	const {
-		result,
-		generatedScheduleId,
-		handleGenerateSchedule,
-		completedSteps,
-		isGenerating,
-		error,
-		resetState,
-	} = useAi();
+  const aiState = useAi();
 
-	const saveScheduleModalState = useSaveScheduleModal({
-		summaries: result?.summary ?? [],
-		subSummaries: result?.subSummary ?? [],
-		scheduleItem: result?.schedule ?? [],
-		generatedScheduleId,
-		isScheduleSavedDirectly,
-		setIsScheduleSavedDirectly,
-		isScheduleSavedByActivation,
-	});
+  const saveScheduleModalState = useSaveScheduleModal({
+    summaries: aiState.result?.summary ?? [],
+    subSummaries: aiState.result?.subSummary ?? [],
+    scheduleItem: aiState.result?.schedule ?? [],
+    generatedScheduleId: aiState.generatedScheduleId,
+    isScheduleSavedDirectly,
+    setIsScheduleSavedDirectly,
+    isScheduleSavedByActivation,
+  });
 
-	const setActiveModalState = useSetActiveModal({
-		result,
-		generatedScheduleId,
-		scheduleItems: result?.schedule ?? [],
-		isScheduleSavedByActivation,
-		isScheduleSavedDirectly,
-		setIsScheduleSavedByActivation,
-	});
+  const setActiveModalState = useSetActiveModal({
+    result: aiState.result,
+    generatedScheduleId: aiState.generatedScheduleId,
+    scheduleItems: aiState.result?.schedule ?? [],
+    isScheduleSavedByActivation,
+    isScheduleSavedDirectly,
+    setIsScheduleSavedByActivation,
+  });
 
-	useEffect(() => {
-		handleGenerateSchedule(inputForm);
-	}, [handleGenerateSchedule, inputForm]);
+  const [showRegenerateCard, setShowRegenerateCard] = useState(false);
 
-	const handleRegenerate = useCallback(() => {
-		resetState();
-		handleGenerateSchedule(inputForm);
-	}, [handleGenerateSchedule, inputForm, resetState]);
+  useEffect(() => {
+    if (!aiState.isGenerating) {
+      setShowRegenerateCard(false);
+      return;
+    }
+    const t = setTimeout(() => setShowRegenerateCard(true), 3000);
+    return () => clearTimeout(t);
+  }, [aiState.isGenerating]);
 
-	return {
-		handleRegenerate,
-		handleGenerateSchedule,
-		completedSteps,
-		result,
-		error,
-		isGenerating,
-		saveScheduleModalState,
-		setActiveModalState,
-		resetRegeneration: resetState,
-	};
+  useEffect(() => {
+    aiState.handleGenerateSchedule(inputForm);
+  }, [aiState.handleGenerateSchedule, inputForm]);
+
+  const resetGenerationState = () => {
+    aiState.resetState();
+    setActiveModalState.resetState();
+    saveScheduleModalState.closeSaveSchedModal();
+    setShowRegenerateCard(false);
+    // reset from context form
+    resetFormState();
+  };
+
+  const resetFullGenerateFormState = () => {
+    resetFormState();
+    setShowRegenerateCard(false);
+    resetFullGenerateFormState();
+  };
+
+  const handleGoHome = () => {
+    resetFullGenerateFormState();
+    router.replace("/");
+  };
+
+  const handleBackToForm = () => {
+    resetGenerationState();
+    router.back();
+  };
+
+  const handleSetActive = () => {
+    setActiveModalState.open();
+  };
+
+  const handleSaveSchedule = () => {
+    saveScheduleModalState.openSaveSchedModal();
+  };
+
+  const handleRegenerate = useCallback(() => {
+    if (aiState.isGenerating) return;
+
+    aiState.handleGenerateSchedule(inputForm);
+  }, [aiState.handleGenerateSchedule, aiState.isGenerating, inputForm]);
+
+  return {
+    handleRegenerate,
+    ...aiState,
+    saveScheduleModalState,
+    setActiveModalState,
+    showRegenerateCard,
+
+    handleBackToForm,
+    handleGoHome,
+    handleSetActive,
+    handleSaveSchedule,
+  };
 }

@@ -2,474 +2,458 @@ import type { DateTimePickerEvent } from "@react-native-community/datetimepicker
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import useModal from "@/hooks/useModal";
-import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
+import {
+  type ScheduleConflict,
+  ScheduleConflictError,
+} from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
+import { ActiveScheduleService, type CreationPayload } from "@/src/service/activeSchedule.service";
 import {
-	ActiveScheduleService,
-	type CreationPayload,
-} from "@/src/service/activeSchedule.service";
-import {
-	addDays,
-	formatCompact,
-	isSameDay,
-	resolveRangeEnd,
-	resolveRangeStart,
-	startOfDay,
-	timeToMinutes,
-	toLocalISODate,
+  addDays,
+  formatCompact,
+  isSameDay,
+  resolveRangeEnd,
+  resolveRangeStart,
+  startOfDay,
+  timeToMinutes,
 } from "@/utils/TimeFormatter";
-import type {
-	Schedule,
-	ScheduleItem,
-} from "../../../../src/models/schedule.model";
+import type { Schedule, ScheduleItem } from "../../../../src/models/schedule.model";
 import type { GenerationResult } from "../../utils/scheduleResponseParser";
 
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
 
-export const DAYS = [
-	"Sunday",
-	"Monday",
-	"Tuesday",
-	"Wednesday",
-	"Thursday",
-	"Friday",
-	"Saturday",
-];
+export const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export interface UseSetActiveModalState {
-	dateMode: DateMode;
-	selectedDays: string[];
-	disabledDays: string[];
-	specificDate: Date;
-	showDatePicker: boolean;
-	rangeAnchorDate: Date;
-	showRangeDatePicker: boolean;
-	rangeResolvedStart: Date | null;
-	rangeResolvedEnd: Date | null;
-	recurring: boolean;
-	isSubmitting: boolean;
-	summary: string;
-	isConfirmBlocked: boolean;
-	isTodayAvailable: boolean;
-	setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
-	setShowDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
-	setShowRangeDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
-	handleModeSelect: (mode: Exclude<DateMode, null>) => void;
-	toggleDay: (day: string) => void;
-	handleDateChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
-	handleRangeDateChange: (
-		event: DateTimePickerEvent,
-		selectedDate?: Date,
-	) => void;
-	handleClose: () => void;
-	handleConfirm: () => Promise<void>;
-	buildPayload: () => CreationPayload;
-	isOpen: boolean;
-	open: () => void;
+  dateMode: DateMode;
+  selectedDays: string[];
+  disabledDays: string[];
+  specificDate: Date;
+  showDatePicker: boolean;
+  rangeAnchorDate: Date;
+  showRangeDatePicker: boolean;
+  rangeResolvedStart: Date | null;
+  rangeResolvedEnd: Date | null;
+  recurring: boolean;
+  isSubmitting: boolean;
+  summary: string;
+  isConfirmBlocked: boolean;
+  isTodayAvailable: boolean;
+  setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowRangeDatePicker: React.Dispatch<React.SetStateAction<boolean>>;
+  handleModeSelect: (mode: Exclude<DateMode, null>) => void;
+  toggleDay: (day: string) => void;
+  handleDateChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
+  handleRangeDateChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
+  handleClose: () => void;
+  handleConfirm: () => Promise<void>;
+  buildPayload: () => CreationPayload;
+  isOpen: boolean;
+  open: () => void;
+
+  resetState: () => void;
+
+  // ── conflict resolution ──────────────────────────────────────────────
+  conflicts: ScheduleConflict[];
+  isConflictModalOpen: boolean;
+  isResolvingConflict: boolean;
+  handleCancelConflicts: () => void;
+  handleResolveConflicts: () => Promise<void>;
+  activationDayIndices: number[];
 }
 
 export function useSetActiveModal(payload: {
-	result: GenerationResult | null;
-	generatedScheduleId?: string;
-	scheduleItems: ScheduleItem[];
-	setIsScheduleSavedByActivation: (b: boolean) => void;
-	isScheduleSavedDirectly: boolean;
-	isScheduleSavedByActivation: boolean;
+  result: GenerationResult | null;
+  generatedScheduleId?: string;
+  scheduleItems: ScheduleItem[];
+  setIsScheduleSavedByActivation: (b: boolean) => void;
+  isScheduleSavedDirectly: boolean;
+  isScheduleSavedByActivation: boolean;
 }): UseSetActiveModalState {
-	const {
-		result,
-		generatedScheduleId,
-		scheduleItems,
-		setIsScheduleSavedByActivation,
-		isScheduleSavedByActivation,
-		isScheduleSavedDirectly,
-	} = payload;
-	const { isOpen, open, close } = useModal();
+  const {
+    result,
+    generatedScheduleId,
+    scheduleItems,
+    setIsScheduleSavedByActivation,
+    isScheduleSavedByActivation,
+    isScheduleSavedDirectly,
+  } = payload;
+  const { isOpen, open, close } = useModal();
 
-	const service = useMemo(() => new ActiveScheduleService(), []);
+  const service = useMemo(() => new ActiveScheduleService(), []);
 
-	const [dateMode, setDateMode] = useState<DateMode>(null);
+  const [dateMode, setDateMode] = useState<DateMode>(null);
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [rangeAnchorDate, setRangeAnchorDate] = useState<Date>(new Date());
+  const [showRangeDatePicker, setShowRangeDatePicker] = useState(false);
+  const [specificDate, setSpecificDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [recurring, setRecurring] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// "range" (days of week) state
-	const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  // ── conflict resolution state ──────────────────────────────────────────
+  const [conflicts, setConflicts] = useState<ScheduleConflict[]>([]);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
 
-	// "range" + non-recurring: anchor date the user picks the active start from.
-	// The actual starts_at is resolved forward from this to the nearest
-	// selected weekday (see resolveRangeStart). Defaults to today for display
-	// purposes, but `hasConfirmedStartDate` tracks whether the user has
-	// actually confirmed a value via the picker — until they have, day
-	// chips stay disabled (see `disabledDays`).
-	const [rangeAnchorDate, setRangeAnchorDate] = useState<Date>(new Date());
-	const [showRangeDatePicker, setShowRangeDatePicker] = useState(false);
+  const isScheduleNeedsToSave = !isScheduleSavedDirectly && !isScheduleSavedByActivation;
 
-	// "specific" date state
-	const [specificDate, setSpecificDate] = useState<Date>(new Date());
-	const [showDatePicker, setShowDatePicker] = useState(false);
+  const resetState = useCallback(() => {
+    setDateMode(null);
+    setSelectedDays([]);
+    setRangeAnchorDate(new Date());
+    setShowRangeDatePicker(false);
+    setSpecificDate(new Date());
+    setShowDatePicker(false);
+    setRecurring(false);
+    setIsSubmitting(false);
+    // clear any stale conflict state from a previous activation attempt
+    setConflicts([]);
+    setIsConflictModalOpen(false);
+    setIsResolvingConflict(false);
+  }, []);
 
-	const [recurring, setRecurring] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    if (isOpen) {
+      resetState();
+    }
+  }, [isOpen, resetState]);
 
-	const isScheduleNeedsToSave =
-		!isScheduleSavedDirectly && !isScheduleSavedByActivation;
+  const handleClose = useCallback(() => {
+    resetState();
+    close();
+  }, [resetState, close]);
 
-	const resetState = useCallback(() => {
-		setDateMode(null);
-		setSelectedDays([]);
-		setRangeAnchorDate(new Date());
-		setShowRangeDatePicker(false);
-		setSpecificDate(new Date());
-		setShowDatePicker(false);
-		setRecurring(false);
-		setIsSubmitting(false);
-	}, []);
+  const handleModeSelect = useCallback((mode: Exclude<DateMode, null>) => {
+    setDateMode(mode);
+    setShowDatePicker(mode === "specific");
+  }, []);
 
-	// Reset whenever the modal is (re)opened, so stale selections from a
-	// previous activation attempt never leak into a new session.
-	useEffect(() => {
-		if (isOpen) {
-			resetState();
-		}
-	}, [isOpen, resetState]);
+  const todayWeekdayIndex = useMemo(() => new Date().getDay(), []);
 
-	const handleClose = useCallback(() => {
-		resetState();
-		close();
-	}, [resetState, close]);
+  const disabledDays = useMemo(() => {
+    if (!recurring && !rangeAnchorDate) return DAYS;
+    return [];
+  }, [recurring, rangeAnchorDate]);
 
-	const handleModeSelect = useCallback((mode: Exclude<DateMode, null>) => {
-		setDateMode(mode);
-		setShowDatePicker(mode === "specific");
-	}, []);
+  const toggleDay = useCallback(
+    (day: string) => {
+      if (disabledDays.includes(day)) return;
 
-	// ── today's weekday index (still used for "today"/"tomorrow" quick
-	// picks in buildPayload — no longer drives day-chip disabling) ─────────
+      setSelectedDays((prev) => {
+        const isAdding = !prev.includes(day);
+        const next = isAdding ? [...prev, day] : prev.filter((d) => d !== day);
 
-	const todayWeekdayIndex = useMemo(() => new Date().getDay(), []);
+        if (!recurring && isAdding && prev.length === 0) {
+          const dayIndex = DAYS.indexOf(day);
+          const snappedStart = resolveRangeStart(rangeAnchorDate, [dayIndex]);
+          if (snappedStart) {
+            setRangeAnchorDate(snappedStart);
+          }
+        }
 
-	const disabledDays = useMemo(() => {
-		if (!recurring && !rangeAnchorDate) return DAYS;
-		return [];
-	}, [recurring, rangeAnchorDate]);
+        return next;
+      });
+    },
+    [disabledDays, recurring, rangeAnchorDate],
+  );
 
-	const toggleDay = useCallback(
-		(day: string) => {
-			if (disabledDays.includes(day)) return;
+  const isTodayAvailable = useMemo(() => {
+    const firstItem = result?.schedule?.[0];
+    if (!firstItem) return false;
 
-			setSelectedDays((prev) => {
-				const isAdding = !prev.includes(day);
-				const next = isAdding ? [...prev, day] : prev.filter((d) => d !== day);
+    const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+    const startMinutes = timeToMinutes(firstItem.start_time);
 
-				// First day picked for a non-recurring range: snap the
-				// "Starts From" anchor to the resolved start for that day,
-				// so the field reflects what will actually be submitted
-				// (e.g. anchor Jul 26 + pick "Tue" -> anchor jumps to Jul 28).
-				// Re-arms any time the list goes back to empty and a new
-				// first day is picked.
-				if (!recurring && isAdding && prev.length === 0) {
-					const dayIndex = DAYS.indexOf(day);
-					const snappedStart = resolveRangeStart(rangeAnchorDate, [dayIndex]);
-					if (snappedStart) {
-						setRangeAnchorDate(snappedStart);
-					}
-				}
+    return startMinutes > nowMinutes;
+  }, [result]);
 
-				return next;
-			});
-		},
-		[disabledDays, recurring, rangeAnchorDate],
-	);
+  useEffect(() => {
+    if (dateMode === "today" && !isTodayAvailable) {
+      setDateMode(null);
+    }
+  }, [dateMode, isTodayAvailable]);
 
-	// ── "today" availability ────────────────────────────────────────────────
+  const handleDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+    if (event.type === "set" && selectedDate) {
+      setSpecificDate(selectedDate);
+    }
+  }, []);
 
-	/** Today is only offered if the generated schedule's first item hasn't
-	 * started yet relative to right now. */
-	const isTodayAvailable = useMemo(() => {
-		const firstItem = result?.schedule?.[0];
-		if (!firstItem) return false;
+  const handleRangeDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowRangeDatePicker(false);
+    }
+    if (event.type === "set" && selectedDate) {
+      setRangeAnchorDate(selectedDate);
+      setSelectedDays([]);
+    }
+  }, []);
 
-		const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
-		const startMinutes = timeToMinutes(firstItem.start_time);
+  const selectedDayIndices = useMemo(
+    () => selectedDays.map((day) => DAYS.indexOf(day)),
+    [selectedDays],
+  );
 
-		return startMinutes > nowMinutes;
-	}, [result]);
+  const rangeResolvedStart = useMemo(
+    () => resolveRangeStart(rangeAnchorDate, selectedDayIndices),
+    [rangeAnchorDate, selectedDayIndices],
+  );
 
-	// If "today" becomes unavailable (e.g. time ticks past) while it's the
-	// active selection, fall back out of it.
-	useEffect(() => {
-		if (dateMode === "today" && !isTodayAvailable) {
-			setDateMode(null);
-		}
-	}, [dateMode, isTodayAvailable]);
+  const rangeResolvedEnd = useMemo(
+    () => resolveRangeEnd(rangeResolvedStart, selectedDayIndices),
+    [rangeResolvedStart, selectedDayIndices],
+  );
 
-	// ── specific date picker ────────────────────────────────────────────────
+  const isConfirmBlocked = useMemo(() => {
+    if (isSubmitting) return true;
+    if (dateMode === null) return true;
+    if (dateMode === "range" && selectedDays.length === 0) return true;
 
-	const handleDateChange = useCallback(
-		(event: DateTimePickerEvent, selectedDate?: Date) => {
-			if (Platform.OS === "android") {
-				setShowDatePicker(false);
-			}
-			if (event.type === "set" && selectedDate) {
-				setSpecificDate(selectedDate);
-			}
-		},
-		[],
-	);
+    return false;
+  }, [isSubmitting, dateMode, selectedDays]);
 
-	// ── range start date picker (non-recurring "Select Days") ──────────────
+  const summary = useMemo(() => {
+    if (dateMode === "today") {
+      return recurring ? "Today, repeating weekly" : "Active today";
+    }
+    if (dateMode === "tomorrow") {
+      return recurring ? "Tomorrow, repeating weekly" : "Active tomorrow";
+    }
+    if (dateMode === "range") {
+      if (selectedDays.length === 0) return "Select at least one day";
+      const dayList = selectedDays.join(", ");
 
-	const handleRangeDateChange = useCallback(
-		(event: DateTimePickerEvent, selectedDate?: Date) => {
-			if (Platform.OS === "android") {
-				setShowRangeDatePicker(false);
-			}
-			if (event.type === "set" && selectedDate) {
-				setRangeAnchorDate(selectedDate);
+      if (recurring) {
+        return `${dayList} · repeats weekly`;
+      }
 
-				setSelectedDays([]);
-			}
-		},
-		[],
-	);
+      if (rangeResolvedStart && rangeResolvedEnd) {
+        const dateLabel = isSameDay(rangeResolvedStart, rangeResolvedEnd)
+          ? formatCompact(rangeResolvedStart)
+          : `${formatCompact(rangeResolvedStart)} – ${formatCompact(rangeResolvedEnd)}`;
+        return `${dayList} · ${dateLabel}`;
+      }
 
-	const selectedDayIndices = useMemo(
-		() => selectedDays.map((day) => DAYS.indexOf(day)),
-		[selectedDays],
-	);
+      return dayList;
+    }
+    if (dateMode === "specific") {
+      return `Active on ${specificDate.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    }
+    return "";
+  }, [dateMode, recurring, selectedDays, specificDate, rangeResolvedStart, rangeResolvedEnd]);
 
-	/** Resolved active window for "range" + non-recurring. Undefined/null
-	 * when there's nothing to resolve yet (no days selected). */
-	const rangeResolvedStart = useMemo(
-		() => resolveRangeStart(rangeAnchorDate, selectedDayIndices),
-		[rangeAnchorDate, selectedDayIndices],
-	);
+  const buildPayload = useCallback((): CreationPayload => {
+    if (!generatedScheduleId) throw new Error("No generatedScheduleId");
 
-	const rangeResolvedEnd = useMemo(
-		() => resolveRangeEnd(rangeResolvedStart, selectedDayIndices),
-		[rangeResolvedStart, selectedDayIndices],
-	);
+    if (isScheduleNeedsToSave && scheduleItems.length === 0)
+      throw new Error("No scheduleItem to save`");
 
-	// ── confirm gating ──────────────────────────────────────────────────────
+    const newSchedule: Schedule | undefined = !isScheduleNeedsToSave
+      ? undefined
+      : {
+          id: generatedScheduleId,
+          name: "N/A",
+          schedule_list: scheduleItems,
+          temporary: true,
+        };
 
-	const isConfirmBlocked = useMemo(() => {
-		if (isSubmitting) return true;
-		if (dateMode === null) return true;
-		if (dateMode === "range" && selectedDays.length === 0) return true;
+    if (dateMode === "specific") {
+      const date = startOfDay(specificDate);
+      const newActiveSchedule: ActiveSchedule = {
+        id: "" as never,
+        schedule_id: generatedScheduleId,
+        active_type: "date",
+        recurring: false,
+        starts_at: date,
+        ends_at: date,
+      };
+      return {
+        isScheduleNeedsToSave,
+        newSchedule,
+        newActiveSchedule,
+        selectedDate: date,
+      };
+    }
 
-		return false;
-	}, [isSubmitting, dateMode, selectedDays]);
+    let dayIndices: number[] = [];
+    let startsAt: Date | undefined;
+    let endsAt: Date | undefined;
+    const today = new Date();
 
-	// ── summary text ────────────────────────────────────────────────────────
+    if (dateMode === "today") {
+      dayIndices = [todayWeekdayIndex];
+      if (!recurring) {
+        const date = startOfDay(today);
+        startsAt = date;
+        endsAt = date;
+      }
+    } else if (dateMode === "tomorrow") {
+      const tomorrowIdx = (todayWeekdayIndex + 1) % 7;
+      dayIndices = [tomorrowIdx];
+      if (!recurring) {
+        const date = startOfDay(addDays(today, 1));
+        startsAt = date;
+        endsAt = date;
+      }
+    } else if (dateMode === "range") {
+      dayIndices = selectedDays.map((day) => DAYS.indexOf(day)).sort((a, b) => a - b);
 
-	const summary = useMemo(() => {
-		if (dateMode === "today") {
-			return recurring ? "Today, repeating weekly" : "Active today";
-		}
-		if (dateMode === "tomorrow") {
-			return recurring ? "Tomorrow, repeating weekly" : "Active tomorrow";
-		}
-		if (dateMode === "range") {
-			if (selectedDays.length === 0) return "Select at least one day";
-			const dayList = selectedDays.join(", ");
+      if (!recurring && dayIndices.length > 0 && rangeResolvedStart && rangeResolvedEnd) {
+        startsAt = rangeResolvedStart;
+        endsAt = rangeResolvedEnd;
+      }
+    }
 
-			if (recurring) {
-				return `${dayList} · repeats weekly`;
-			}
+    const newActiveSchedule: ActiveSchedule = {
+      id: "" as never,
+      schedule_id: generatedScheduleId,
+      active_type: "days",
+      recurring,
+      starts_at: startsAt,
+      ends_at: endsAt,
+    };
 
-			if (rangeResolvedStart && rangeResolvedEnd) {
-				const dateLabel = isSameDay(rangeResolvedStart, rangeResolvedEnd)
-					? formatCompact(rangeResolvedStart)
-					: `${formatCompact(rangeResolvedStart)} – ${formatCompact(rangeResolvedEnd)}`;
-				return `${dayList} · ${dateLabel}`;
-			}
+    return {
+      isScheduleNeedsToSave,
+      newSchedule,
+      newActiveSchedule,
+      selectedDays: dayIndices,
+    };
+  }, [
+    dateMode,
+    recurring,
+    selectedDays,
+    specificDate,
+    generatedScheduleId,
+    todayWeekdayIndex,
+    rangeResolvedStart,
+    rangeResolvedEnd,
+    scheduleItems,
+    isScheduleNeedsToSave,
+  ]);
 
-			return dayList;
-		}
-		if (dateMode === "specific") {
-			return `Active on ${specificDate.toLocaleDateString(undefined, {
-				month: "short",
-				day: "numeric",
-				year: "numeric",
-			})}`;
-		}
-		return "";
-	}, [
-		dateMode,
-		recurring,
-		selectedDays,
-		specificDate,
-		rangeResolvedStart,
-		rangeResolvedEnd,
-	]);
+  const handleConfirm = useCallback(async () => {
+    if (isConfirmBlocked) return;
 
-	// ── payload construction ────────────────────────────────────────────────
+    const activationPayload = buildPayload();
+    setIsSubmitting(true);
 
-	const buildPayload = useCallback((): CreationPayload => {
-		if (!generatedScheduleId) throw new Error("No generatedScheduleId");
+    try {
+      await service.createAsync({ activationPayload, overWrite: false });
 
-		if (isScheduleNeedsToSave && scheduleItems.length === 0)
-			throw new Error("No scheduleItem to save`");
+      if (isScheduleNeedsToSave) {
+        setIsScheduleSavedByActivation(true);
+      }
 
-		const newSchedule: Schedule | undefined = !isScheduleNeedsToSave
-			? undefined
-			: {
-					id: generatedScheduleId,
-					name: "N/A",
-					schedule_list: scheduleItems,
-					temporary: true, // temporary saved
-				};
+      // resetState();
+      // close();
+    } catch (err) {
+      console.log(err);
+      if (err instanceof ScheduleConflictError) {
+        // err.context carries the ScheduleConflict[] payload (see BaseError)
+        setConflicts(err.context);
+        setIsConflictModalOpen(true);
+      }
+      // Any other error: conflict modal stays closed; SetActiveModal
+      // remains open so the user can retry.
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    isConfirmBlocked,
+    buildPayload,
+    service,
+    isScheduleNeedsToSave,
+    setIsScheduleSavedByActivation,
+  ]);
 
-		if (dateMode === "specific") {
-			const date = startOfDay(specificDate);
-			const newActiveSchedule: ActiveSchedule = {
-				id: "" as never, // populated server-side / stripped by CreateActiveScheduleEntitySchema
-				schedule_id: generatedScheduleId,
-				active_type: "date",
-				recurring: false,
-				starts_at: date,
-				ends_at: date,
-			};
-			return {
-				isScheduleNeedsToSave,
-				newSchedule,
-				newActiveSchedule,
-				selectedDate: date,
-			};
-		}
+  // ── conflict resolution handlers ────────────────────────────────────────
 
-		// "today" | "tomorrow" | "range" all resolve to active_type "days"
-		let dayIndices: number[] = [];
-		let startsAt: Date | undefined;
-		let endsAt: Date | undefined;
-		const today = new Date();
+  // ── weekday footprint of the activation currently being created ────────
+  // Used by the conflict modal to compute, per conflicting schedule, which
+  // specific weekdays actually overlap with THIS activation attempt.
+  const activationDayIndices = useMemo(() => {
+    if (dateMode === "specific") return [specificDate.getDay()];
+    if (dateMode === "today") return [todayWeekdayIndex];
+    if (dateMode === "tomorrow") return [(todayWeekdayIndex + 1) % 7];
+    if (dateMode === "range") return selectedDayIndices;
+    return [];
+  }, [dateMode, specificDate, todayWeekdayIndex, selectedDayIndices]);
 
-		if (dateMode === "today") {
-			dayIndices = [todayWeekdayIndex];
-			if (!recurring) {
-				const date = startOfDay(today);
-				startsAt = date;
-				endsAt = date;
-			}
-		} else if (dateMode === "tomorrow") {
-			const tomorrowIdx = (todayWeekdayIndex + 1) % 7;
-			dayIndices = [tomorrowIdx];
-			if (!recurring) {
-				const date = startOfDay(addDays(today, 1));
-				startsAt = date;
-				endsAt = date;
-			}
-		} else if (dateMode === "range") {
-			dayIndices = selectedDays
-				.map((day) => DAYS.indexOf(day))
-				.sort((a, b) => a - b);
+  const handleCancelConflicts = useCallback(() => {
+    setConflicts([]);
+    setIsConflictModalOpen(false);
+  }, []);
 
-			if (
-				!recurring &&
-				dayIndices.length > 0 &&
-				rangeResolvedStart &&
-				rangeResolvedEnd
-			) {
-				startsAt = rangeResolvedStart;
-				endsAt = rangeResolvedEnd;
-			}
-		}
+  const handleResolveConflicts = useCallback(async () => {
+    if (conflicts.length === 0) return;
 
-		const newActiveSchedule: ActiveSchedule = {
-			id: "" as never,
-			schedule_id: generatedScheduleId,
-			active_type: "days",
-			recurring,
-			starts_at: startsAt,
-			ends_at: endsAt,
-		};
+    setIsResolvingConflict(true);
+    try {
+      // TODO: apply the reorder/drop resolution against `conflicts`,
+      // then retry activation (e.g. service.createAsync(buildPayload(), true, { overwrite: true })
+      // or per-conflict PATCH calls) once the overwrite contract on
+      // ActiveScheduleService is finalized
 
-		return {
-			isScheduleNeedsToSave,
-			newSchedule,
-			newActiveSchedule,
-			selectedDays: dayIndices,
-		};
-	}, [
-		dateMode,
-		recurring,
-		selectedDays,
-		specificDate,
-		generatedScheduleId,
-		todayWeekdayIndex,
-		rangeResolvedStart,
-		rangeResolvedEnd,
-		scheduleItems,
-		isScheduleNeedsToSave,
-	]);
+      const activationPayload = buildPayload();
+      await service.createAsync({ activationPayload, overWrite: true });
 
-	const handleConfirm = useCallback(async () => {
-		if (isConfirmBlocked) return;
+      setConflicts([]);
+      setIsConflictModalOpen(false);
+    } catch (err) {
+      console.log("Conflict resolution failed", err);
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  }, [conflicts, service, buildPayload]);
 
-		const payload = buildPayload();
-		setIsSubmitting(true);
+  return {
+    dateMode,
+    selectedDays,
+    disabledDays,
+    specificDate,
+    showDatePicker,
+    rangeAnchorDate,
+    showRangeDatePicker,
+    rangeResolvedStart,
+    rangeResolvedEnd,
+    recurring,
+    isSubmitting,
+    summary,
+    isConfirmBlocked,
+    isTodayAvailable,
 
-		try {
-			console.log("payload stringified: ", JSON.stringify(payload, null, 2));
-			console.log(toLocalISODate(payload.newActiveSchedule.starts_at));
-			console.log(toLocalISODate(payload.newActiveSchedule.ends_at));
+    resetState,
 
-			await service.createAsync(payload, true);
+    setRecurring,
+    setShowDatePicker,
+    setShowRangeDatePicker,
+    handleModeSelect,
+    toggleDay,
+    handleDateChange,
+    handleRangeDateChange,
+    handleClose,
+    handleConfirm,
 
-			if (isScheduleNeedsToSave) {
-				setIsScheduleSavedByActivation(true);
-			}
+    buildPayload,
 
-			// resetState();
-			// close();
-		} catch (err) {
-			console.log(err);
-			if (err instanceof ScheduleConflictError)
-				console.log("Conflict Error", err);
-			// Surface ScheduleConflictError (or any other failure) back to the
-			// caller instead of closing the modal. Conflict-resolution UI is
-			// wired up separately.
-		} finally {
-			setIsSubmitting(false);
-		}
-	}, [
-		isConfirmBlocked,
-		buildPayload,
-		service,
-		isScheduleNeedsToSave,
-		setIsScheduleSavedByActivation,
-	]);
+    isOpen,
+    open,
 
-	return {
-		// state
-		dateMode,
-		selectedDays,
-		disabledDays,
-		specificDate,
-		showDatePicker,
-		rangeAnchorDate,
-		showRangeDatePicker,
-		rangeResolvedStart,
-		rangeResolvedEnd,
-		recurring,
-		isSubmitting,
-		summary,
-		isConfirmBlocked,
-		isTodayAvailable,
-
-		// setters / handlers
-		setRecurring,
-		setShowDatePicker,
-		setShowRangeDatePicker,
-		handleModeSelect,
-		toggleDay,
-		handleDateChange,
-		handleRangeDateChange,
-		handleClose,
-		handleConfirm,
-
-		// exposed for advanced use (e.g. conflict modal retry with overwrite)
-		buildPayload,
-
-		isOpen,
-		open,
-	};
+    conflicts,
+    isConflictModalOpen,
+    isResolvingConflict,
+    handleCancelConflicts,
+    handleResolveConflicts,
+    activationDayIndices,
+  };
 }

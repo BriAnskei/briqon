@@ -5,61 +5,59 @@ import { AIService } from "@/src/service/ai.service";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 const useAi = () => {
-	const aiService = useMemo(() => new AIService(), []);
+  const aiService = useMemo(() => new AIService(), []);
 
-	const [result, setResult] = useState<GenerationResult | null>(null);
+  const [result, setResult] = useState<GenerationResult | null>(null);
 
-	const [completedSteps, SetCompletedSteps] = useState<Step[]>([]);
-	const [error, setError] = useState<string | undefined>(undefined);
+  const [completedSteps, SetCompletedSteps] = useState<Step[]>([]);
+  const [error, setError] = useState<string | undefined>(undefined);
 
-	const isGeneratingRef = useRef(false);
-	const newScheduleGeneratedIdRef = useRef<string | undefined>(undefined);
+  const isGeneratingRef = useRef(false);
+  const newScheduleGeneratedIdRef = useRef<string | undefined>(undefined);
 
-	const handleGenerateSchedule = useCallback(
-		async (formState: NewScheduleFormState | undefined): Promise<void> => {
-			if (isGeneratingRef.current) return;
-			if (!formState) {
-				setError("No Input state data");
-				return;
-			}
+  const handleGenerateSchedule = useCallback(
+    async (formState: NewScheduleFormState | undefined): Promise<void> => {
+      if (isGeneratingRef.current) return;
+      if (!formState) {
+        setError("No Input state data");
+        return;
+      }
+      isGeneratingRef.current = true;
+      try {
+        const { generationResult, newScheduleId } = await aiService.generateSchedule(
+          formState,
+          (s) => SetCompletedSteps((prev) => [...prev, s]),
+        );
 
-			isGeneratingRef.current = true;
-			try {
-				const { generationResult, newScheduleId } =
-					await aiService.generateSchedule(formState, (s) =>
-						SetCompletedSteps((prev) => [...prev, s]),
-					);
+        setResult(generationResult);
+        newScheduleGeneratedIdRef.current = newScheduleId;
+      } catch (err) {
+        console.log(err, "Failed to generate");
+        setError(err instanceof Error ? err.message : "Failed to generated Schedule");
+      } finally {
+        isGeneratingRef.current = false;
+      }
+    },
+    [aiService],
+  );
 
-				setResult(generationResult);
-				newScheduleGeneratedIdRef.current = newScheduleId;
-			} catch (err) {
-				console.log(err, "Failed to generate");
-				setError(
-					err instanceof Error ? err.message : "Failed to generated Schedule",
-				);
-			} finally {
-				isGeneratingRef.current = false;
-			}
-		},
-		[aiService],
-	);
+  const resetState = () => {
+    setError(undefined);
+    setResult(null);
+    SetCompletedSteps([]);
+    newScheduleGeneratedIdRef.current = undefined;
+    isGeneratingRef.current = false;
+  };
 
-	const resetState = () => {
-		setError(undefined);
-		setResult(null);
-		SetCompletedSteps([]);
-		newScheduleGeneratedIdRef.current = undefined;
-	};
-
-	return {
-		result,
-		generatedScheduleId: newScheduleGeneratedIdRef.current,
-		handleGenerateSchedule,
-		resetState,
-		completedSteps,
-		isGenerating: isGeneratingRef.current,
-		error,
-	};
+  return {
+    result,
+    generatedScheduleId: newScheduleGeneratedIdRef.current,
+    handleGenerateSchedule,
+    resetState,
+    completedSteps,
+    isGenerating: isGeneratingRef.current,
+    error,
+  };
 };
 
 export default useAi;

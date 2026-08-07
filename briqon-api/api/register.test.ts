@@ -8,9 +8,9 @@ jest.mock("jsonwebtoken", () => ({
   default: { sign: jest.fn() },
 }));
 
-import registerDefault, { registerHanlder } from "./register";
-import { rateLimit } from "../util/rateLimit";
 import jwt from "jsonwebtoken";
+import { rateLimit } from "../util/rateLimit";
+import registerDefault, { registerHanlder } from "./register";
 
 const mockedLimit = rateLimit.limit as jest.Mock;
 const mockedSign = jwt.sign as unknown as jest.Mock;
@@ -111,9 +111,7 @@ describe("register rate limiting (default export)", () => {
 
     await registerDefault(makeReq(), makeRes());
 
-    expect(mockedLimit).toHaveBeenCalledWith(
-      "register:203.0.113.5:install-123",
-    );
+    expect(mockedLimit).toHaveBeenCalledWith("register:203.0.113.5:install-123");
   });
 
   it("falls back to socket IP and 'unknown' installationId when both are absent", async () => {

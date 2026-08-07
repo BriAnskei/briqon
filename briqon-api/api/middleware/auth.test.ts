@@ -38,10 +38,7 @@ describe("withAuth", () => {
     const handler = jest.fn();
     const res = makeRes();
 
-    await withAuth(handler)(
-      { headers: { authorization: "Bearer nope" } },
-      res,
-    );
+    await withAuth(handler)({ headers: { authorization: "Bearer nope" } }, res);
 
     expect(handler).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(401);

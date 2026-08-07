@@ -1,7 +1,4 @@
-import {
-  CreateScheduleResponseSchema,
-  GeminiScheduleSchema,
-} from "../schema/Schedule.schema";
+import { CreateScheduleResponseSchema, GeminiScheduleSchema } from "../schema/Schedule.schema";
 import { ai } from "../util/ai";
 import { withAuth } from "./middleware/auth";
 import { withRateLimit } from "./middleware/rateLimit";
@@ -13,8 +10,6 @@ export async function generateHanlder(req: any, res: any) {
       error: "Method not allowed",
     });
   }
-
-  console.log("generating")
 
   const { prompt, systemInstruction } = req.body;
 
@@ -41,12 +36,10 @@ export async function generateHanlder(req: any, res: any) {
         contents: prompt,
       });
 
-      const parsed = CreateScheduleResponseSchema.safeParse(
-        JSON.parse(response.text as string),
-      );
-      console.log("responseded")
+      const parsed = CreateScheduleResponseSchema.safeParse(JSON.parse(response.text as string));
+      console.log("responseded");
       if (parsed.success) {
-        console.log("invalid scheama, retriying")
+        console.log("invalid scheama, retriying");
         return res.status(200).json({
           success: true,
           res: parsed.data,

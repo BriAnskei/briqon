@@ -3,8 +3,8 @@ jest.mock("../util/ai", () => ({
   ai: { models: { generateContent: jest.fn() } },
 }));
 
-import { generateHanlder } from "./generate";
 import { ai } from "../util/ai";
+import { generateHanlder } from "./generate";
 
 const mockedGenerate = ai.models.generateContent as jest.Mock;
 
@@ -28,9 +28,7 @@ const VALID_SCHEDULE = {
   summary: {
     categories: [{ name: "Work", total: "4h" }],
   },
-  schedule: [
-    { start_time: "09:00", end_time: "10:00", activity: "Deep work" },
-  ],
+  schedule: [{ start_time: "09:00", end_time: "10:00", activity: "Deep work" }],
 };
 
 describe("generateHanlder", () => {

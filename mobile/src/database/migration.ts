@@ -1,9 +1,9 @@
 import { getDatabase } from "./db";
 
 export const migrateDatabase = async () => {
-	const db = await getDatabase();
+  const db = await getDatabase();
 
-	await db.execAsync(`
+  await db.execAsync(`
     PRAGMA journal_mode = WAL;
 
     CREATE TABLE IF NOT EXISTS schedules (
