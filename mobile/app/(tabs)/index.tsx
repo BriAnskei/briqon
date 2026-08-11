@@ -7,12 +7,12 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
+import { CustomSwitch } from "@/components/CustomSwitch";
 import { SetActiveModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
 import { Colors, Radius, Shadow } from "../../type/theme";
@@ -118,12 +118,9 @@ function AlarmRow({
           </Text>
         </View>
       </View>
-      <Switch
+      <CustomSwitch
         value={alarm.alarmEnabled}
         onValueChange={() => onToggle(alarm.id)}
-        trackColor={{ false: Colors.border, true: Colors.accent + "60" }}
-        thumbColor={alarm.alarmEnabled ? Colors.accent : Colors.textMuted}
-        ios_backgroundColor={Colors.border}
       />
     </View>
   );
@@ -391,30 +388,31 @@ function useSStyles() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 24,
-          paddingTop: Platform.OS === "ios" ? 62 : 44,
-          paddingBottom: 16,
-          backgroundColor: Colors.bgCard,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
+          paddingHorizontal: 24, // px-6
+          paddingTop: Platform.OS === "ios" ? 54 : 44,
+          paddingBottom: 8, // py-2
+          // Transparent background + no border per spec
         },
         brandName: {
-          fontSize: 20,
-          fontWeight: "800",
-          color: Colors.accent,
-          letterSpacing: 0.4,
+          fontSize: 24, // text-2xl
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600", // semibold
+          color: Colors.textPrimary,
+          letterSpacing: -0.4,
         },
         brandTagline: {
           fontSize: 11,
-          color: Colors.textMuted,
+          fontFamily: "DMMono",
+          fontWeight: "400",
+          color: Colors.textSecondary,
           marginTop: 2,
           letterSpacing: 0.3,
         },
         headerActions: { flexDirection: "row", gap: 10, alignItems: "center" },
         headerBtn: {
-          width: 38,
-          height: 38,
-          borderRadius: Radius.md,
+          width: 32, // theme toggle button: 32x32
+          height: 32,
+          borderRadius: 999, // full
           backgroundColor: Colors.bgElevated,
           borderWidth: 1,
           borderColor: Colors.border,
@@ -427,7 +425,7 @@ function useSStyles() {
           ...Shadow.accent,
         },
         scroll: { flex: 1 },
-        scrollContent: { paddingHorizontal: 20, paddingTop: 28 },
+        scrollContent: { paddingHorizontal: 24, paddingTop: 28 },
         sectionRow: {
           flexDirection: "row",
           justifyContent: "space-between",
@@ -435,14 +433,17 @@ function useSStyles() {
           marginBottom: 14,
         },
         sectionTitle: {
-          fontSize: 22,
-          fontWeight: "800",
+          fontSize: 24, // text-2xl
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600", // semibold
           color: Colors.textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: -0.4,
         },
         sectionDate: {
           fontSize: 12,
-          color: Colors.textMuted,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textSecondary,
           marginTop: 4,
           letterSpacing: 0.1,
         },
@@ -480,12 +481,12 @@ function useSStyles() {
           borderRadius: 4,
           backgroundColor: Colors.accent,
         },
-        namePillText: { fontSize: 13, fontWeight: "600", color: Colors.accent },
+        namePillText: { fontSize: 14, fontFamily: "Inter", fontWeight: "400", color: Colors.textPrimary },
         countPill: {
-          backgroundColor: Colors.successSoft,
+          backgroundColor: Colors.accentSoft,
           borderRadius: Radius.full,
           borderWidth: 1,
-          borderColor: Colors.success + "40",
+          borderColor: Colors.accentGlow,
           paddingHorizontal: 10,
           paddingVertical: 6,
         },
@@ -495,42 +496,51 @@ function useSStyles() {
         },
         countPillText: {
           fontSize: 12,
-          color: Colors.success,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textSecondary,
         },
         alarmList: { gap: 8 },
         alarmRow: {
           flexDirection: "row",
           alignItems: "center",
           backgroundColor: Colors.bgCard,
-          borderRadius: Radius.lg,
+          borderRadius: Radius.xl, // rounded-2xl per spec
           borderWidth: 1,
           borderColor: Colors.border,
           overflow: "hidden",
           paddingRight: 14,
           gap: 12,
+          minHeight: 64,
           ...Shadow.card,
         },
         alarmRowDim: { opacity: 0.45 },
         alarmAccent: { width: 3, alignSelf: "stretch" },
         alarmIndex: {
           fontSize: 11,
-          fontWeight: "700",
-          color: Colors.textMuted,
+          fontFamily: "DMMono",
+          fontWeight: "500",
+          color: Colors.textSecondary,
           letterSpacing: 0.5,
           minWidth: 20,
         },
         alarmBody: { flex: 1, paddingVertical: 14 },
         alarmActivity: {
-          fontSize: 14,
-          fontWeight: "600",
+          fontSize: 14, // alarm label: 14px / Inter / 400
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textPrimary,
           marginBottom: 5,
         },
         textDim: { color: Colors.textMuted },
         alarmTimeRow: { flexDirection: "row", alignItems: "center", gap: 5 },
         alarmTimeDot: { width: 5, height: 5, borderRadius: 3 },
-        alarmTime: { fontSize: 12, color: Colors.textMuted },
+        alarmTime: {
+          fontSize: 14,
+          fontFamily: "DMMono",
+          fontWeight: "500",
+          color: Colors.textSecondary,
+        },
         emptyCard: {
           backgroundColor: Colors.bgCard,
           borderRadius: Radius.xl,
@@ -555,12 +565,15 @@ function useSStyles() {
         },
         emptyTitle: {
           fontSize: 17,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 8,
         },
         emptyBody: {
           fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textMuted,
           textAlign: "center",
           lineHeight: 21,
@@ -568,12 +581,12 @@ function useSStyles() {
         },
         emptyBtn: {
           backgroundColor: Colors.accent,
-          borderRadius: Radius.lg,
+          borderRadius: 12, // py-3 spec
           paddingHorizontal: 28,
-          paddingVertical: 13,
+          paddingVertical: 12,
           ...Shadow.accent,
         },
-        emptyBtnText: { fontSize: 14, fontWeight: "700", color: Colors.white },
+        emptyBtnText: { fontSize: 14, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
         menuOverlay: {
           flex: 1,
           backgroundColor: "rgba(0,0,0,0.55)",
@@ -608,11 +621,12 @@ function useSStyles() {
         menuItemBody: { flex: 1 },
         menuItemLabel: {
           fontSize: 14,
+          fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        menuItemSub: { fontSize: 11, color: Colors.textMuted, lineHeight: 16 },
+        menuItemSub: { fontSize: 11, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, lineHeight: 16 },
         menuDivider: {
           height: 1,
           backgroundColor: Colors.border,

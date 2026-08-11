@@ -56,12 +56,15 @@ function ToastCard({ type, text1, text2 }: ToastConfigParams<unknown> & { type: 
         },
         title: {
           fontSize: 13,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: colors.textPrimary,
           letterSpacing: 0.1,
         },
         body: {
           fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: colors.textSecondary,
           lineHeight: 17,
         },

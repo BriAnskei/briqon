@@ -57,9 +57,6 @@ export const migrateDatabase = async () => {
       recurring INTEGER NOT NULL
           CHECK(recurring IN (0, 1)),
 
-      starts_at TEXT,
-      ends_at TEXT,
-
       FOREIGN KEY (schedule_id)
         REFERENCES schedules(id)
         ON DELETE CASCADE
@@ -70,6 +67,90 @@ export const migrateDatabase = async () => {
 
     CREATE INDEX IF NOT EXISTS idx_active_schedules_time_range
     ON active_schedules(starts_at, ends_at);
+
+
+
+
+
+    CREATE TABLE IF NOT EXIT current_active (
+      id TEXT PRIMARY KEY NOT NULL,
+      active_id TEXT NOT NULL
+      on_active INTEGER NOT NULL
+          CHECK(recurring IN (0, 1)),
+
+      FOREIGN KEY (schedule_id)
+        REFERENCES schedules(id)
+        ON DELETE CASCADE
+    )
+
+
+    CREATE INDEX IF NOT EXISTS idx_current_active_active_id
+      ON current_active(active_id);
+
+
+
+
+
+    CREATE TABLE IF NOT EXIST schedule_occurence (
+      id TEXT PRIMARY KEY NOT NULL,
+      active_id TEXT NOT NULL,
+      window_start TEXT NOT NULL,
+      window_ends TEXT NOT NULL,
+
+        foreign key (active_id)
+          references active_schedules(id)
+          on delete cascade
+    )
+
+    CREATE INDEX IF NOT EXISTS idx_schedule_occurence_active_id
+      ON schedule_occurence(active_id);
+
+
+
+
+
+
+    -- Occurring Ending Window
+    CREATE TABLE IF NOT EXISTS occurring_overflow (
+      id TEXT PRIMARY KEY NOT NULL,
+      active_id TEXT NOT NULL,
+      minutes_exceeded INTEGER NOT NULL,
+
+      foreign key (active_id)
+        references active_schedules(id)
+        on delete cascade
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
+      ON ocurring_overflow(active_id);
+
+
+
+
+
+
+    -- Non-Recurring Ranges
+    CREATE TABLE IF NOT EXISTS non_recurring_ranges (
+      id TEXT PRIMARY KEY NOT NULL,
+      active_id TEXT NOT NULL,
+      starts_at TEXT NOT NULL,
+      ends_at TEXT NOT NULL,
+
+      FOREIGN KEY (active_id)
+        REFERENCES active_schedules(id)
+        ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_non_recurring_ranges_active_id
+      ON non_recurring_ranges(active_id);
+
+    CREATE INDEX IF NOT EXISTS idx_non_recurring_ranges_time_range
+      ON non_recurring_ranges(starts_at, ends_at);
+
+
+
+
+
 
 
     CREATE TABLE IF NOT EXISTS active_schedule_days (
@@ -87,6 +168,8 @@ export const migrateDatabase = async () => {
 
     CREATE INDEX IF NOT EXISTS idx_active_schedule_days_weekday_active_schedule_id
       ON active_schedule_days(weekday, active_schedule_id);
+
+
 
 
 

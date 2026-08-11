@@ -1,0 +1,5 @@
+package.json
+pnpm-lock.yaml
+biome.json
+node_modules/
+.zed/

@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
-import { useTheme } from "@/context/ThemeContext";
+import { StyleSheet, Text, View } from "react-native";
 import { Colors } from "@/type/theme";
 
 // ─── Logo Mark ────────────────────────────────────────────────────────────────
@@ -38,7 +37,6 @@ function LogoMark() {
 }
 
 function useLogoStyles() {
-  const { colors } = useTheme();
   return useMemo(
     () =>
       StyleSheet.create({
@@ -148,7 +146,7 @@ function useLogoStyles() {
         bellLeft: { left: 12 },
         bellRight: { right: 12 },
       }),
-    [colors],
+    [],
   );
 }
 
@@ -175,7 +173,6 @@ export default function SplashScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 function useSStyles() {
-  const { colors } = useTheme();
   return useMemo(
     () =>
       StyleSheet.create({
@@ -211,12 +208,14 @@ function useSStyles() {
         },
         wordmark: {
           fontSize: 34,
-          fontWeight: "800",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
           letterSpacing: -0.8,
         },
         tagline: {
           fontSize: 12,
+          fontFamily: "DMMono-Medium",
           fontWeight: "500",
           color: Colors.textMuted,
           letterSpacing: 2,
@@ -224,6 +223,6 @@ function useSStyles() {
           marginTop: -6,
         },
       }),
-    [colors],
+    [],
   );
 }

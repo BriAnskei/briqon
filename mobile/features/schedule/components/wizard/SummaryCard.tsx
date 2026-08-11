@@ -78,11 +78,17 @@ function useSStyles() {
         divider: { width: 1, height: 28, backgroundColor: Colors.borderLight },
         value: {
           fontSize: 16,
-          fontWeight: "800",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        label: { fontSize: 11, fontWeight: "600", color: Colors.textSecondary },
+        label: {
+          fontSize: 11,
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
+          color: Colors.textSecondary,
+        },
       }),
     [colors],
   );

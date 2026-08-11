@@ -81,17 +81,34 @@ function useSStyles() {
       StyleSheet.create({
         body: { paddingTop: 8 },
         title: {
-          fontSize: 22,
-          fontWeight: "800",
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: -0.4,
           marginBottom: 6,
         },
         sub: {
           fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textMuted,
           lineHeight: 20,
           marginBottom: 24,
+        },
+        label: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textPrimary,
+        },
+        desc: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          textAlign: "center",
+          lineHeight: 18,
         },
         grid: { gap: 14 },
         card: {

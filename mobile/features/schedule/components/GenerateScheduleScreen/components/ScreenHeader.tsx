@@ -48,15 +48,13 @@ function useSStyles() {
           flexDirection: "row",
           alignItems: "center",
           gap: 12,
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-          backgroundColor: Colors.bgCard,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
+          paddingHorizontal: 24, // px-6
+          paddingVertical: 8, // py-2
+          // Transparent background + no border per spec
         },
         headerIconBtn: {
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           borderRadius: Radius.full,
           alignItems: "center",
           justifyContent: "center",
@@ -66,11 +64,12 @@ function useSStyles() {
         },
         headerTextGroup: { flex: 1 },
         headerTitle: {
-          fontSize: 18,
-          fontWeight: "700",
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
         },
-        headerSub: { fontSize: 12, color: Colors.textMuted, marginTop: 4 },
+        headerSub: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, marginTop: 4 },
       }),
     [colors],
   );

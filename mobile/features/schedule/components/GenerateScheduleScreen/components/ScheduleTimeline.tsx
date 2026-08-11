@@ -40,7 +40,8 @@ function useSStyles() {
       StyleSheet.create({
         timelineTitle: {
           fontSize: 15,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 4,
         },
@@ -65,7 +66,8 @@ function useSStyles() {
         },
         scheduleIndex: {
           fontSize: 11,
-          fontWeight: "700",
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
           color: Colors.textMuted,
           letterSpacing: 0.5,
           minWidth: 20,
@@ -81,10 +83,11 @@ function useSStyles() {
         scheduleActivity: {
           flex: 1,
           fontSize: 14,
+          fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        scheduleTime: { fontSize: 12, color: Colors.textMuted, flexShrink: 0 },
+        scheduleTime: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, flexShrink: 0 },
       }),
     [colors],
   );

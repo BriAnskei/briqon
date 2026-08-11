@@ -5,8 +5,6 @@ export const ActiveScheduleSchema = z.object({
   schedule_id: z.string(),
   active_type: z.enum(["days", "date"]),
   recurring: z.boolean(),
-  starts_at: z.date().optional(),
-  ends_at: z.date().optional(),
 });
 
 export const CreateActivecheduleSchema = ActiveScheduleSchema.omit({

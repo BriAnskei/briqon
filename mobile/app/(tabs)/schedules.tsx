@@ -29,21 +29,22 @@ function useSStyles() {
       StyleSheet.create({
         root: { flex: 1, backgroundColor: Colors.bg },
         header: {
-          paddingHorizontal: 24,
+          paddingHorizontal: 24, // px-6
           paddingTop: Platform.OS === "ios" ? 62 : 44,
-          paddingBottom: 16,
-          backgroundColor: Colors.bgCard,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
+          paddingBottom: 8, // py-2
+          // Transparent background + no border per spec
         },
         brandName: {
-          fontSize: 20,
-          fontWeight: "800",
-          color: Colors.accent,
-          letterSpacing: 0.4,
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+          letterSpacing: -0.4,
         },
         brandTagline: {
           fontSize: 11,
+          fontFamily: "DMMono",
+          fontWeight: "400",
           color: Colors.textMuted,
           marginTop: 2,
           letterSpacing: 0.3,
@@ -54,8 +55,13 @@ function useSStyles() {
           justifyContent: "center",
           gap: 8,
         },
-        label: { fontSize: 24, fontWeight: "700", color: Colors.textPrimary },
-        sub: { fontSize: 13, color: Colors.textMuted },
+        label: {
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+        },
+        sub: { fontSize: 13, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
       }),
     [colors],
   );

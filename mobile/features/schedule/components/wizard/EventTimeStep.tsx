@@ -74,14 +74,17 @@ function useSStyles() {
       StyleSheet.create({
         body: { paddingTop: 8 },
         title: {
-          fontSize: 22,
-          fontWeight: "800",
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: -0.4,
           marginBottom: 6,
         },
         sub: {
           fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textMuted,
           lineHeight: 20,
           marginBottom: 24,
@@ -94,7 +97,7 @@ function useSStyles() {
           marginTop: 16,
           paddingHorizontal: 4,
         },
-        durationText: { fontSize: 12, color: Colors.textMuted },
+        durationText: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
       }),
     [colors],
   );

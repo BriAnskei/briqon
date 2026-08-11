@@ -49,7 +49,9 @@ function useSStyles() {
         },
         regenerateTextGroup: { flex: 1, gap: 10 },
         regenerateQuote: {
-          fontSize: 12.5,
+          fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
           lineHeight: 18,
           color: Colors.textSecondary,
           fontStyle: "italic",
@@ -67,7 +69,8 @@ function useSStyles() {
         },
         regenerateBtnText: {
           fontSize: 12,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.accent,
         },
       }),

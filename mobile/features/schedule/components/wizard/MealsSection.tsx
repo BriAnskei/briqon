@@ -183,16 +183,22 @@ function useSStyles() {
           marginBottom: 10,
         },
         sectionLabel: {
-          fontSize: 13,
-          fontWeight: "700",
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textSecondary,
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
         },
-        optional: { fontWeight: "400", color: Colors.textMuted },
+        optional: { fontSize: 13, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
 
         draftFieldLabel: {
           fontSize: 12,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textMuted,
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
           marginBottom: 6,
         },
 
@@ -218,8 +224,8 @@ function useSStyles() {
           backgroundColor: Colors.accentSoft,
           borderColor: Colors.accent,
         },
-        chipText: { fontSize: 12, fontWeight: "600", color: Colors.textMuted },
-        chipTextActive: { color: Colors.accent },
+        chipText: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.textMuted },
+        chipTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
 
         inputRow: {
           flexDirection: "row",
@@ -229,26 +235,30 @@ function useSStyles() {
           borderRadius: Radius.md,
           borderWidth: 1,
           borderColor: Colors.border,
-          paddingHorizontal: 13,
-          paddingVertical: 11,
+          paddingHorizontal: 16,
+          paddingVertical: 12,
         },
         inputField: {
           flex: 1,
           fontSize: 14,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textPrimary,
           padding: 0,
         },
 
         empty: {
           fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textMuted,
           textAlign: "center",
           paddingVertical: 16,
         },
 
         toggle: {
-          width: 44,
-          height: 26,
+          width: 48,
+          height: 28,
           borderRadius: 999,
           backgroundColor: Colors.bgElevated,
           borderWidth: 1,
@@ -261,14 +271,14 @@ function useSStyles() {
           borderColor: Colors.accent,
         },
         toggleKnob: {
-          width: 20,
-          height: 20,
+          width: 24,
+          height: 24,
           borderRadius: 999,
           backgroundColor: Colors.textMuted,
         },
         toggleKnobActive: {
           backgroundColor: Colors.accent,
-          transform: [{ translateX: 18 }],
+          transform: [{ translateX: 22 }],
         },
 
         mealCard: {
@@ -295,10 +305,11 @@ function useSStyles() {
         mealTitle: {
           flex: 1,
           fontSize: 14,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
         },
-        mealDurationText: { fontSize: 12, color: Colors.textMuted },
+        mealDurationText: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
 
         durationRow: {
           flexDirection: "row",
@@ -318,7 +329,8 @@ function useSStyles() {
         },
         stepperValue: {
           fontSize: 13,
-          fontWeight: "600",
+          fontFamily: "Inter",
+          fontWeight: "400",
           color: Colors.textPrimary,
           minWidth: 32,
           textAlign: "center",
@@ -344,10 +356,11 @@ function useSStyles() {
         },
         segmentText: {
           fontSize: 11,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textMuted,
         },
-        segmentTextActive: { color: Colors.accent },
+        segmentTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
       }),
     [colors],
   );

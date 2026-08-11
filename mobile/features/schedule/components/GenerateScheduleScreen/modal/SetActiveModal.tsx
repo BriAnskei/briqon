@@ -384,7 +384,7 @@ function useSStyles() {
           borderBottomWidth: 1,
           borderBottomColor: Colors.border,
         },
-        title: { fontSize: 17, fontWeight: "700", color: Colors.textPrimary },
+        title: { fontSize: 18, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.textPrimary },
         closeBtn: {
           width: 28,
           height: 28,
@@ -393,7 +393,7 @@ function useSStyles() {
           alignItems: "center",
           justifyContent: "center",
         },
-        closeBtnText: { fontSize: 11, color: Colors.textSecondary },
+        closeBtnText: { fontSize: 11, fontFamily: "DMMono-Medium", fontWeight: "500", color: Colors.textSecondary },
         summaryCard: {
           flexDirection: "row",
           alignItems: "center",
@@ -413,7 +413,8 @@ function useSStyles() {
         },
         summaryText: {
           fontSize: 13,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.accent,
           flex: 1,
         },
@@ -425,10 +426,11 @@ function useSStyles() {
           gap: 8,
         },
         sectionLabel: {
-          fontSize: 11,
-          fontWeight: "700",
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textMuted,
-          letterSpacing: 1.1,
+          letterSpacing: 0.5,
           textTransform: "uppercase",
           marginBottom: 4,
           marginLeft: 2,
@@ -448,10 +450,11 @@ function useSStyles() {
         },
         pillText: {
           fontSize: 13,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textSecondary,
         },
-        pillTextActive: { color: Colors.accent },
+        pillTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
         optionCard: {
           backgroundColor: Colors.bgCard,
           borderRadius: Radius.md,
@@ -470,11 +473,12 @@ function useSStyles() {
         optionCardLeft: { flex: 1 },
         optionCardTitle: {
           fontSize: 14,
+          fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        optionCardSubtitle: { fontSize: 12, color: Colors.textMuted },
+        optionCardSubtitle: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
         radioOuter: {
           width: 20,
           height: 20,
@@ -517,7 +521,8 @@ function useSStyles() {
         dayChipDisabled: { opacity: 0.4 },
         dayChipText: {
           fontSize: 12,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textSecondary,
         },
         dayChipTextActive: { color: Colors.white },
@@ -530,11 +535,13 @@ function useSStyles() {
         },
         rangeStartLabel: {
           fontSize: 12,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textSecondary,
         },
         rangeResolvedHint: {
           fontSize: 12,
+          fontFamily: "Inter-Medium",
           fontWeight: "500",
           color: Colors.textMuted,
           marginTop: 2,
@@ -555,6 +562,7 @@ function useSStyles() {
         },
         changeDateText: {
           fontSize: 13,
+          fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.accent,
         },
@@ -569,11 +577,12 @@ function useSStyles() {
         repeatLeft: { flex: 1 },
         repeatTitle: {
           fontSize: 14,
+          fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        repeatSubtitle: { fontSize: 12, color: Colors.textMuted },
+        repeatSubtitle: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
         actions: {
           flexDirection: "row",
           gap: 10,
@@ -591,7 +600,8 @@ function useSStyles() {
         },
         cancelText: {
           fontSize: 15,
-          fontWeight: "600",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           color: Colors.textSecondary,
         },
         confirmBtn: {
@@ -608,7 +618,7 @@ function useSStyles() {
           shadowOpacity: 0,
           elevation: 0,
         },
-        confirmText: { fontSize: 15, fontWeight: "700", color: Colors.white },
+        confirmText: { fontSize: 15, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
         confirmTextDisabled: { color: Colors.textMuted },
       }),
     [colors],

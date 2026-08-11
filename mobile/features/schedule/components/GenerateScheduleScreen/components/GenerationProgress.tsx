@@ -63,8 +63,8 @@ function useSStyles() {
           borderColor: Colors.border,
           backgroundColor: Colors.bgElevated,
         },
-        stepLabel: { fontSize: 13, color: Colors.textMuted },
-        stepLabelDone: { color: Colors.textPrimary, fontWeight: "600" },
+        stepLabel: { fontSize: 14, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        stepLabelDone: { color: Colors.textPrimary, fontFamily: "Inter-SemiBold", fontWeight: "600" },
       }),
     [colors],
   );

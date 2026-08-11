@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/context/ThemeContext";
 import { Colors } from "@/type/theme";
@@ -80,7 +80,6 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
             >
               {tab.label}
             </Text>
-            {active && <View style={s.tabActiveDot} />}
           </TouchableOpacity>
         );
       })}
@@ -95,32 +94,27 @@ function useSStyles() {
       StyleSheet.create({
         tabBar: {
           flexDirection: "row",
-          backgroundColor: Colors.bgCard,
+          backgroundColor: Colors.bgCard + "CC", // bg-card/80 (80% opacity per spec)
           borderTopWidth: 1,
           borderTopColor: Colors.border,
-          paddingTop: 10,
-          paddingHorizontal: 8,
+          paddingTop: 12, // py-3
+          paddingBottom: 20, // pb-5
         },
         tabItem: {
           flex: 1,
           alignItems: "center",
           justifyContent: "center",
           gap: 4,
-          paddingVertical: 2,
+          paddingHorizontal: 24, // px-6 per spec
         },
         tabLabel: {
           fontSize: 10,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
           letterSpacing: 0.3,
         },
         tabLabelActive: {
-          fontWeight: "700",
-        },
-        tabActiveDot: {
-          width: 4,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: Colors.accent,
-          marginTop: 1,
+          fontWeight: "500",
         },
       }),
     [colors],

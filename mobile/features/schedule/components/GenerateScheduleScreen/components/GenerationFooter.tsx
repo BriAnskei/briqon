@@ -38,7 +38,7 @@ function useSStyles() {
         footer: {
           flexDirection: "row",
           gap: 12,
-          paddingHorizontal: 20,
+          paddingHorizontal: 24,
           paddingTop: 14,
           paddingBottom: 8,
           backgroundColor: Colors.bgCard,
@@ -52,7 +52,7 @@ function useSStyles() {
           justifyContent: "center",
           gap: 8,
           borderRadius: Radius.lg,
-          paddingVertical: 15,
+          paddingVertical: 12,
         },
         saveBtn: {
           backgroundColor: Colors.bgElevated,
@@ -61,14 +61,16 @@ function useSStyles() {
         },
         saveBtnText: {
           fontSize: 14,
-          fontWeight: "700",
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
         },
         setActiveBtn: { backgroundColor: Colors.accent, ...Shadow.accent },
         setActiveBtnText: {
           fontSize: 14,
-          fontWeight: "700",
-          color: Colors.bg,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.white,
           letterSpacing: 0.2,
         },
       }),

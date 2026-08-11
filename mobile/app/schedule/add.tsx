@@ -146,11 +146,9 @@ function useSStyles() {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          paddingHorizontal: 20,
-          paddingVertical: 14,
-          backgroundColor: Colors.bgCard,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
+          paddingHorizontal: 24, // px-6
+          paddingVertical: 8, // py-2
+          // Transparent background + no border per spec
         },
         backBtn: {
           width: 38,
@@ -164,17 +162,18 @@ function useSStyles() {
         },
         headerCenter: { alignItems: "center" },
         headerTitle: {
-          fontSize: 16,
-          fontWeight: "700",
+          fontSize: 24,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
           color: Colors.textPrimary,
         },
-        headerSub: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+        headerSub: { fontSize: 11, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, marginTop: 2 },
 
         scroll: { flex: 1 },
-        scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
+        scrollContent: { paddingHorizontal: 24, paddingTop: 8 },
 
         footer: {
-          paddingHorizontal: 20,
+          paddingHorizontal: 24,
           paddingTop: 14,
           paddingBottom: 8,
           backgroundColor: Colors.bgCard,
@@ -187,15 +186,16 @@ function useSStyles() {
           justifyContent: "center",
           gap: 10,
           backgroundColor: Colors.accent,
-          borderRadius: Radius.lg,
-          paddingVertical: 16,
+          borderRadius: 12, // py-3 spec
+          paddingVertical: 12,
           ...Shadow.accent,
         },
         nextBtnDisabled: { opacity: 0.35 },
         nextBtnText: {
-          fontSize: 15,
-          fontWeight: "700",
-          color: Colors.bg,
+          fontSize: 14,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.white,
           letterSpacing: 0.2,
         },
       }),

@@ -89,7 +89,7 @@ function useSStyles() {
         root: { flex: 1, backgroundColor: Colors.bg },
 
         scroll: { flex: 1 },
-        scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
+        scrollContent: { paddingHorizontal: 24, paddingTop: 20 },
 
         resultSection: { marginTop: 20, gap: 20 },
       }),
