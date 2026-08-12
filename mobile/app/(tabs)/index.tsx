@@ -118,10 +118,7 @@ function AlarmRow({
           </Text>
         </View>
       </View>
-      <CustomSwitch
-        value={alarm.alarmEnabled}
-        onValueChange={() => onToggle(alarm.id)}
-      />
+      <CustomSwitch value={alarm.alarmEnabled} onValueChange={() => onToggle(alarm.id)} />
     </View>
   );
 }
@@ -481,7 +478,12 @@ function useSStyles() {
           borderRadius: 4,
           backgroundColor: Colors.accent,
         },
-        namePillText: { fontSize: 14, fontFamily: "Inter", fontWeight: "400", color: Colors.textPrimary },
+        namePillText: {
+          fontSize: 14,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textPrimary,
+        },
         countPill: {
           backgroundColor: Colors.accentSoft,
           borderRadius: Radius.full,
@@ -586,7 +588,12 @@ function useSStyles() {
           paddingVertical: 12,
           ...Shadow.accent,
         },
-        emptyBtnText: { fontSize: 14, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
+        emptyBtnText: {
+          fontSize: 14,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.white,
+        },
         menuOverlay: {
           flex: 1,
           backgroundColor: "rgba(0,0,0,0.55)",
@@ -626,7 +633,13 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        menuItemSub: { fontSize: 11, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, lineHeight: 16 },
+        menuItemSub: {
+          fontSize: 11,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          lineHeight: 16,
+        },
         menuDivider: {
           height: 1,
           backgroundColor: Colors.border,

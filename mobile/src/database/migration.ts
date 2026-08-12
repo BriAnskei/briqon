@@ -66,22 +66,22 @@ export const migrateDatabase = async () => {
       ON active_schedules(schedule_id);
 
     CREATE INDEX IF NOT EXISTS idx_active_schedules_time_range
-    ON active_schedules(starts_at, ends_at);
+    ON active_schedules(active_type);
 
 
 
 
 
-    CREATE TABLE IF NOT EXIT current_active (
-      id TEXT PRIMARY KEY NOT NULL,
-      active_id TEXT NOT NULL
-      on_active INTEGER NOT NULL
-          CHECK(recurring IN (0, 1)),
+  CREATE TABLE IF NOT EXISTS current_active (
+    id TEXT PRIMARY KEY NOT NULL,
+    active_id TEXT NOT NULL,
+    on_active INTEGER NOT NULL
+        CHECK(on_active IN (0, 1)),
 
-      FOREIGN KEY (schedule_id)
-        REFERENCES schedules(id)
-        ON DELETE CASCADE
-    )
+    FOREIGN KEY (active_id)
+      REFERENCES active_schedules(id)
+      ON DELETE CASCADE
+  );
 
 
     CREATE INDEX IF NOT EXISTS idx_current_active_active_id
@@ -91,7 +91,7 @@ export const migrateDatabase = async () => {
 
 
 
-    CREATE TABLE IF NOT EXIST schedule_occurence (
+    CREATE TABLE IF NOT EXISTS schedule_occurence (
       id TEXT PRIMARY KEY NOT NULL,
       active_id TEXT NOT NULL,
       window_start TEXT NOT NULL,
@@ -100,7 +100,7 @@ export const migrateDatabase = async () => {
         foreign key (active_id)
           references active_schedules(id)
           on delete cascade
-    )
+    );
 
     CREATE INDEX IF NOT EXISTS idx_schedule_occurence_active_id
       ON schedule_occurence(active_id);
@@ -122,7 +122,7 @@ export const migrateDatabase = async () => {
     );
 
     CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
-      ON ocurring_overflow(active_id);
+      ON occurring_overflow(active_id);
 
 
 

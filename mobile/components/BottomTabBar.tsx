@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
@@ -42,6 +43,7 @@ const TABS: TabDef[] = [
 ];
 
 export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
+  const { colorScheme } = useTheme();
   const s = useSStyles();
   const router = useRouter();
 
@@ -56,9 +58,13 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
-    <SafeAreaView edges={["bottom"]} style={s.tabBar}>
-      {/* ← dynamic paddingBottom */}
-      {TABS.map((tab) => {
+    <SafeAreaView edges={["bottom"]}>
+      <BlurView
+        intensity={20} // backdrop-blur-sm (4px blur equivalent)
+        tint={colorScheme === "dark" ? "dark" : "light"}
+        style={s.tabBar}
+      >
+        {TABS.map((tab) => {
         const active = tab.key === activeRouteKey;
         const iconColor = active ? Colors.accent : Colors.textMuted;
         const iconName = active ? tab.iconActive : tab.icon;
@@ -83,6 +89,7 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
           </TouchableOpacity>
         );
       })}
+      </BlurView>
     </SafeAreaView>
   );
 }
