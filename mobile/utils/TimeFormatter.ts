@@ -156,6 +156,19 @@ export function addMinutes(time: string, minutes: number): string {
   return minutesToTime(timeToMinutes(time) + minutes);
 }
 
+// Returns minutes from midnight to endTime if endTime is on the next day (earlier than startTime),
+// otherwise returns 0(e.g., calculateNextDayMinutes("22:00", "06:00") returns 360)
+export function calculateNextDayMinutes(startTime: string, endTime: string): number {
+  const start = timeToMinutes(startTime);
+  const end = timeToMinutes(endTime);
+
+  if (end >= start) {
+    return 0;
+  }
+
+  return end;
+}
+
 // ── date helpers ─────────────────────────────────────────────────────────
 
 export function startOfDay(date: Date): Date {

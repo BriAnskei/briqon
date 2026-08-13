@@ -1,4 +1,4 @@
-import { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
+import { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import { ActivationContext } from "./ActivationContext";
 
 export interface ConflictHandler {

@@ -1,5 +1,5 @@
-import { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
-import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
+import { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
+import { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
 import { ActivationContext } from "./ActivationContext";
 import { ConflictHandler } from "./ConflictHandler";
 
