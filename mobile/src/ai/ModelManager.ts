@@ -39,15 +39,20 @@ export class ModelManager {
       });
     }
 
-    let download = FileSystem.createDownloadResumable(MODEL_URL, MODEL_PATH, {}, (progress) => {
-      if (progress.totalBytesExpectedToWrite <= 0) {
-        return;
-      }
+    let download = FileSystem.createDownloadResumable(
+      MODEL_URL,
+      MODEL_PATH,
+      {},
+      (progress) => {
+        if (progress.totalBytesExpectedToWrite <= 0) {
+          return;
+        }
 
-      const percent = progress.totalBytesWritten / progress.totalBytesExpectedToWrite;
+        const percent = progress.totalBytesWritten / progress.totalBytesExpectedToWrite;
 
-      onProgress?.(percent);
-    });
+        onProgress?.(percent);
+      },
+    );
 
     const maxRetries = 10;
     let attempt = 0;
@@ -64,7 +69,9 @@ export class ModelManager {
         console.error(`Download attempt ${attempt} failed:`, e.message);
 
         if (attempt >= maxRetries) {
-          throw new Error(`Failed to download model after ${maxRetries} attempts: ${e.message}`);
+          throw new Error(
+            `Failed to download model after ${maxRetries} attempts: ${e.message}`,
+          );
         }
 
         // Wait before retrying (exponential backoff)
@@ -80,7 +87,9 @@ export class ModelManager {
             {},
             (progress) => {
               if (progress.totalBytesExpectedToWrite <= 0) return;
-              onProgress?.(progress.totalBytesWritten / progress.totalBytesExpectedToWrite);
+              onProgress?.(
+                progress.totalBytesWritten / progress.totalBytesExpectedToWrite,
+              );
             },
             JSON.parse(resumeData).resumeData,
           );

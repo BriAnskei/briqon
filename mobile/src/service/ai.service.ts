@@ -31,7 +31,8 @@ export class AIService {
       },
     );
 
-    if (!res.data.success) throw new Error(res.data.error ?? "Failed to generate schedule");
+    if (!res.data.success)
+      throw new Error(res.data.error ?? "Failed to generate schedule");
 
     onStepProgress("parsing");
 

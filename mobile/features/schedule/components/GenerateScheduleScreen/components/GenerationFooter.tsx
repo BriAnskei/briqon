@@ -13,7 +13,11 @@ export function GenerationFooter({ onSave, onSetActive }: GenerationFooterProps)
   const s = useSStyles();
   return (
     <View style={s.footer}>
-      <TouchableOpacity style={[s.footerBtn, s.saveBtn]} onPress={onSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={[s.footerBtn, s.saveBtn]}
+        onPress={onSave}
+        activeOpacity={0.85}
+      >
         <Ionicons name="bookmark-outline" size={17} color={Colors.textPrimary} />
         <Text style={s.saveBtnText}>Save</Text>
       </TouchableOpacity>

@@ -16,7 +16,9 @@ export function BreaksStep({ breakFrequency, onChange }: Props) {
   return (
     <View style={s.body}>
       <Text style={s.title}>Break frequency</Text>
-      <Text style={s.sub}>Choose how you want your breaks distributed throughout the day.</Text>
+      <Text style={s.sub}>
+        Choose how you want your breaks distributed throughout the day.
+      </Text>
       <View style={s.gap}>
         {BREAK_FREQUENCY_OPTIONS.map((opt) => {
           const active = breakFrequency === opt.key;
@@ -41,10 +43,16 @@ export function BreaksStep({ breakFrequency, onChange }: Props) {
                   },
                 ]}
               >
-                <Ionicons name={opt.icon} size={22} color={active ? opt.color : Colors.textMuted} />
+                <Ionicons
+                  name={opt.icon}
+                  size={22}
+                  color={active ? opt.color : Colors.textMuted}
+                />
               </View>
               <View style={s.cardBody}>
-                <Text style={[s.cardLabel, active && { color: opt.color }]}>{opt.label}</Text>
+                <Text style={[s.cardLabel, active && { color: opt.color }]}>
+                  {opt.label}
+                </Text>
                 <Text style={s.cardDesc}>{opt.desc}</Text>
               </View>
               {active && (
@@ -110,7 +118,13 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 3,
         },
-        cardDesc: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, lineHeight: 17 },
+        cardDesc: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          lineHeight: 17,
+        },
         check: {
           width: 24,
           height: 24,

@@ -82,7 +82,13 @@ export const EVENT_TYPES: {
   },
 ];
 
-export const PERSONAL_STEP_LABELS = ["Time", "Appointments", "Meals", "Breaks", "Priority"];
+export const PERSONAL_STEP_LABELS = [
+  "Time",
+  "Appointments",
+  "Meals",
+  "Breaks",
+  "Priority",
+];
 export const EVENT_STEP_LABELS = ["Details", "Time", "Items"];
 export const PERSONAL_TOTAL_STEPS = 6;
 export const EVENT_TOTAL_STEPS = 4;

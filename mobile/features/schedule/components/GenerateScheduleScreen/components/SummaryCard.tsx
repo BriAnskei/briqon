@@ -21,7 +21,10 @@ export function SummaryCard({ summaries, subSummaries }: SummaryCardProps) {
           return (
             <View
               key={cat.id}
-              style={[s.categoryBlock, i !== summaries.length - 1 && s.categoryBlockDivider]}
+              style={[
+                s.categoryBlock,
+                i !== summaries.length - 1 && s.categoryBlockDivider,
+              ]}
             >
               <View style={s.categoryHeaderRow}>
                 <Text style={s.categoryName}>{cat.name}</Text>

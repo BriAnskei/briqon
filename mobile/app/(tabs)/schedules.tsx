@@ -61,7 +61,12 @@ function useSStyles() {
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        sub: { fontSize: 13, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        sub: {
+          fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
       }),
     [colors],
   );

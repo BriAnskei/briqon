@@ -1,5 +1,5 @@
-import { calculateNextDayMinutes } from "@/utils/TimeFormatter";
 import { ulid } from "ulid";
+import { calculateNextDayMinutes, timeToMinutes } from "@/utils/TimeFormatter";
 
 export class OccuringOverflow {
   private constructor(
@@ -10,7 +10,8 @@ export class OccuringOverflow {
   ) {}
 
   static create(activeId: string, startsAt: string, endsAt: string): OccuringOverflow {
+    const startDayMinutes = timeToMinutes(startsAt);
     const nextDayMinExceed = calculateNextDayMinutes(startsAt, endsAt);
-    return new OccuringOverflow(ulid(), activeId, nextDayMinExceed);
+    return new OccuringOverflow(ulid(), activeId, startDayMinutes, nextDayMinExceed);
   }
 }

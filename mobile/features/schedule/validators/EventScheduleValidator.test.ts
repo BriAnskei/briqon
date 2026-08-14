@@ -26,7 +26,11 @@ describe("EventScheduleValidator", () => {
   }
 
   // Flexible item: no explicit time, only a (possibly null) duration.
-  function flexItem(id: string, name: string, durationMinutes: number | null): EventScheduleItem {
+  function flexItem(
+    id: string,
+    name: string,
+    durationMinutes: number | null,
+  ): EventScheduleItem {
     return { id, name, durationMinutes, isFixedTime: false };
   }
 
@@ -78,7 +82,9 @@ describe("EventScheduleValidator", () => {
   // -------------------------------------------------------------------
 
   it("passes when no measurable durations are present", () => {
-    const validator = new EventScheduleValidator(withItems([flexItem("e1", "Free play", null)]));
+    const validator = new EventScheduleValidator(
+      withItems([flexItem("e1", "Free play", null)]),
+    );
     expect(validator.validateEventDurationWindow().valid).toBe(true);
   });
 
@@ -124,7 +130,9 @@ describe("EventScheduleValidator", () => {
       withItems(items, { startTime: atTime(18), endTime: atTime(19) }); // 6pm–7pm
 
     it("passes when there are no fixed-time items", () => {
-      const validator = new EventScheduleValidator(windowForm([flexItem("e1", "Mingling", 30)]));
+      const validator = new EventScheduleValidator(
+        windowForm([flexItem("e1", "Mingling", 30)]),
+      );
       expect(validator.validateEventConflicts().valid).toBe(true);
     });
 

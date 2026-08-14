@@ -2,6 +2,8 @@ import * as NavigationBar from "expo-navigation-bar";
 import { StatusBar } from "expo-status-bar";
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useColorScheme } from "react-native";
+import SplashScreen from "@/components/SplashScreen";
+import { useFonts } from "@/hooks/useFonts";
 import {
   type ColorScheme,
   darkThemePalette,
@@ -9,8 +11,6 @@ import {
   setActiveTheme,
   type Theme,
 } from "@/type/theme";
-import { useFonts } from "@/hooks/useFonts";
-import SplashScreen from "@/components/SplashScreen";
 
 type ThemeValue = {
   colorScheme: ColorScheme;
@@ -34,7 +34,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync(colors.bg).catch(() => {});
-    NavigationBar.setButtonStyleAsync(scheme === "dark" ? "light" : "dark").catch(() => {});
+    NavigationBar.setButtonStyleAsync(scheme === "dark" ? "light" : "dark").catch(
+      () => {},
+    );
   }, [colors, scheme]);
 
   if (!fontsLoaded) {

@@ -1,11 +1,11 @@
-import { CreationPayload } from "@/type/services/activationService.types";
-import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
-import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
-import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
-import { ScheduleRepository } from "../repository/schedule.repository";
-import { ActivationRepository } from "./ActivationRepository";
+import type { SQLiteDatabase } from "expo-sqlite";
 import { ulid } from "ulid";
-import { SQLiteDatabase } from "expo-sqlite";
+import type { CreationPayload } from "@/type/services/activationService.types";
+import type { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
+import type { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
+import type { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
+import type { ScheduleRepository } from "../repository/schedule.repository";
+import type { ActivationRepository } from "./ActivationRepository";
 
 export class SQLiteActivationRepository implements ActivationRepository {
   constructor(
@@ -54,5 +54,9 @@ export class SQLiteActivationRepository implements ActivationRepository {
     activeScheduleId: string,
     db: SQLiteDatabase,
   ) {}
-  private async createDate(selectedDate: Date, activeScheduleId: string, db: SQLiteDatabase) {}
+  private async createDate(
+    selectedDate: Date,
+    activeScheduleId: string,
+    db: SQLiteDatabase,
+  ) {}
 }

@@ -292,7 +292,9 @@ describe("useWizardForm", () => {
         await result.current.handleNext();
       });
       expect(result.current.step).toBe(4); // still stuck on step 4
-      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(toastCallsBeforeRetry);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
 
       // Switching to "none" clears the break error, hides the toast, and unblocks Next.
       act(() => result.current.patch({ breakFrequency: "none" }));
@@ -483,7 +485,9 @@ describe("useWizardForm", () => {
         await result.current.handleNext();
       });
       expect(result.current.step).toBe(3);
-      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(toastCallsBeforeRetry);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
 
       // Removing the offending item clears the error and unblocks Next.
       const badId = result.current.form.eventScheduleItems[0].id;
@@ -664,7 +668,9 @@ describe("useWizardForm", () => {
         await result.current.handleNext();
       });
       expect(result.current.step).toBe(2);
-      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(toastCallsBeforeRetry);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
 
       // Removing the overlapping appointment clears the error and unblocks.
       act(() =>
@@ -717,7 +723,9 @@ describe("useWizardForm", () => {
         await result.current.handleNext();
       });
       expect(result.current.step).toBe(2);
-      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(toastCallsBeforeRetry);
+      expect((Toast.show as jest.Mock).mock.calls.length).toBeGreaterThan(
+        toastCallsBeforeRetry,
+      );
 
       // Moving the fixed meal inside the window clears the error.
       act(() =>

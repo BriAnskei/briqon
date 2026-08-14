@@ -1,7 +1,10 @@
 import { Fragment, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
-import type { EventSummary, PersonalSummary } from "@/features/schedule/hooks/form/useWizardForm";
+import type {
+  EventSummary,
+  PersonalSummary,
+} from "@/features/schedule/hooks/form/useWizardForm";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { formatMinutes } from "@/utils/TimeFormatter";
 
@@ -35,7 +38,9 @@ export function personalSummaryItems(s: PersonalSummary): SummaryItem[] {
           },
         ]
       : []),
-    ...(s.mealMinutes > 0 ? [{ label: "Meals", value: formatMinutes(s.mealMinutes) }] : []),
+    ...(s.mealMinutes > 0
+      ? [{ label: "Meals", value: formatMinutes(s.mealMinutes) }]
+      : []),
     {
       label: "Remaining",
       value: formatMinutes(s.remainingMinutes),

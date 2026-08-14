@@ -199,7 +199,10 @@ export function resolveRangeStart(anchor: Date, selectedIndices: number[]): Date
 /** Last date within the 7-day window starting at `start` (inclusive) whose
  * weekday is one of `selectedIndices` — i.e. the final occurrence of the
  * selected days before the pattern would repeat. */
-export function resolveRangeEnd(start: Date | null, selectedIndices: number[]): Date | null {
+export function resolveRangeEnd(
+  start: Date | null,
+  selectedIndices: number[],
+): Date | null {
   if (!start || selectedIndices.length === 0) return null;
   for (let offset = 6; offset >= 0; offset--) {
     const candidate = addDays(start, offset);

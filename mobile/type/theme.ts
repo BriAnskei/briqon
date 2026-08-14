@@ -77,7 +77,11 @@ export const TextStyles: Record<string, TextStyleDef> = {
   alarmLabel: { fontSize: 14, fontFamily: FontFamily.body, fontWeight: "400" },
   alarmNextIn: { fontSize: 12, fontFamily: FontFamily.body, fontWeight: "400" },
   dayOfWeekDot: { fontSize: 11, fontFamily: FontFamily.mono, fontWeight: "400" },
-  dayOfWeekDotActive: { fontSize: 11, fontFamily: FontFamily.monoMedium, fontWeight: "500" },
+  dayOfWeekDotActive: {
+    fontSize: 11,
+    fontFamily: FontFamily.monoMedium,
+    fontWeight: "500",
+  },
   alarmCountFooter: { fontSize: 12, fontFamily: FontFamily.body, fontWeight: "400" },
 
   // AI tab
@@ -88,7 +92,11 @@ export const TextStyles: Record<string, TextStyleDef> = {
   aiSamplePrompt: { fontSize: 14, fontFamily: FontFamily.body, fontWeight: "400" },
   aiThinkingStep: { fontSize: 14, fontFamily: FontFamily.body, fontWeight: "400" },
   aiResultTime: { fontSize: 30, fontFamily: FontFamily.monoLight, fontWeight: "300" },
-  aiAlarmsGenerated: { fontSize: 14, fontFamily: FontFamily.bodyMedium, fontWeight: "500" },
+  aiAlarmsGenerated: {
+    fontSize: 14,
+    fontFamily: FontFamily.bodyMedium,
+    fontWeight: "500",
+  },
   aiAddAlarmsBtn: { fontSize: 14, fontFamily: FontFamily.bodyMedium, fontWeight: "500" },
 
   // Bottom tab bar
@@ -106,7 +114,11 @@ export const TextStyles: Record<string, TextStyleDef> = {
   modalTimeInput: { fontSize: 18, fontFamily: FontFamily.mono, fontWeight: "400" },
   modalLabelInput: { fontSize: 14, fontFamily: FontFamily.body, fontWeight: "400" },
   modalDayBtn: { fontSize: 12, fontFamily: FontFamily.monoMedium, fontWeight: "500" },
-  modalAddAlarmBtn: { fontSize: 14, fontFamily: FontFamily.bodySemiBold, fontWeight: "600" },
+  modalAddAlarmBtn: {
+    fontSize: 14,
+    fontFamily: FontFamily.bodySemiBold,
+    fontWeight: "600",
+  },
 };
 
 // ─── Light palette ──────────────────────────────────────────────────────────────

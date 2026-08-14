@@ -17,7 +17,10 @@ export type GenerationResult = {
  * (ScheduleSummary, SubSummary, ScheduleItem). Throws a ZodError if the
  * response does not match the server schema or any of the client models.
  */
-export function parseScheduleResponse(raw: unknown, scheduleId: string): GenerationResult {
+export function parseScheduleResponse(
+  raw: unknown,
+  scheduleId: string,
+): GenerationResult {
   const parsed = RawScheduleResponseSchema.parse(raw);
 
   const summary: ScheduleSummary[] = [];
@@ -46,7 +49,9 @@ export function parseScheduleResponse(raw: unknown, scheduleId: string): Generat
     });
   });
 
-  const schedule: ScheduleItem[] = parsed.schedule.map((item) => ScheduleItemSchema.parse(item));
+  const schedule: ScheduleItem[] = parsed.schedule.map((item) =>
+    ScheduleItemSchema.parse(item),
+  );
 
   return { summary, subSummary, schedule };
 }

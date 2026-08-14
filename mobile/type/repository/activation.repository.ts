@@ -1,1 +1,1 @@
-export interface ActivationRepositry
+export type ActivationRepositry = {};

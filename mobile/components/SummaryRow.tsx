@@ -47,8 +47,19 @@ function useSStyles() {
           justifyContent: "center",
         },
         body: { flex: 1 },
-        label: { fontSize: 11, fontFamily: "DMMono-Medium", fontWeight: "500", color: Colors.textMuted, marginBottom: 2 },
-        value: { fontSize: 14, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.textPrimary },
+        label: {
+          fontSize: 11,
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+          marginBottom: 2,
+        },
+        value: {
+          fontSize: 14,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+        },
       }),
     [colors],
   );

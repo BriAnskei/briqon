@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { TimeRow } from "@/components/TimeRow";
 import { useTheme } from "@/context/ThemeContext";
 import { Colors, Radius, Shadow } from "@/type/theme";
@@ -154,7 +161,11 @@ export function AppointmentsSection({
             <TouchableOpacity style={s.cancelBtn} onPress={hideDraft} activeOpacity={0.8}>
               <Text style={s.cancelText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.confirmBtn} onPress={commitAppointment} activeOpacity={0.85}>
+            <TouchableOpacity
+              style={s.confirmBtn}
+              onPress={commitAppointment}
+              activeOpacity={0.85}
+            >
               <Ionicons name="checkmark" size={15} color={Colors.white} />
               <Text style={s.confirmText}>Add Appointment</Text>
             </TouchableOpacity>
@@ -195,7 +206,12 @@ function useSStyles() {
           alignItems: "center",
           gap: 4,
         },
-        addBtnText: { fontSize: 13, fontFamily: "Inter", fontWeight: "400", color: Colors.accent },
+        addBtnText: {
+          fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.accent,
+        },
 
         apptCard: {
           flexDirection: "row",
@@ -223,7 +239,12 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        apptTime: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        apptTime: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
         removeBtn: {
           alignItems: "center",
           justifyContent: "center",
@@ -262,8 +283,17 @@ function useSStyles() {
           backgroundColor: Colors.accentSoft,
           borderColor: Colors.accent,
         },
-        chipText: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.textMuted },
-        chipTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
+        chipText: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+        },
+        chipTextActive: {
+          color: Colors.accent,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
         inputRow: {
           flexDirection: "row",
           alignItems: "center",

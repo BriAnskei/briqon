@@ -9,7 +9,9 @@ export abstract class BaseRepository {
    * @param callback - Function that receives a db instance and performs operations
    * @returns Promise resolving to the callback's return value
    */
-  public async transaction<T>(callback: (db: SQLite.SQLiteDatabase) => Promise<T>): Promise<T> {
+  public async transaction<T>(
+    callback: (db: SQLite.SQLiteDatabase) => Promise<T>,
+  ): Promise<T> {
     const db = await this.dbPromise;
     let res!: T;
     await db.withTransactionAsync(async () => {

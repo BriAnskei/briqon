@@ -23,7 +23,9 @@ export function StepIndicator({ step, labels }: Props) {
                   <Text style={[s.dotNum, active && s.dotNumActive]}>{i + 1}</Text>
                 )}
               </View>
-              <Text style={[s.label, active && s.labelActive, done && s.labelDone]}>{label}</Text>
+              <Text style={[s.label, active && s.labelActive, done && s.labelDone]}>
+                {label}
+              </Text>
             </View>
             {i < labels.length - 1 && <View style={[s.line, done && s.lineDone]} />}
           </React.Fragment>
@@ -60,9 +62,19 @@ function useSStyles() {
           backgroundColor: Colors.accentSoft,
         },
         dotDone: { backgroundColor: "transparent", borderColor: Colors.accent },
-        dotNum: { fontSize: 11, fontFamily: "DMMono-Medium", fontWeight: "500", color: Colors.textMuted },
+        dotNum: {
+          fontSize: 11,
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+        },
         dotNumActive: { color: Colors.accent },
-        label: { fontSize: 10, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.textMuted },
+        label: {
+          fontSize: 10,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+        },
         labelActive: { color: Colors.accent, fontWeight: "500" },
         labelDone: { color: Colors.success },
         line: {

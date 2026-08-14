@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
 import * as Font from "expo-font";
+import { useEffect, useState } from "react";
 
 // Expo font loading uses the "fontFamily" key as the resolved name.
 // We register them so that `fontFamily: "DMMono"` and `fontFamily: "Inter"` resolve correctly.
 const FONT_FAMILY_MAP: Record<string, any> = {
-  "DMMono": require("../assets/fonts/DMMono-Regular.ttf"),
+  DMMono: require("../assets/fonts/DMMono-Regular.ttf"),
   "DMMono-Light": require("../assets/fonts/DMMono-Light.ttf"),
   "DMMono-Medium": require("../assets/fonts/DMMono-Medium.ttf"),
   "DMMono-SemiBold": require("../assets/fonts/DMMono-SemiBold.ttf"),
-  "Inter": require("../assets/fonts/Inter-Regular.ttf"),
+  Inter: require("../assets/fonts/Inter-Regular.ttf"),
   "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
   "Inter-SemiBold": require("../assets/fonts/Inter-SemiBold.ttf"),
 };

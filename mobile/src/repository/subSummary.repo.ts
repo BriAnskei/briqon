@@ -21,7 +21,10 @@ export class SubSummariesRepository extends BaseRepository {
     }
   }
 
-  async findBySummaryId(summaryId: string, db: SQLite.SQLiteDatabase): Promise<SubSummary[]> {
+  async findBySummaryId(
+    summaryId: string,
+    db: SQLite.SQLiteDatabase,
+  ): Promise<SubSummary[]> {
     return await this.all<SubSummary>(
       `
       SELECT * FROM sub_summaries WHERE summary_id = ?

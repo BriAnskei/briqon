@@ -59,7 +59,9 @@ export function EditScheduleScreen() {
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity
-          onPress={() => !isSubmitting && router.replace("/schedule/schedule-conversation")}
+          onPress={() =>
+            !isSubmitting && router.replace("/schedule/schedule-conversation")
+          }
           activeOpacity={0.7}
           style={[s.backBtn, isSubmitting && s.disabled]}
           disabled={isSubmitting}
@@ -167,8 +169,8 @@ export function EditScheduleScreen() {
                         </Text>
                         {dur ? (
                           <Text style={[s.tlMeta, isPendingDelete && s.deletedText]}>
-                            {formatTime12h(item.start_time)} – {formatTime12h(item.end_time)} ·{" "}
-                            {dur}
+                            {formatTime12h(item.start_time)} –{" "}
+                            {formatTime12h(item.end_time)} · {dur}
                           </Text>
                         ) : null}
                       </View>
@@ -249,8 +251,8 @@ export function EditScheduleScreen() {
                               s.wordCountLimit,
                           ]}
                         >
-                          {state.status === "editing" ? countChars(state.prompt) : 0}/{CHAR_LIMIT}{" "}
-                          chars
+                          {state.status === "editing" ? countChars(state.prompt) : 0}/
+                          {CHAR_LIMIT} chars
                         </Text>
                       </View>
                       <View style={s.editInputActions}>
@@ -276,7 +278,8 @@ export function EditScheduleScreen() {
                           activeOpacity={0.85}
                           disabled={
                             state.status === "editing" &&
-                            (!state.prompt.trim() || countChars(state.prompt) > CHAR_LIMIT)
+                            (!state.prompt.trim() ||
+                              countChars(state.prompt) > CHAR_LIMIT)
                           }
                         >
                           <Text style={s.submitBtnText}>Apply</Text>

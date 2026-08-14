@@ -28,13 +28,19 @@ export class ActiveScheduleDaysRepository extends BaseRepository {
            )
            VALUES (?, ?, ?)
            `,
-        [activeScheduleDay.id, activeScheduleDay.active_schedule_id, activeScheduleDay.weekday],
+        [
+          activeScheduleDay.id,
+          activeScheduleDay.active_schedule_id,
+          activeScheduleDay.weekday,
+        ],
         db,
       );
     }
   }
 
-  async fetchAllByActiveScheduleId(activeScheduleId: string): Promise<ActiveScheduleDays[]> {
+  async fetchAllByActiveScheduleId(
+    activeScheduleId: string,
+  ): Promise<ActiveScheduleDays[]> {
     const row = await this.all<ActiveScheduleRow>(
       `
       SELECT * FROM active_schedule_days WHERE
@@ -46,7 +52,10 @@ export class ActiveScheduleDaysRepository extends BaseRepository {
     return row.map(this.mapRow);
   }
 
-  async removeActiveScheduleDays(activeScheduleId: string, weekdays: number[]): Promise<void> {
+  async removeActiveScheduleDays(
+    activeScheduleId: string,
+    weekdays: number[],
+  ): Promise<void> {
     if (weekdays.length === 0) return;
 
     const placeholders = weekdays.map(() => "?").join(",");

@@ -24,7 +24,8 @@ export function PriorityStep({ form, patch }: Props) {
       ? "None"
       : form.appointments
           .map(
-            (a) => `${appointmentLabel(a)} · ${formatTime(a.startTime)}–${formatTime(a.endTime)}`,
+            (a) =>
+              `${appointmentLabel(a)} · ${formatTime(a.startTime)}–${formatTime(a.endTime)}`,
           )
           .join("\n");
 
@@ -70,8 +71,8 @@ export function PriorityStep({ form, patch }: Props) {
     <View style={s.body}>
       <Text style={s.title}>What's your priority focus?</Text>
       <Text style={s.sub}>
-        Tell us what you want to focus on during this schedule — could be work, study, a hobby,
-        errands, anything.
+        Tell us what you want to focus on during this schedule — could be work, study, a
+        hobby, errands, anything.
       </Text>
 
       <View style={s.fieldBlock}>
@@ -132,7 +133,11 @@ export function PriorityStep({ form, patch }: Props) {
             value={`${formatTime(form.startTime)} – ${formatTime(form.endTime)}`}
           />
           {form.appointments.length > 0 && (
-            <SummaryRow icon="calendar-outline" label="Appointments" value={appointmentsSummary} />
+            <SummaryRow
+              icon="calendar-outline"
+              label="Appointments"
+              value={appointmentsSummary}
+            />
           )}
           <SummaryRow icon="git-branch-outline" label="Break Style" value={breakLabel} />
           <SummaryRow
@@ -140,7 +145,11 @@ export function PriorityStep({ form, patch }: Props) {
             label="Priority Focus"
             value={form.priorityFocusText.trim()}
           />
-          <SummaryRow icon="hourglass-outline" label="Focus Duration" value={durationLabel} />
+          <SummaryRow
+            icon="hourglass-outline"
+            label="Focus Duration"
+            value={durationLabel}
+          />
         </View>
       )}
     </View>

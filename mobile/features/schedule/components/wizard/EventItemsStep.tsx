@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { Colors, Radius, Shadow } from "@/type/theme";
 import { formatMinutes, formatTime } from "@/utils/TimeFormatter";
@@ -52,8 +59,12 @@ export function EventItemsStep({
               {(item.durationMinutes != null || (item.isFixedTime && item.fixedTime)) && (
                 <Text style={s.itemSub}>
                   {[
-                    item.durationMinutes != null ? formatMinutes(item.durationMinutes) : null,
-                    item.isFixedTime && item.fixedTime ? `at ${formatTime(item.fixedTime)}` : null,
+                    item.durationMinutes != null
+                      ? formatMinutes(item.durationMinutes)
+                      : null,
+                    item.isFixedTime && item.fixedTime
+                      ? `at ${formatTime(item.fixedTime)}`
+                      : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -94,7 +105,9 @@ export function EventItemsStep({
                 <TextInput
                   style={s.durationInputField}
                   value={eventItemDraft.durationHours}
-                  onChangeText={(t) => patchEventItem({ durationHours: t.replace(/[^0-9]/g, "") })}
+                  onChangeText={(t) =>
+                    patchEventItem({ durationHours: t.replace(/[^0-9]/g, "") })
+                  }
                   placeholder="0"
                   placeholderTextColor={Colors.textMuted}
                   keyboardType="number-pad"
@@ -127,7 +140,12 @@ export function EventItemsStep({
                 onPress={() => eventItemDraft.isFixedTime && toggleFixedTime()}
                 activeOpacity={0.8}
               >
-                <Text style={[s.segmentText, !eventItemDraft.isFixedTime && s.segmentTextActive]}>
+                <Text
+                  style={[
+                    s.segmentText,
+                    !eventItemDraft.isFixedTime && s.segmentTextActive,
+                  ]}
+                >
                   Flexible
                 </Text>
               </TouchableOpacity>
@@ -136,7 +154,12 @@ export function EventItemsStep({
                 onPress={() => !eventItemDraft.isFixedTime && toggleFixedTime()}
                 activeOpacity={0.8}
               >
-                <Text style={[s.segmentText, eventItemDraft.isFixedTime && s.segmentTextActive]}>
+                <Text
+                  style={[
+                    s.segmentText,
+                    eventItemDraft.isFixedTime && s.segmentTextActive,
+                  ]}
+                >
                   Fixed time
                 </Text>
               </TouchableOpacity>
@@ -151,7 +174,9 @@ export function EventItemsStep({
                 >
                   <Ionicons name="time-outline" size={15} color={Colors.textMuted} />
                   <Text style={s.inputField}>
-                    {eventItemDraft.fixedTime ? formatTime(eventItemDraft.fixedTime) : "Set time"}
+                    {eventItemDraft.fixedTime
+                      ? formatTime(eventItemDraft.fixedTime)
+                      : "Set time"}
                   </Text>
                 </TouchableOpacity>
                 {eventItemDraft.showFixedTimePicker && (
@@ -169,7 +194,11 @@ export function EventItemsStep({
             )}
 
             <View style={s.draftActions}>
-              <TouchableOpacity style={s.cancelBtn} onPress={hideDraft} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={s.cancelBtn}
+                onPress={hideDraft}
+                activeOpacity={0.8}
+              >
                 <Text style={s.cancelText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -192,7 +221,9 @@ export function EventItemsStep({
         )}
 
         {eventScheduleItems.length === 0 && !eventItemDraft.visible && (
-          <Text style={s.empty}>No items added — the AI will build the full schedule for you.</Text>
+          <Text style={s.empty}>
+            No items added — the AI will build the full schedule for you.
+          </Text>
         )}
       </View>
     </View>
@@ -236,7 +267,13 @@ function useSStyles() {
           textTransform: "uppercase",
           letterSpacing: 0.5,
         },
-        sectionSub: { fontSize: 11, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, marginTop: 2 },
+        sectionSub: {
+          fontSize: 11,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          marginTop: 2,
+        },
         optional: { fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
         addBtn: {
           flexDirection: "row",
@@ -249,7 +286,12 @@ function useSStyles() {
           borderWidth: 1,
           borderColor: Colors.accentGlow,
         },
-        addBtnText: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.accent },
+        addBtnText: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.accent,
+        },
 
         itemCard: {
           flexDirection: "row",
@@ -279,7 +321,12 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        itemSub: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        itemSub: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
 
         draftCard: {
           backgroundColor: Colors.bgCard,
@@ -342,7 +389,12 @@ function useSStyles() {
           padding: 0,
           textAlign: "center",
         },
-        durationInputUnit: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        durationInputUnit: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
 
         segmentRow: { flexDirection: "row", gap: 6 },
         segment: {
@@ -365,7 +417,11 @@ function useSStyles() {
           fontWeight: "500",
           color: Colors.textMuted,
         },
-        segmentTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
+        segmentTextActive: {
+          color: Colors.accent,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
 
         draftActions: { flexDirection: "row", gap: 10, marginTop: 14 },
         cancelBtn: {

@@ -145,7 +145,10 @@ describe("useWizardValidation", () => {
   it("surfaces a single message on step 1 when only the conflict validator fails", () => {
     const form: NewScheduleFormState = {
       ...baseForm,
-      appointments: [appt("a1", "work", "09:00", "10:30"), appt("a2", "medical", "10:00", "11:00")],
+      appointments: [
+        appt("a1", "work", "09:00", "10:30"),
+        appt("a2", "medical", "10:00", "11:00"),
+      ],
     };
     const { result } = setup(form, 1);
 
@@ -172,7 +175,9 @@ describe("useWizardValidation", () => {
     expect(meals.valid).toBe(true);
     expect(timeBlockRange.valid).toBe(true);
 
-    expect(result.current.stepError).toBe([appointments.message, conflicts.message].join("\n"));
+    expect(result.current.stepError).toBe(
+      [appointments.message, conflicts.message].join("\n"),
+    );
   });
 
   it("surfaces a timeBlockRange failure on step 1 when a block falls outside the window", () => {
@@ -185,7 +190,9 @@ describe("useWizardValidation", () => {
     const { result } = setup(form, 1);
 
     expect(result.current.validation.timeBlockRange.valid).toBe(false);
-    expect(result.current.stepError).toBe(result.current.validation.timeBlockRange.message);
+    expect(result.current.stepError).toBe(
+      result.current.validation.timeBlockRange.message,
+    );
   });
 
   // ---------------------------------------------------------------------
@@ -243,7 +250,10 @@ describe("useWizardValidation", () => {
   it("returns undefined stepError for steps with no defined error mapping (e.g. step 0 or 4)", () => {
     const form: NewScheduleFormState = {
       ...baseForm,
-      appointments: [appt("a1", "work", "08:00", "18:00"), appt("a2", "medical", "09:00", "19:00")],
+      appointments: [
+        appt("a1", "work", "08:00", "18:00"),
+        appt("a2", "medical", "09:00", "19:00"),
+      ],
     };
 
     const stepZero = setup(form, 0);
@@ -330,7 +340,10 @@ describe("useWizardValidation", () => {
     const form: NewScheduleFormState = {
       ...baseForm,
       scheduleType: "event",
-      eventScheduleItems: [eventItem("e1", "Speech", "1 hr"), eventItem("e2", "Games", "2 hr")],
+      eventScheduleItems: [
+        eventItem("e1", "Speech", "1 hr"),
+        eventItem("e2", "Games", "2 hr"),
+      ],
     };
     const { result } = setup(form, 1, true);
     expect(result.current.validation.eventDuration.valid).toBe(true);
@@ -352,18 +365,25 @@ describe("useWizardValidation", () => {
     expect(result.current.validation.eventDuration.valid).toBe(false);
     // Total exceeding the window also makes the sequential run exceed it,
     // so both event messages surface together.
-    expect(result.current.stepError).toContain(result.current.validation.eventDuration.message);
+    expect(result.current.stepError).toContain(
+      result.current.validation.eventDuration.message,
+    );
   });
 
   it("surfaces an unnamed-event-item error on the event details step", () => {
     const form: NewScheduleFormState = {
       ...baseForm,
       scheduleType: "event",
-      eventScheduleItems: [eventItem("e1", "Speech", "1 hr"), eventItem("e2", "", "30 min")],
+      eventScheduleItems: [
+        eventItem("e1", "Speech", "1 hr"),
+        eventItem("e2", "", "30 min"),
+      ],
     };
     const { result } = setup(form, 1, true);
     expect(result.current.validation.eventItemsPresent.valid).toBe(false);
-    expect(result.current.stepError).toBe(result.current.validation.eventItemsPresent.message);
+    expect(result.current.stepError).toBe(
+      result.current.validation.eventItemsPresent.message,
+    );
   });
 
   it("keeps event validation out of personal steps (step 1 stays clean for event data)", () => {
@@ -371,7 +391,10 @@ describe("useWizardValidation", () => {
     const form: NewScheduleFormState = {
       ...baseForm,
       scheduleType: "personal",
-      eventScheduleItems: [eventItem("e1", "Ceremony", "7 hr"), eventItem("e2", "Party", "6 hr")],
+      eventScheduleItems: [
+        eventItem("e1", "Ceremony", "7 hr"),
+        eventItem("e2", "Party", "6 hr"),
+      ],
     };
     const { result } = setup(form, 1, false);
     expect(result.current.stepError).toBeUndefined();

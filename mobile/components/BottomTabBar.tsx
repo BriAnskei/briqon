@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { BlurView } from "expo-blur";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
@@ -65,30 +65,30 @@ export function BottomTabBar({ state, navigation }: BottomTabBarProps) {
         style={s.tabBar}
       >
         {TABS.map((tab) => {
-        const active = tab.key === activeRouteKey;
-        const iconColor = active ? Colors.accent : Colors.textMuted;
-        const iconName = active ? tab.iconActive : tab.icon;
+          const active = tab.key === activeRouteKey;
+          const iconColor = active ? Colors.accent : Colors.textMuted;
+          const iconName = active ? tab.iconActive : tab.icon;
 
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={s.tabItem}
-            onPress={() => handlePress(tab)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={iconName} size={22} color={iconColor} />
-            <Text
-              style={[
-                s.tabLabel,
-                { color: active ? Colors.accent : Colors.textMuted },
-                active && s.tabLabelActive,
-              ]}
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={s.tabItem}
+              onPress={() => handlePress(tab)}
+              activeOpacity={0.7}
             >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              <Ionicons name={iconName} size={22} color={iconColor} />
+              <Text
+                style={[
+                  s.tabLabel,
+                  { color: active ? Colors.accent : Colors.textMuted },
+                  active && s.tabLabelActive,
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </BlurView>
     </SafeAreaView>
   );

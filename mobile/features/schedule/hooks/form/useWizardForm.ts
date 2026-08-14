@@ -42,13 +42,16 @@ export function useWizardForm() {
   const isEvent = form.scheduleType === "event";
   const totalSteps = isEvent ? EVENT_TOTAL_STEPS : PERSONAL_TOTAL_STEPS;
 
-  const { validator, fixedScheduleDuration, validation, stepError } = useWizardValidation({
-    form,
-    step,
-    isEvent,
-  });
+  const { validator, fixedScheduleDuration, validation, stepError } = useWizardValidation(
+    {
+      form,
+      step,
+      isEvent,
+    },
+  );
 
-  const patch = (p: Partial<NewScheduleFormState>) => setForm((prev) => ({ ...prev, ...p }));
+  const patch = (p: Partial<NewScheduleFormState>) =>
+    setForm((prev) => ({ ...prev, ...p }));
 
   const mealsState = useMeals({ form, setForm, step });
   const apptState = useAppointments({ form, setForm });
@@ -118,7 +121,8 @@ export function useWizardForm() {
     if (isEvent) {
       if (step === 1)
         return (
-          form.eventType !== null && (form.eventType !== "other" || !!form.eventOtherLabel.trim())
+          form.eventType !== null &&
+          (form.eventType !== "other" || !!form.eventOtherLabel.trim())
         );
       if (step === 2) return true; // Time window
       if (step === 3) return true; // Event items (optional)

@@ -43,7 +43,9 @@ export default class ScheduleFormWindowtimeRuleValidator {
     const totalFixedEventSchedMins = this.getAppWindowMin() + this.getMealsWindowMin();
 
     if (totalFixedEventSchedMins + this.getBreakWindowMin() > totalTimeWindow) {
-      const recommendedBreakStyle = this.findApplicableBreakFreq(totalFixedEventSchedMins);
+      const recommendedBreakStyle = this.findApplicableBreakFreq(
+        totalFixedEventSchedMins,
+      );
       return {
         valid: false,
         message: `There isn't enough free time in your schedule to fit the selected break style. Use the "${recommendedBreakStyle}" break style instead`,
@@ -53,7 +55,9 @@ export default class ScheduleFormWindowtimeRuleValidator {
     return { valid: true };
   }
 
-  private findApplicableBreakFreq(totalFixedEventSchedMins: number): NonNullable<BreakFrequency> {
+  private findApplicableBreakFreq(
+    totalFixedEventSchedMins: number,
+  ): NonNullable<BreakFrequency> {
     const totalTimeWindow = this.getWindowMinutes();
     const breakTypePercentage = this.getBreakPercentage();
 
@@ -150,7 +154,12 @@ export default class ScheduleFormWindowtimeRuleValidator {
   }
 
   private getMealsWindowMin() {
-    return this.form.meals.reduce((total, { durationMinutes }) => total + durationMinutes, 0) ?? 0;
+    return (
+      this.form.meals.reduce(
+        (total, { durationMinutes }) => total + durationMinutes,
+        0,
+      ) ?? 0
+    );
   }
 
   private getTotalWindowMin(schedules: { start_time: Date; end_time: Date }[]) {

@@ -69,7 +69,13 @@ function useSStyles() {
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        headerSub: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, marginTop: 4 },
+        headerSub: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          marginTop: 4,
+        },
       }),
     [colors],
   );

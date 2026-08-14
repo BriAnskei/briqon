@@ -1,8 +1,8 @@
 import { ScheduleConflictError } from "../errors/scheduleActivationConflic.error";
-import { ActivationRepository } from "./ActivationRepository";
-import { ActivationContext } from "./domain/conflict/ActivationContext";
-import { ConflictDetector } from "./domain/conflict/ConflictDetector";
-import { ConflictResolver } from "./domain/conflict/ConflictResolver";
+import type { ActivationRepository } from "./ActivationRepository";
+import type { ActivationContext } from "./domain/conflict/ActivationContext";
+import type { ConflictDetector } from "./domain/conflict/ConflictDetector";
+import type { ConflictResolver } from "./domain/conflict/ConflictResolver";
 
 export class AddActivationService {
   constructor(

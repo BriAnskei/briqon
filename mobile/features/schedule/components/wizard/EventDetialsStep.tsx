@@ -16,7 +16,9 @@ export function EventDetailsStep({ form, patch }: Props) {
   return (
     <View style={s.body}>
       <Text style={s.title}>What's the occasion?</Text>
-      <Text style={s.sub}>Pick the event type so we can shape your schedule around it.</Text>
+      <Text style={s.sub}>
+        Pick the event type so we can shape your schedule around it.
+      </Text>
 
       <View style={s.grid}>
         {EVENT_TYPES.map((opt) => {
@@ -42,9 +44,15 @@ export function EventDetailsStep({ form, patch }: Props) {
                   },
                 ]}
               >
-                <Ionicons name={opt.icon} size={22} color={active ? opt.color : Colors.textMuted} />
+                <Ionicons
+                  name={opt.icon}
+                  size={22}
+                  color={active ? opt.color : Colors.textMuted}
+                />
               </View>
-              <Text style={[s.cardLabel, active && { color: opt.color }]}>{opt.label}</Text>
+              <Text style={[s.cardLabel, active && { color: opt.color }]}>
+                {opt.label}
+              </Text>
               {active && (
                 <View style={[s.check, { backgroundColor: opt.color }]}>
                   <Ionicons name="checkmark" size={10} color={Colors.white} />

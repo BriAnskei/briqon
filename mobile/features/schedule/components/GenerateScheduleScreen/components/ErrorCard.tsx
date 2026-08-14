@@ -40,7 +40,13 @@ function useSStyles() {
           borderRadius: Radius.md,
           padding: 14,
         },
-        errorText: { color: Colors.danger, fontSize: 13, fontFamily: "Inter", fontWeight: "400", flex: 1 },
+        errorText: {
+          color: Colors.danger,
+          fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          flex: 1,
+        },
 
         retryBtn: {
           flexDirection: "row",
@@ -52,7 +58,12 @@ function useSStyles() {
           paddingVertical: 12,
           marginTop: 12,
         },
-        retryBtnText: { fontSize: 14, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
+        retryBtnText: {
+          fontSize: 14,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.white,
+        },
       }),
     [colors],
   );

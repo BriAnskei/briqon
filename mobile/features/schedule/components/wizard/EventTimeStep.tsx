@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMemo } from "react";
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { TimeRow } from "@/components/TimeRow";
 import { useTheme } from "@/context/ThemeContext";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
@@ -18,7 +25,9 @@ export function EventTimeStep({ form, patch }: Props) {
   return (
     <View style={s.body}>
       <Text style={s.title}>Time & schedule</Text>
-      <Text style={s.sub}>Set when the event runs. You'll add key segments on the next step.</Text>
+      <Text style={s.sub}>
+        Set when the event runs. You'll add key segments on the next step.
+      </Text>
 
       {/* ── Time pickers ──────────────────────────────────────────────── */}
       <View style={s.gap16}>
@@ -97,7 +106,12 @@ function useSStyles() {
           marginTop: 16,
           paddingHorizontal: 4,
         },
-        durationText: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        durationText: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
       }),
     [colors],
   );

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { MealPlacement, Meals, MealType, NewScheduleFormState } from "@/type/NewScheduleTypes";
+import type {
+  MealPlacement,
+  Meals,
+  MealType,
+  NewScheduleFormState,
+} from "@/type/NewScheduleTypes";
 
 export type UseMealsStateType = {
   toggleIncludeMeals: () => void;
@@ -27,7 +32,9 @@ const useMeals = ({ form, setForm, step }: Payload): UseMealsStateType => {
   const meals: Meals[] = form?.meals ?? [];
 
   const [includeMeal, setIncludeMeals] = useState(false);
-  const [showTimepickerFor, setShowTimepickerFor] = useState<string | undefined>(undefined);
+  const [showTimepickerFor, setShowTimepickerFor] = useState<string | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     if (step > 3 && meals.length === 0) {
@@ -88,7 +95,8 @@ const useMeals = ({ form, setForm, step }: Payload): UseMealsStateType => {
     handlePlacement,
     toggleMealType,
 
-    toggleTimePicker: (id: string) => setShowTimepickerFor((p) => (p === id ? undefined : id)),
+    toggleTimePicker: (id: string) =>
+      setShowTimepickerFor((p) => (p === id ? undefined : id)),
     showTimepickerFor,
 
     reduceDuration: (id: string) => {

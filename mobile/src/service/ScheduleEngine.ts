@@ -309,7 +309,9 @@ export class ScheduleEngine {
 
       // **Always** insert a break after the just‑finished chunk (if there is room).
       const afterChunk = getCurrentTime();
-      const spaceForBreak = nextFixed ? nextFixed.start - afterChunk : endMins - afterChunk;
+      const spaceForBreak = nextFixed
+        ? nextFixed.start - afterChunk
+        : endMins - afterChunk;
       if (spaceForBreak >= breakLength) {
         result.push({
           activity: "Break",

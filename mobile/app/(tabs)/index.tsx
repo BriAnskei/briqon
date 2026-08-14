@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useTheme } from "@/context/ThemeContext";
 import { CustomSwitch } from "@/components/CustomSwitch";
+import { useTheme } from "@/context/ThemeContext";
 import { SetActiveModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
 import { Colors, Radius, Shadow } from "../../type/theme";
@@ -110,7 +110,9 @@ function AlarmRow({
       <View style={[s.alarmAccent, { backgroundColor: color }]} />
       <Text style={s.alarmIndex}>{String(index + 1).padStart(2, "0")}</Text>
       <View style={s.alarmBody}>
-        <Text style={[s.alarmActivity, !alarm.alarmEnabled && s.textDim]}>{alarm.activity}</Text>
+        <Text style={[s.alarmActivity, !alarm.alarmEnabled && s.textDim]}>
+          {alarm.activity}
+        </Text>
         <View style={s.alarmTimeRow}>
           <View style={[s.alarmTimeDot, { backgroundColor: color }]} />
           <Text style={s.alarmTime}>
@@ -170,7 +172,11 @@ function DotMenu({
             activeOpacity={0.75}
           >
             <View style={[s.menuIconWrap, { backgroundColor: Colors.warningSoft }]}>
-              <Ionicons name="notifications-off-outline" size={18} color={Colors.warning} />
+              <Ionicons
+                name="notifications-off-outline"
+                size={18}
+                color={Colors.warning}
+              />
             </View>
             <View style={s.menuItemBody}>
               <Text style={s.menuItemLabel}>Turn Off All Alarms</Text>
@@ -192,7 +198,9 @@ function DotMenu({
               <Ionicons name="trash-outline" size={18} color={Colors.danger} />
             </View>
             <View style={s.menuItemBody}>
-              <Text style={[s.menuItemLabel, { color: Colors.danger }]}>Delete Schedule</Text>
+              <Text style={[s.menuItemLabel, { color: Colors.danger }]}>
+                Delete Schedule
+              </Text>
               <Text style={s.menuItemSub}>Remove today&apos;s active schedule</Text>
             </View>
           </TouchableOpacity>
@@ -330,7 +338,11 @@ export default function HomeScreen() {
               onPress={() => setMenuVisible(true)}
               activeOpacity={0.7}
             >
-              <Ionicons name="ellipsis-horizontal" size={16} color={Colors.textSecondary} />
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={16}
+                color={Colors.textSecondary}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -342,7 +354,12 @@ export default function HomeScreen() {
               <Text style={s.namePillText}>{MOCK_SCHEDULE.name}</Text>
             </View>
             <View style={[s.countPill, enabledCount === 0 && s.countPillOff]}>
-              <Text style={[s.countPillText, enabledCount === 0 && { color: Colors.textMuted }]}>
+              <Text
+                style={[
+                  s.countPillText,
+                  enabledCount === 0 && { color: Colors.textMuted },
+                ]}
+              >
                 {enabledCount}/{alarms.length} alarms on
               </Text>
             </View>

@@ -122,7 +122,12 @@ function useSStyles() {
           borderWidth: 1,
           borderColor: Colors.accentGlow,
         },
-        badgeText: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.accent },
+        badgeText: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.accent,
+        },
         durationHint: {
           flexDirection: "row",
           alignItems: "center",
@@ -130,7 +135,12 @@ function useSStyles() {
           marginTop: 16,
           paddingHorizontal: 4,
         },
-        durationText: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        durationText: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
       }),
     [colors],
   );

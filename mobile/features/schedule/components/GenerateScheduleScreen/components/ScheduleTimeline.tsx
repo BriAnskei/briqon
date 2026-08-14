@@ -87,7 +87,13 @@ function useSStyles() {
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        scheduleTime: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, flexShrink: 0 },
+        scheduleTime: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          flexShrink: 0,
+        },
       }),
     [colors],
   );

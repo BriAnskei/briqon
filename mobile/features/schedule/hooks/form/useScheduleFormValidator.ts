@@ -146,7 +146,9 @@ export function useWizardValidation({ form, step, isEvent }: UseWizardValidation
       }
 
       if (step === 5) {
-        return !validation.priorityTime.valid ? validation.priorityTime.message : undefined;
+        return !validation.priorityTime.valid
+          ? validation.priorityTime.message
+          : undefined;
       }
     }
 

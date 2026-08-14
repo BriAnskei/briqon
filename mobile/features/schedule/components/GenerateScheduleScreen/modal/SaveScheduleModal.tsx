@@ -147,7 +147,12 @@ function useSStyles() {
           borderBottomWidth: 1,
           borderBottomColor: Colors.border,
         },
-        title: { fontSize: 18, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.textPrimary },
+        title: {
+          fontSize: 18,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+        },
         closeBtn: {
           width: 28,
           height: 28,
@@ -159,7 +164,12 @@ function useSStyles() {
         closeBtnDisabled: {
           opacity: 0.4,
         },
-        closeBtnText: { fontSize: 11, fontFamily: "DMMono-Medium", fontWeight: "500", color: Colors.textSecondary },
+        closeBtnText: {
+          fontSize: 11,
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
+          color: Colors.textSecondary,
+        },
         body: {
           paddingHorizontal: 20,
           paddingTop: 20,
@@ -235,7 +245,12 @@ function useSStyles() {
           shadowOpacity: 0,
           elevation: 0,
         },
-        saveText: { fontSize: 15, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
+        saveText: {
+          fontSize: 15,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.white,
+        },
         saveTextDisabled: { color: Colors.textMuted },
       }),
     [colors],

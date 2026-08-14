@@ -111,7 +111,10 @@ export class ActiveScheduleRepository extends BaseRepository {
     );
   }
 
-  async findRangeOverlaps(startsAt?: string, endsAt?: string): Promise<ScheduleConflict[]> {
+  async findRangeOverlaps(
+    startsAt?: string,
+    endsAt?: string,
+  ): Promise<ScheduleConflict[]> {
     if (!startsAt || !endsAt) return [];
 
     const rows = await this.all<ConflictRow>(
@@ -196,9 +199,10 @@ export class ActiveScheduleRepository extends BaseRepository {
   }
 
   async findById(id: string): Promise<ActiveSchedule | null> {
-    const row = await this.first<ActiveScheduleRow>(`SELECT * FROM active_schedules WHERE id = ?`, [
-      id,
-    ]);
+    const row = await this.first<ActiveScheduleRow>(
+      `SELECT * FROM active_schedules WHERE id = ?`,
+      [id],
+    );
 
     if (!row) return null;
     return this.mapRow(row);

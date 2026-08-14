@@ -20,8 +20,10 @@ const BREAK_FREQUENCY_INSTRUCTIONS: Record<Exclude<BreakFrequency, null>, string
 // ─── Meal placement → natural language instruction ────────────────────────────
 const MEAL_PLACEMENT_INSTRUCTIONS: Record<string, (label: string) => string> = {
   flexible: (label) => `Place "${label}" at a natural, sensible time within the window.`,
-  anchor_first: (label) => `Anchor "${label}" at or near the very start of the schedule window.`,
-  anchor_last: (label) => `Anchor "${label}" at or near the very end of the schedule window.`,
+  anchor_first: (label) =>
+    `Anchor "${label}" at or near the very start of the schedule window.`,
+  anchor_last: (label) =>
+    `Anchor "${label}" at or near the very end of the schedule window.`,
   fixed_time: (label) => `Lock "${label}" to its specified fixed time — never move it.`,
 };
 
@@ -52,7 +54,8 @@ const EVENT_TYPE_INSTRUCTIONS: Record<
   },
   other: {
     label: "Event",
-    system: "This is a custom event. Pace it sensibly around the segments the user provided.",
+    system:
+      "This is a custom event. Pace it sensibly around the segments the user provided.",
   },
 };
 
@@ -118,7 +121,9 @@ export class WizardPromptBuilder {
     const sleep = formatTime(state.endTime);
     const totalMins = getDurationMins(state.startTime, state.endTime);
 
-    const lines: string[] = [`Schedule window: ${wake} – ${sleep} (${totalMins} minutes total).`];
+    const lines: string[] = [
+      `Schedule window: ${wake} – ${sleep} (${totalMins} minutes total).`,
+    ];
 
     // ── Priority focus (required text, optional duration) ───────────────────
     const focusText = state.priorityFocusText.trim();
@@ -196,7 +201,9 @@ export class WizardPromptBuilder {
     const eventKey = state.eventType ?? "other";
     const eventInfo = EVENT_TYPE_INSTRUCTIONS[eventKey] ?? EVENT_TYPE_INSTRUCTIONS.other;
     const eventLabel =
-      state.eventType === "other" ? state.eventOtherLabel || eventInfo.label : eventInfo.label;
+      state.eventType === "other"
+        ? state.eventOtherLabel || eventInfo.label
+        : eventInfo.label;
 
     const lines: string[] = [
       `Event type: ${eventLabel}`,
@@ -208,7 +215,9 @@ export class WizardPromptBuilder {
       lines.push("\nRequired event segments (fit these into the window in order):");
       for (const item of state.eventScheduleItems) {
         const durPart =
-          item.durationMinutes != null ? ` (~${formatDurationMins(item.durationMinutes)})` : "";
+          item.durationMinutes != null
+            ? ` (~${formatDurationMins(item.durationMinutes)})`
+            : "";
 
         const fixedPart =
           item.isFixedTime && item.fixedTime
@@ -225,7 +234,9 @@ export class WizardPromptBuilder {
         `Generate a complete, well-paced program for a ${eventLabel} event within the given time window.`,
       );
     }
-    const systemInstruction = [EVENT_BASE_SYSTEM_INSTRUCTION, eventInfo.system].join("\n\n");
+    const systemInstruction = [EVENT_BASE_SYSTEM_INSTRUCTION, eventInfo.system].join(
+      "\n\n",
+    );
 
     return {
       systemInstruction,

@@ -7,7 +7,10 @@ import {
   ScheduleConflictError,
 } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
-import { ActiveScheduleService, type CreationPayload } from "@/src/service/activeSchedule.service";
+import {
+  ActiveScheduleService,
+  type CreationPayload,
+} from "@/src/service/activeSchedule.service";
 import {
   addDays,
   formatCompact,
@@ -22,7 +25,15 @@ import type { GenerationResult } from "../../utils/scheduleResponseParser";
 
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
 
-export const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+export const DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 export interface UseSetActiveModalState {
   dateMode: DateMode;
@@ -175,24 +186,30 @@ export function useSetActiveModal(payload: {
     }
   }, [dateMode, isTodayAvailable]);
 
-  const handleDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowDatePicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setSpecificDate(selectedDate);
-    }
-  }, []);
+  const handleDateChange = useCallback(
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (Platform.OS === "android") {
+        setShowDatePicker(false);
+      }
+      if (event.type === "set" && selectedDate) {
+        setSpecificDate(selectedDate);
+      }
+    },
+    [],
+  );
 
-  const handleRangeDateChange = useCallback((event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS === "android") {
-      setShowRangeDatePicker(false);
-    }
-    if (event.type === "set" && selectedDate) {
-      setRangeAnchorDate(selectedDate);
-      setSelectedDays([]);
-    }
-  }, []);
+  const handleRangeDateChange = useCallback(
+    (event: DateTimePickerEvent, selectedDate?: Date) => {
+      if (Platform.OS === "android") {
+        setShowRangeDatePicker(false);
+      }
+      if (event.type === "set" && selectedDate) {
+        setRangeAnchorDate(selectedDate);
+        setSelectedDays([]);
+      }
+    },
+    [],
+  );
 
   const selectedDayIndices = useMemo(
     () => selectedDays.map((day) => DAYS.indexOf(day)),
@@ -249,7 +266,14 @@ export function useSetActiveModal(payload: {
       })}`;
     }
     return "";
-  }, [dateMode, recurring, selectedDays, specificDate, rangeResolvedStart, rangeResolvedEnd]);
+  }, [
+    dateMode,
+    recurring,
+    selectedDays,
+    specificDate,
+    rangeResolvedStart,
+    rangeResolvedEnd,
+  ]);
 
   const buildPayload = useCallback((): CreationPayload => {
     if (!generatedScheduleId) throw new Error("No generatedScheduleId");

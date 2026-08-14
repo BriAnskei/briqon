@@ -18,7 +18,11 @@ const ICONS: Record<ToastVariant, keyof typeof MaterialCommunityIcons.glyphMap> 
 
 // ── Shared toast card ─────────────────────────────────────────────────────────
 
-function ToastCard({ type, text1, text2 }: ToastConfigParams<unknown> & { type: ToastVariant }) {
+function ToastCard({
+  type,
+  text1,
+  text2,
+}: ToastConfigParams<unknown> & { type: ToastVariant }) {
   const { colors } = useTheme();
 
   const s = useMemo(

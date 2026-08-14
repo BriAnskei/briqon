@@ -48,7 +48,12 @@ export function SetActiveModal(state: UseSetActiveModalState) {
   } = state;
 
   return (
-    <Modal visible={isOpen} animationType="slide" transparent onRequestClose={handleClose}>
+    <Modal
+      visible={isOpen}
+      animationType="slide"
+      transparent
+      onRequestClose={handleClose}
+    >
       <View style={s.overlay}>
         <View style={s.sheet}>
           <View style={s.handle} />
@@ -56,7 +61,11 @@ export function SetActiveModal(state: UseSetActiveModalState) {
           {/* ── Header ── */}
           <View style={s.header}>
             <Text style={s.title}>When should this be active?</Text>
-            <TouchableOpacity onPress={handleClose} style={s.closeBtn} activeOpacity={0.8}>
+            <TouchableOpacity
+              onPress={handleClose}
+              style={s.closeBtn}
+              activeOpacity={0.8}
+            >
               <Text style={s.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -139,7 +148,9 @@ export function SetActiveModal(state: UseSetActiveModalState) {
                 <View style={s.optionCardLeft}>
                   <Text style={s.optionCardTitle}>Pick a Date</Text>
                   <Text style={s.optionCardSubtitle}>
-                    {dateMode === "specific" ? formatDate(specificDate) : "Choose from calendar"}
+                    {dateMode === "specific"
+                      ? formatDate(specificDate)
+                      : "Choose from calendar"}
                   </Text>
                 </View>
                 <Radio active={dateMode === "specific"} />
@@ -175,7 +186,9 @@ export function SetActiveModal(state: UseSetActiveModalState) {
               <View style={s.repeatRow}>
                 <View style={s.repeatLeft}>
                   <Text style={s.repeatTitle}>Repeat every week</Text>
-                  <Text style={s.repeatSubtitle}>Apply this schedule on a weekly basis</Text>
+                  <Text style={s.repeatSubtitle}>
+                    Apply this schedule on a weekly basis
+                  </Text>
                 </View>
                 <Switch
                   value={recurring}
@@ -192,7 +205,11 @@ export function SetActiveModal(state: UseSetActiveModalState) {
 
           {/* ── Actions ── */}
           <View style={s.actions}>
-            <TouchableOpacity style={s.cancelBtn} onPress={handleClose} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={s.cancelBtn}
+              onPress={handleClose}
+              activeOpacity={0.8}
+            >
               <Text style={s.cancelText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -288,7 +305,9 @@ function DayRangeExpanded({
               onPress={onOpenRangeDatePicker}
               activeOpacity={0.8}
             >
-              <Text style={s.changeDateText}>📅 {formatDate(rangeAnchorDate)} · Tap to change</Text>
+              <Text style={s.changeDateText}>
+                📅 {formatDate(rangeAnchorDate)} · Tap to change
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -301,7 +320,11 @@ function DayRangeExpanded({
           return (
             <TouchableOpacity
               key={day}
-              style={[s.dayChip, active && s.dayChipActive, disabled && s.dayChipDisabled]}
+              style={[
+                s.dayChip,
+                active && s.dayChipActive,
+                disabled && s.dayChipDisabled,
+              ]}
               onPress={() => onToggleDay(day)}
               disabled={disabled}
               activeOpacity={0.8}
@@ -384,7 +407,12 @@ function useSStyles() {
           borderBottomWidth: 1,
           borderBottomColor: Colors.border,
         },
-        title: { fontSize: 18, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.textPrimary },
+        title: {
+          fontSize: 18,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+        },
         closeBtn: {
           width: 28,
           height: 28,
@@ -393,7 +421,12 @@ function useSStyles() {
           alignItems: "center",
           justifyContent: "center",
         },
-        closeBtnText: { fontSize: 11, fontFamily: "DMMono-Medium", fontWeight: "500", color: Colors.textSecondary },
+        closeBtnText: {
+          fontSize: 11,
+          fontFamily: "DMMono-Medium",
+          fontWeight: "500",
+          color: Colors.textSecondary,
+        },
         summaryCard: {
           flexDirection: "row",
           alignItems: "center",
@@ -454,7 +487,11 @@ function useSStyles() {
           fontWeight: "500",
           color: Colors.textSecondary,
         },
-        pillTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
+        pillTextActive: {
+          color: Colors.accent,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
         optionCard: {
           backgroundColor: Colors.bgCard,
           borderRadius: Radius.md,
@@ -478,7 +515,12 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        optionCardSubtitle: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        optionCardSubtitle: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
         radioOuter: {
           width: 20,
           height: 20,
@@ -582,7 +624,12 @@ function useSStyles() {
           color: Colors.textPrimary,
           marginBottom: 2,
         },
-        repeatSubtitle: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        repeatSubtitle: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
         actions: {
           flexDirection: "row",
           gap: 10,
@@ -618,7 +665,12 @@ function useSStyles() {
           shadowOpacity: 0,
           elevation: 0,
         },
-        confirmText: { fontSize: 15, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
+        confirmText: {
+          fontSize: 15,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.white,
+        },
         confirmTextDisabled: { color: Colors.textMuted },
       }),
     [colors],

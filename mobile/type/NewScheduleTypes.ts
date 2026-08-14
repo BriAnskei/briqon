@@ -1,7 +1,13 @@
 export type ScheduleType = "personal" | "event" | null;
 export type BreakFrequency = "few-long" | "balanced" | "many-short" | "none" | null;
 export type AppointmentType = "work" | "school" | "medical" | "custom";
-export type EventType = "birthday" | "wedding" | "conference" | "concert" | "other" | null;
+export type EventType =
+  | "birthday"
+  | "wedding"
+  | "conference"
+  | "concert"
+  | "other"
+  | null;
 
 export type MealType = "breakfast / morning outine" | "lunch" | "dinner" | "snack";
 

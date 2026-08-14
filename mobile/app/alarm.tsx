@@ -1,6 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Animated,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import NativeAlarmModule from "@/specs/NativeAlarmModule";
 import { Colors, Radius, Shadow } from "../type/theme";
@@ -77,8 +84,15 @@ export default function AlarmScreen() {
   const s = useSStyles();
   const params = useLocalSearchParams<AlarmParams>();
 
-  const { id, activity, start_time, end_time, schedule_name, next_activity, next_start_time } =
-    params;
+  const {
+    id,
+    activity,
+    start_time,
+    end_time,
+    schedule_name,
+    next_activity,
+    next_start_time,
+  } = params;
 
   const [clock, setClock] = useState(getFormattedTime);
   const [dismissed, setDismissed] = useState(false);
@@ -156,10 +170,9 @@ export default function AlarmScreen() {
     NativeAlarmModule.minimizeApp();
   };
 
-  const snoozeDisplay = `${Math.floor(snoozeSeconds / 60)}:${String(snoozeSeconds % 60).padStart(
-    2,
-    "0",
-  )}`;
+  const snoozeDisplay = `${Math.floor(snoozeSeconds / 60)}:${String(
+    snoozeSeconds % 60,
+  ).padStart(2, "0")}`;
 
   return (
     <View style={s.root}>
@@ -238,10 +251,18 @@ export default function AlarmScreen() {
         </View>
       ) : (
         <View style={s.actions}>
-          <TouchableOpacity style={s.btnDismiss} onPress={handleDismiss} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={s.btnDismiss}
+            onPress={handleDismiss}
+            activeOpacity={0.85}
+          >
             <Text style={s.btnDismissText}>Dismiss</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.btnSnooze} onPress={handleSnooze} activeOpacity={0.75}>
+          <TouchableOpacity
+            style={s.btnSnooze}
+            onPress={handleSnooze}
+            activeOpacity={0.75}
+          >
             <Text style={s.btnSnoozeText}>Snooze · 5 min</Text>
           </TouchableOpacity>
         </View>
@@ -401,7 +422,12 @@ function useSStyles() {
           fontWeight: "500",
           color: Colors.textSecondary,
         },
-        timeArrow: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        timeArrow: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
         upNextCard: {
           backgroundColor: Colors.bgCard,
           borderRadius: Radius.lg,

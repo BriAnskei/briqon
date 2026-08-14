@@ -1,7 +1,7 @@
-import { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
-import { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
-import { ActivationContext } from "./ActivationContext";
-import { ConflictHandler } from "./ConflictHandler";
+import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
+import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
+import type { ActivationContext } from "./ActivationContext";
+import type { ConflictHandler } from "./ConflictHandler";
 
 export class DaysActivationConflictHandler implements ConflictHandler {
   constructor(private readonly activeScheduleRepository: ActiveScheduleRepository) {}

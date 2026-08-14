@@ -65,7 +65,10 @@ describe("ScheduleConflictValidator", () => {
   it("returns valid for two non-overlapping appointments", () => {
     const form = {
       ...baseForm,
-      appointments: [appt("a1", "work", "09:00", "10:00"), appt("a2", "medical", "10:30", "11:00")],
+      appointments: [
+        appt("a1", "work", "09:00", "10:00"),
+        appt("a2", "medical", "10:30", "11:00"),
+      ],
     };
     const validator = new ScheduleConflictValidator(form as any);
     expect(validator.validateTimeConflicts().valid).toBe(true);
@@ -74,7 +77,10 @@ describe("ScheduleConflictValidator", () => {
   it("treats back-to-back appointments (end === next start) as non-overlapping", () => {
     const form = {
       ...baseForm,
-      appointments: [appt("a1", "work", "09:00", "10:00"), appt("a2", "medical", "10:00", "11:00")],
+      appointments: [
+        appt("a1", "work", "09:00", "10:00"),
+        appt("a2", "medical", "10:00", "11:00"),
+      ],
     };
     const validator = new ScheduleConflictValidator(form as any);
     expect(validator.validateTimeConflicts().valid).toBe(true);
@@ -83,7 +89,10 @@ describe("ScheduleConflictValidator", () => {
   it("detects two overlapping appointments and names both in the message", () => {
     const form = {
       ...baseForm,
-      appointments: [appt("a1", "work", "09:00", "10:30"), appt("a2", "medical", "10:00", "11:00")],
+      appointments: [
+        appt("a1", "work", "09:00", "10:30"),
+        appt("a2", "medical", "10:00", "11:00"),
+      ],
     };
     const validator = new ScheduleConflictValidator(form as any);
     const result = validator.validateTimeConflicts();
@@ -101,7 +110,10 @@ describe("ScheduleConflictValidator", () => {
     // start time before comparing adjacent pairs.
     const form = {
       ...baseForm,
-      appointments: [appt("a1", "work", "10:00", "11:00"), appt("a2", "medical", "09:30", "10:30")],
+      appointments: [
+        appt("a1", "work", "10:00", "11:00"),
+        appt("a2", "medical", "09:30", "10:30"),
+      ],
     };
     const validator = new ScheduleConflictValidator(form as any);
     const result = validator.validateTimeConflicts();
@@ -156,7 +168,9 @@ describe("ScheduleConflictValidator", () => {
     };
     const validator = new ScheduleConflictValidator(form as any);
     const result = validator.validateTimeConflicts();
-    expect(result.message).toBe('"Custom appointment" conflicts with "Custom appointment".');
+    expect(result.message).toBe(
+      '"Custom appointment" conflicts with "Custom appointment".',
+    );
   });
 
   // ---------------------------------------------------------------------

@@ -57,7 +57,11 @@ export function TypeStep({ scheduleType, onChange }: Props) {
                   },
                 ]}
               >
-                <Ionicons name={opt.icon} size={28} color={active ? opt.color : Colors.textMuted} />
+                <Ionicons
+                  name={opt.icon}
+                  size={28}
+                  color={active ? opt.color : Colors.textMuted}
+                />
               </View>
               <Text style={[s.label, active && { color: opt.color }]}>{opt.label}</Text>
               <Text style={s.desc}>{opt.desc}</Text>

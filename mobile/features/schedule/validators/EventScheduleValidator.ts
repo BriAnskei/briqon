@@ -143,7 +143,9 @@ export default class EventScheduleValidator {
         id: item.id,
         label: item.name,
         start: item.fixedTime!,
-        end: new Date(item.fixedTime!.getTime() + (item.durationMinutes ?? 0) * 60 * 1000),
+        end: new Date(
+          item.fixedTime!.getTime() + (item.durationMinutes ?? 0) * 60 * 1000,
+        ),
       }));
   }
 }

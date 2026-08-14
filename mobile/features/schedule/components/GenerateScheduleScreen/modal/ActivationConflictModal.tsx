@@ -1,6 +1,13 @@
 import { AlertTriangle, HelpCircle } from "lucide-react-native";
 import { useMemo, useRef } from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import { useActivationConflictModal } from "@/features/schedule/hooks/generation/useActivationConflictModal";
 import { DAYS } from "@/features/schedule/hooks/generation/useSetActiveModal";
@@ -28,8 +35,13 @@ export function ActivationConflictModal({
 }: ActivationConflictModalProp) {
   const s = useCStyles();
   const infoButtonRef = useRef(null);
-  const { expandedConflictId, toggleExpand, isInfoModalOpen, openInfoModal, closeInfoModal } =
-    useActivationConflictModal(conflicts);
+  const {
+    expandedConflictId,
+    toggleExpand,
+    isInfoModalOpen,
+    openInfoModal,
+    closeInfoModal,
+  } = useActivationConflictModal(conflicts);
 
   return (
     <Modal
@@ -45,7 +57,11 @@ export function ActivationConflictModal({
             <View style={s.headerTop}>
               <View style={s.titleRow}>
                 <View style={s.titleIconWrap}>
-                  <AlertTriangle size={16} color={Colors.danger ?? "#E5484D"} strokeWidth={2.25} />
+                  <AlertTriangle
+                    size={16}
+                    color={Colors.danger ?? "#E5484D"}
+                    strokeWidth={2.25}
+                  />
                 </View>
                 <Text style={s.title}>Schedule Conflicts</Text>
               </View>
@@ -258,7 +274,12 @@ function useCStyles() {
           justifyContent: "center",
           backgroundColor: (Colors.danger ?? "#E5484D") + "1A",
         },
-        title: { fontSize: 18, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.textPrimary },
+        title: {
+          fontSize: 18,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.textPrimary,
+        },
         infoBtn: {
           width: 30,
           height: 30,
@@ -373,8 +394,16 @@ function useCStyles() {
           fontWeight: "500",
           color: Colors.textSecondary,
         },
-        dayChipTextActive: { color: "#111111", fontFamily: "Inter-Medium", fontWeight: "500" },
-        dayChipTextConflict: { color: Colors.danger ?? "#E5484D", fontFamily: "Inter-Medium", fontWeight: "500" },
+        dayChipTextActive: {
+          color: "#111111",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
+        dayChipTextConflict: {
+          color: Colors.danger ?? "#E5484D",
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
         actions: {
           flexDirection: "row",
           gap: 10,
@@ -409,7 +438,12 @@ function useCStyles() {
         resolveBtnDisabled: {
           backgroundColor: Colors.bgElevated,
         },
-        resolveText: { fontSize: 15, fontFamily: "Inter-SemiBold", fontWeight: "600", color: Colors.white },
+        resolveText: {
+          fontSize: 15,
+          fontFamily: "Inter-SemiBold",
+          fontWeight: "600",
+          color: Colors.white,
+        },
       }),
     [colors],
   );

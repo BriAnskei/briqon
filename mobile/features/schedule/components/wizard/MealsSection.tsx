@@ -57,7 +57,9 @@ export function MealsSection({
         </TouchableOpacity>
       </View>
 
-      {!includeMeal && <Text style={s.empty}>Meals won&apos;t be included in this schedule.</Text>}
+      {!includeMeal && (
+        <Text style={s.empty}>Meals won&apos;t be included in this schedule.</Text>
+      )}
 
       {includeMeal && (
         <>
@@ -99,7 +101,10 @@ export function MealsSection({
                 <View style={s.durationRow}>
                   <Text style={s.draftFieldLabel}>Duration</Text>
                   <View style={s.stepper}>
-                    <TouchableOpacity style={s.stepperBtn} onPress={() => reduceDuration(meal.id)}>
+                    <TouchableOpacity
+                      style={s.stepperBtn}
+                      onPress={() => reduceDuration(meal.id)}
+                    >
                       <Ionicons name="remove" size={14} color={Colors.textMuted} />
                     </TouchableOpacity>
                     <Text style={s.stepperValue}>{meal.durationMinutes}m</Text>
@@ -190,7 +195,12 @@ function useSStyles() {
           textTransform: "uppercase",
           letterSpacing: 0.5,
         },
-        optional: { fontSize: 13, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        optional: {
+          fontSize: 13,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
 
         draftFieldLabel: {
           fontSize: 12,
@@ -224,8 +234,17 @@ function useSStyles() {
           backgroundColor: Colors.accentSoft,
           borderColor: Colors.accent,
         },
-        chipText: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.textMuted },
-        chipTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
+        chipText: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+        },
+        chipTextActive: {
+          color: Colors.accent,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
 
         inputRow: {
           flexDirection: "row",
@@ -309,7 +328,12 @@ function useSStyles() {
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        mealDurationText: { fontSize: 12, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted },
+        mealDurationText: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+        },
 
         durationRow: {
           flexDirection: "row",
@@ -360,7 +384,11 @@ function useSStyles() {
           fontWeight: "500",
           color: Colors.textMuted,
         },
-        segmentTextActive: { color: Colors.accent, fontFamily: "Inter-Medium", fontWeight: "500" },
+        segmentTextActive: {
+          color: Colors.accent,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+        },
       }),
     [colors],
   );

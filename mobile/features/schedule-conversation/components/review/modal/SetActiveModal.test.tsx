@@ -97,7 +97,9 @@ describe("SetActiveModal", () => {
       scheduleName: "My New Schedule",
     });
 
-    const { getByPlaceholderText, getByDisplayValue } = render(<SetActiveModal {...mockProps} />);
+    const { getByPlaceholderText, getByDisplayValue } = render(
+      <SetActiveModal {...mockProps} />,
+    );
 
     expect(getByPlaceholderText("Schedule name…")).toBeTruthy();
     expect(getByDisplayValue("My New Schedule")).toBeTruthy();

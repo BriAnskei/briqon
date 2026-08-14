@@ -1,5 +1,9 @@
 import { useState } from "react";
-import type { Appointment, AppointmentDraft, NewScheduleFormState } from "@/type/NewScheduleTypes";
+import type {
+  Appointment,
+  AppointmentDraft,
+  NewScheduleFormState,
+} from "@/type/NewScheduleTypes";
 import { defaultAppointmentDraft } from "../../utils/wizardHelpers";
 
 export type UseAppointmentsStateType = {
@@ -22,7 +26,8 @@ const useAppointments = ({ form, setForm }: Payload): UseAppointmentsStateType =
 
   const [apptDraft, setApptDraft] = useState<AppointmentDraft>(defaultAppointmentDraft());
 
-  const patchAppt = (p: Partial<AppointmentDraft>) => setApptDraft((prev) => ({ ...prev, ...p }));
+  const patchAppt = (p: Partial<AppointmentDraft>) =>
+    setApptDraft((prev) => ({ ...prev, ...p }));
 
   const commitAppointment = () => {
     if (!apptDraft.visible) return;

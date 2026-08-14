@@ -106,7 +106,9 @@ export default function AddScheduleScreen() {
         >
           {w.step > 0 &&
             (w.isEvent
-              ? w.eventSummary && <SummaryCard items={eventSummaryItems(w.eventSummary)} />
+              ? w.eventSummary && (
+                  <SummaryCard items={eventSummaryItems(w.eventSummary)} />
+                )
               : w.personalSummary && (
                   <SummaryCard items={personalSummaryItems(w.personalSummary)} />
                 ))}
@@ -123,7 +125,9 @@ export default function AddScheduleScreen() {
           disabled={!w.canProceed()}
           activeOpacity={0.85}
         >
-          <Text style={s.nextBtnText}>{w.isLastStep() ? "Generate Schedule" : "Continue"}</Text>
+          <Text style={s.nextBtnText}>
+            {w.isLastStep() ? "Generate Schedule" : "Continue"}
+          </Text>
           <Ionicons
             name={w.isLastStep() ? "sparkles-outline" : "arrow-forward"}
             size={18}
@@ -167,7 +171,13 @@ function useSStyles() {
           fontWeight: "600",
           color: Colors.textPrimary,
         },
-        headerSub: { fontSize: 11, fontFamily: "Inter", fontWeight: "400", color: Colors.textMuted, marginTop: 2 },
+        headerSub: {
+          fontSize: 11,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
+          marginTop: 2,
+        },
 
         scroll: { flex: 1 },
         scrollContent: { paddingHorizontal: 24, paddingTop: 8 },

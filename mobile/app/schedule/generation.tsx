@@ -49,7 +49,10 @@ export default function GenerateScheduleScreen() {
         {!isGenerating && result && (
           <View style={s.resultSection}>
             {showRegenerateCard && (
-              <RegenerateCard onRegenerate={handleRegenerate} isGenerating={isGenerating} />
+              <RegenerateCard
+                onRegenerate={handleRegenerate}
+                isGenerating={isGenerating}
+              />
             )}
 
             <SummaryCard summaries={result.summary} subSummaries={result.subSummary} />

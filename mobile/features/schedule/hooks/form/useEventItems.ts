@@ -27,7 +27,9 @@ type Payload = {
 const useEventItems = ({ form, setForm }: Payload): UseEventItemsStateType => {
   const eventScheduleItems: EventScheduleItem[] = form?.eventScheduleItems ?? [];
 
-  const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(defaultEventItemDraft());
+  const [eventItemDraft, setEventItemDraft] = useState<EventItemDraft>(
+    defaultEventItemDraft(),
+  );
 
   const patchEventItem = (p: Partial<EventItemDraft>) =>
     setEventItemDraft((prev) => ({ ...prev, ...p }));

@@ -54,8 +54,19 @@ function useSStyles() {
           justifyContent: "center",
         },
         body: { flex: 1 },
-        label: { fontSize: 12, fontFamily: "Inter-Medium", fontWeight: "500", color: Colors.textMuted, marginBottom: 3 },
-        time: { fontSize: 17, fontFamily: "DMMono-Light", fontWeight: "300", color: Colors.textPrimary },
+        label: {
+          fontSize: 12,
+          fontFamily: "Inter-Medium",
+          fontWeight: "500",
+          color: Colors.textMuted,
+          marginBottom: 3,
+        },
+        time: {
+          fontSize: 17,
+          fontFamily: "DMMono-Light",
+          fontWeight: "300",
+          color: Colors.textPrimary,
+        },
       }),
     [colors],
   );

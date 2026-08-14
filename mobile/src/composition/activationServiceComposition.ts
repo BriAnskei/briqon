@@ -24,7 +24,10 @@ const daysConflictHandler = new DaysActivationConflictHandler(activeScheduleRepo
 
 const rangeConflictHandler = new RangeActivationConflictHandler(activeScheduleRepository);
 
-const conflictDetector = new ConflictDetector([daysConflictHandler, rangeConflictHandler]);
+const conflictDetector = new ConflictDetector([
+  daysConflictHandler,
+  rangeConflictHandler,
+]);
 
 const conflictResolver = new ConflictResolver(
   activeScheduleRepository,

@@ -1,4 +1,7 @@
-import { CreateScheduleResponseSchema, GeminiScheduleSchema } from "../schema/Schedule.schema";
+import {
+  CreateScheduleResponseSchema,
+  GeminiScheduleSchema,
+} from "../schema/Schedule.schema";
 import { ai } from "../util/ai";
 import { withAuth } from "./middleware/auth";
 import { withRateLimit } from "./middleware/rateLimit";
@@ -36,7 +39,9 @@ export async function generateHanlder(req: any, res: any) {
         contents: prompt,
       });
 
-      const parsed = CreateScheduleResponseSchema.safeParse(JSON.parse(response.text as string));
+      const parsed = CreateScheduleResponseSchema.safeParse(
+        JSON.parse(response.text as string),
+      );
       console.log("responseded");
       if (parsed.success) {
         console.log("invalid scheama, retriying");

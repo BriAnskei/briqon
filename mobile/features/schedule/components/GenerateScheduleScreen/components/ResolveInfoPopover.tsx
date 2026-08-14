@@ -17,7 +17,11 @@ interface ResolveInfoPopoverProps {
   fromRef: React.RefObject<any>;
 }
 
-export function ResolveInfoPopover({ isOpen, onClose, fromRef }: ResolveInfoPopoverProps) {
+export function ResolveInfoPopover({
+  isOpen,
+  onClose,
+  fromRef,
+}: ResolveInfoPopoverProps) {
   const s = useStyles();
   const [popoverPosition, setPopoverPosition] = useState<{
     x: number;
@@ -63,7 +67,10 @@ export function ResolveInfoPopover({ isOpen, onClose, fromRef }: ResolveInfoPopo
               {
                 left: Math.max(
                   8,
-                  Math.min(popoverPosition.x - 150 + 15, Dimensions.get("window").width - 308),
+                  Math.min(
+                    popoverPosition.x - 150 + 15,
+                    Dimensions.get("window").width - 308,
+                  ),
                 ),
                 top: popoverPosition.y + 30,
               },
@@ -81,17 +88,17 @@ export function ResolveInfoPopover({ isOpen, onClose, fromRef }: ResolveInfoPopo
               <Text style={s.title}>How Conflict Resolution Works</Text>
 
               <Text style={s.bodyText}>
-                When you activate a schedule that overlaps with another active schedule, Briqon
-                automatically resolves the conflict so that each day belongs to only one active
-                schedule.
+                When you activate a schedule that overlaps with another active schedule,
+                Briqon automatically resolves the conflict so that each day belongs to
+                only one active schedule.
               </Text>
 
               <Text style={s.subtitle}>Reorder Days</Text>
 
               <Text style={s.bodyText}>
-                If the existing schedule still has days that don't conflict, only the conflicting
-                days are transferred to the new schedule. The remaining days stay in the existing
-                schedule.
+                If the existing schedule still has days that don't conflict, only the
+                conflicting days are transferred to the new schedule. The remaining days
+                stay in the existing schedule.
               </Text>
 
               <View style={s.example}>
@@ -109,8 +116,9 @@ export function ResolveInfoPopover({ isOpen, onClose, fromRef }: ResolveInfoPopo
               <Text style={s.subtitle}>Remove Empty Schedule</Text>
 
               <Text style={s.bodyText}>
-                If every day in the existing schedule conflicts with the new schedule, the existing
-                schedule no longer contains any active days and is automatically removed.
+                If every day in the existing schedule conflicts with the new schedule, the
+                existing schedule no longer contains any active days and is automatically
+                removed.
               </Text>
 
               <View style={s.example}>
@@ -127,8 +135,9 @@ export function ResolveInfoPopover({ isOpen, onClose, fromRef }: ResolveInfoPopo
               <Text style={s.subtitle}>Selected Days Only</Text>
 
               <Text style={s.bodyText}>
-                If you choose to resolve only specific conflicting days, only those selected days
-                are removed from the existing schedule. Any unselected days remain active.
+                If you choose to resolve only specific conflicting days, only those
+                selected days are removed from the existing schedule. Any unselected days
+                remain active.
               </Text>
             </ScrollView>
           </View>

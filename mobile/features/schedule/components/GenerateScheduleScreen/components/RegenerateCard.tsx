@@ -13,11 +13,16 @@ export function RegenerateCard({ onRegenerate, isGenerating }: RegenerateCardPro
   const s = useSStyles();
   return (
     <View style={s.regenerateCard}>
-      <Ionicons name="sparkles-outline" size={18} color={Colors.accent} style={{ marginTop: 1 }} />
+      <Ionicons
+        name="sparkles-outline"
+        size={18}
+        color={Colors.accent}
+        style={{ marginTop: 1 }}
+      />
       <View style={s.regenerateTextGroup}>
         <Text style={s.regenerateQuote}>
-          Not quite right? Feel free to regenerate, or tweak your preferences and try again — it
-          only takes a moment.
+          Not quite right? Feel free to regenerate, or tweak your preferences and try
+          again — it only takes a moment.
         </Text>
         <TouchableOpacity
           style={s.regenerateBtn}
