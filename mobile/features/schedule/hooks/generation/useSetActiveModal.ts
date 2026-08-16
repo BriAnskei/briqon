@@ -2,25 +2,23 @@ import type { DateTimePickerEvent } from "@react-native-community/datetimepicker
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import useModal from "@/hooks/useModal";
+import { activeScheduleService } from "@/src/composition/activationServiceComposition";
 import {
   type ScheduleConflict,
   ScheduleConflictError,
 } from "@/src/errors/scheduleActivationConflic.error";
-import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
-import {
-  ActiveScheduleService,
-  type CreationPayload,
-} from "@/src/service/activeSchedule.service";
+import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 import {
   addDays,
   formatCompact,
   isSameDay,
+  minutesToTime,
   resolveRangeEnd,
   resolveRangeStart,
   startOfDay,
   timeToMinutes,
 } from "@/utils/TimeFormatter";
-import type { Schedule, ScheduleItem } from "../../../../src/models/schedule.model";
+import type { ScheduleItem } from "../../../../src/models/schedule.model";
 import type { GenerationResult } from "../../utils/scheduleResponseParser";
 
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
@@ -59,7 +57,7 @@ export interface UseSetActiveModalState {
   handleRangeDateChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
   handleClose: () => void;
   handleConfirm: () => Promise<void>;
-  buildPayload: () => CreationPayload;
+  buildPayload: () => CreateActivationInput;
   isOpen: boolean;
   open: () => void;
 
@@ -92,7 +90,7 @@ export function useSetActiveModal(payload: {
   } = payload;
   const { isOpen, open, close } = useModal();
 
-  const service = useMemo(() => new ActiveScheduleService(), []);
+  const service = activeScheduleService;
 
   const [dateMode, setDateMode] = useState<DateMode>(null);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -275,82 +273,78 @@ export function useSetActiveModal(payload: {
     rangeResolvedEnd,
   ]);
 
-  const buildPayload = useCallback((): CreationPayload => {
+  /**
+   * Earliest start_time and latest end_time across all schedule items,
+   * in "HH:MM" format. Computed from scheduleItems so the activation
+   * window spans the full generated schedule.
+   */
+  const scheduleTimeBounds = useMemo(() => {
+    return {
+      scheduleTimeStart: scheduleItems[0].start_time,
+      sheduleTimeEnd: scheduleItems[scheduleItems.length - 1].end_time,
+    };
+  }, [scheduleItems]);
+
+  const buildPayload = useCallback((): CreateActivationInput => {
     if (!generatedScheduleId) throw new Error("No generatedScheduleId");
 
     if (isScheduleNeedsToSave && scheduleItems.length === 0)
       throw new Error("No scheduleItem to save`");
 
-    const newSchedule: Schedule | undefined = !isScheduleNeedsToSave
-      ? undefined
-      : {
-          id: generatedScheduleId,
-          name: "N/A",
-          schedule_list: scheduleItems,
-          temporary: true,
-        };
+    let activeType: "days" | "date";
+    let selectedDayIndices: number[] | undefined;
+    let selectedDate: Date | undefined;
+    let nonReccuringDaysTypeStartsAt: Date | undefined;
 
     if (dateMode === "specific") {
+      activeType = "date";
       const date = startOfDay(specificDate);
-      const newActiveSchedule: ActiveSchedule = {
-        id: "" as never,
-        schedule_id: generatedScheduleId,
-        active_type: "date",
-        recurring: false,
-        starts_at: date,
-        ends_at: date,
-      };
-      return {
-        isScheduleNeedsToSave,
-        newSchedule,
-        newActiveSchedule,
-        selectedDate: date,
-      };
+      selectedDate = date;
+      // For date type, the activation starts at the selected date itself
+      nonReccuringDaysTypeStartsAt = date;
+    } else {
+      activeType = "days";
+
+      let dayIndices: number[] = [];
+      const today = new Date();
+
+      if (dateMode === "today") {
+        dayIndices = [todayWeekdayIndex];
+        if (!recurring) {
+          const date = startOfDay(today);
+          nonReccuringDaysTypeStartsAt = date;
+        }
+      } else if (dateMode === "tomorrow") {
+        const tomorrowIdx = (todayWeekdayIndex + 1) % 7;
+        dayIndices = [tomorrowIdx];
+        if (!recurring) {
+          const date = startOfDay(addDays(today, 1));
+          nonReccuringDaysTypeStartsAt = date;
+        }
+      } else if (dateMode === "range") {
+        dayIndices = selectedDays.map((day) => DAYS.indexOf(day)).sort((a, b) => a - b);
+
+        // For non-recurring day selections, the start is the first selected
+        // day on or after the anchor date (e.g. anchor=21, selected Sun/Mon
+        // → startsAt = 22, the first selected day at/after the anchor)
+        if (!recurring && dayIndices.length > 0 && rangeResolvedStart) {
+          nonReccuringDaysTypeStartsAt = rangeResolvedStart;
+        }
+      }
+
+      selectedDayIndices = dayIndices.length > 0 ? dayIndices : undefined;
     }
-
-    let dayIndices: number[] = [];
-    let startsAt: Date | undefined;
-    let endsAt: Date | undefined;
-    const today = new Date();
-
-    if (dateMode === "today") {
-      dayIndices = [todayWeekdayIndex];
-      if (!recurring) {
-        const date = startOfDay(today);
-        startsAt = date;
-        endsAt = date;
-      }
-    } else if (dateMode === "tomorrow") {
-      const tomorrowIdx = (todayWeekdayIndex + 1) % 7;
-      dayIndices = [tomorrowIdx];
-      if (!recurring) {
-        const date = startOfDay(addDays(today, 1));
-        startsAt = date;
-        endsAt = date;
-      }
-    } else if (dateMode === "range") {
-      dayIndices = selectedDays.map((day) => DAYS.indexOf(day)).sort((a, b) => a - b);
-
-      if (!recurring && dayIndices.length > 0 && rangeResolvedStart && rangeResolvedEnd) {
-        startsAt = rangeResolvedStart;
-        endsAt = rangeResolvedEnd;
-      }
-    }
-
-    const newActiveSchedule: ActiveSchedule = {
-      id: "" as never,
-      schedule_id: generatedScheduleId,
-      active_type: "days",
-      recurring,
-      starts_at: startsAt,
-      ends_at: endsAt,
-    };
 
     return {
-      isScheduleNeedsToSave,
-      newSchedule,
-      newActiveSchedule,
-      selectedDays: dayIndices,
+      scheduleId: generatedScheduleId,
+      activeType,
+      recurring,
+      selectedDays: selectedDayIndices,
+      selectedDate,
+      overwrite: false,
+      nonReccuringDaysTypeStartsAt,
+      scheduleTimeStart: scheduleTimeBounds.scheduleTimeStart,
+      sheduleTimeEnd: scheduleTimeBounds.sheduleTimeEnd,
     };
   }, [
     dateMode,
@@ -363,16 +357,17 @@ export function useSetActiveModal(payload: {
     rangeResolvedEnd,
     scheduleItems,
     isScheduleNeedsToSave,
+    scheduleTimeBounds,
   ]);
 
   const handleConfirm = useCallback(async () => {
     if (isConfirmBlocked) return;
 
-    const activationPayload = buildPayload();
+    const input = buildPayload();
     setIsSubmitting(true);
 
     try {
-      await service.createAsync({ activationPayload, overWrite: false });
+      await service.createAsync(input);
 
       if (isScheduleNeedsToSave) {
         setIsScheduleSavedByActivation(true);
@@ -395,7 +390,6 @@ export function useSetActiveModal(payload: {
   }, [
     isConfirmBlocked,
     buildPayload,
-    service,
     isScheduleNeedsToSave,
     setIsScheduleSavedByActivation,
   ]);
@@ -424,12 +418,10 @@ export function useSetActiveModal(payload: {
     setIsResolvingConflict(true);
     try {
       // TODO: apply the reorder/drop resolution against `conflicts`,
-      // then retry activation (e.g. service.createAsync(buildPayload(), true, { overwrite: true })
-      // or per-conflict PATCH calls) once the overwrite contract on
-      // ActiveScheduleService is finalized
+      // then retry activation with overwrite enabled
 
-      const activationPayload = buildPayload();
-      await service.createAsync({ activationPayload, overWrite: true });
+      const input = { ...buildPayload(), overwrite: true };
+      await service.createAsync(input);
 
       setConflicts([]);
       setIsConflictModalOpen(false);
@@ -438,7 +430,7 @@ export function useSetActiveModal(payload: {
     } finally {
       setIsResolvingConflict(false);
     }
-  }, [conflicts, service, buildPayload]);
+  }, [conflicts, buildPayload]);
 
   return {
     dateMode,

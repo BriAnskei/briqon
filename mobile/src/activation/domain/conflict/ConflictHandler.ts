@@ -1,6 +1,6 @@
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
-import type { ActivationContext } from "./ActivationContext";
+import type { Activation } from "../Activation";
 
 export interface ConflictHandler {
-  check(context: ActivationContext): Promise<ScheduleConflict[]>;
+  check(context: Activation): Promise<ScheduleConflict[]>;
 }

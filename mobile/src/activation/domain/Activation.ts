@@ -1,15 +1,18 @@
 import { ulid } from "ulid";
 import type { ActiveType, CreateActivationData } from "../types/CreateActivationData";
+import type { DateTypeActivation } from "../types/DateTypeActivation";
+import type { DayTypeNonOccuringActivation } from "../types/DayTypeNonOccuringActivation";
+import type { DayTypeOccuringActivation } from "../types/DayTypeOccuringActivation";
 import type { ActiveScheduleDate } from "./entity/ActiveScheduleDate";
 import type { ActiveScheduleDays } from "./entity/ActiveScheduleDays";
 import type { NonOccuringWindowRange } from "./entity/NonOccuringWindowRange";
 import type { OccuringOverflow } from "./entity/OccuringOverflow";
 
 export class Activation {
-  private days: ActiveScheduleDays[] | null = null;
+  private days: ActiveScheduleDays[] = [];
   private date: ActiveScheduleDate | null = null;
 
-  private nonReccuringRange: NonOccuringWindowRange[] | null = null;
+  private nonReccuringRange: NonOccuringWindowRange[] = [];
   private occuringOverflow: OccuringOverflow | null = null;
 
   private constructor(
@@ -24,7 +27,7 @@ export class Activation {
   }
 
   addDay(day: ActiveScheduleDays) {
-    this.days?.push(day);
+    this.days.push(day);
   }
 
   setDate(date: ActiveScheduleDate) {
@@ -35,23 +38,37 @@ export class Activation {
     this.occuringOverflow = occuringOverflow;
   }
 
-  getReccuringOverFlow(): OccuringOverflow {
-    if (this.activeType === "date" || !this.occuringOverflow)
-      throw new Error("Invalid type for activation or No data found in occuringOverflow");
-    return this.occuringOverflow;
-  }
-
   addNonReccuringRange(nonOccuringRange: NonOccuringWindowRange) {
-    this.nonReccuringRange?.push(nonOccuringRange);
+    this.nonReccuringRange.push(nonOccuringRange);
   }
 
-  getDays(): ActiveScheduleDays[] {
-    if (!this.days) throw new Error("No data in activation days");
-    return [...this.days];
+  getDayTypeOccuring(): DayTypeOccuringActivation {
+    if (!this.occuringOverflow)
+      throw new Error("Non occuring day type requires one occuring over flow entity");
+
+    return {
+      days: this.days,
+      occuringOverflow: this.occuringOverflow,
+    };
   }
 
-  getDate(): ActiveScheduleDate {
-    if (!this.date) throw new Error("No date intance");
-    return this.date;
+  getDayTypeNonOccuring(): DayTypeNonOccuringActivation {
+    if (this.nonReccuringRange.length !== this.days.length)
+      throw new Error("Days type non reccuring requires a reccuring ranges for each day");
+
+    return {
+      days: this.days,
+      ranges: this.nonReccuringRange,
+    };
+  }
+
+  getDateType(): DateTypeActivation {
+    if (!this.date) throw new Error("Date type activation requires a date data");
+    if (this.nonReccuringRange.length === 0)
+      throw new Error("Date type activation requies one nonOccuring range");
+    return {
+      date: this.date,
+      range: this.nonReccuringRange[this.nonReccuringRange.length - 1],
+    };
   }
 }

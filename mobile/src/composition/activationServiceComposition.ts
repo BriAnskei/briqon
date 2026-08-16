@@ -1,6 +1,7 @@
 // activation/composition/activeScheduleService.ts
 
 import { AddActivationService } from "../activation/AddActivationService";
+import { ActivationFactory } from "../activation/domain/ActivationFactory";
 import { ConflictDetector } from "../activation/domain/conflict/ConflictDetector";
 import { ConflictResolver } from "../activation/domain/conflict/ConflictResolver";
 import { DaysActivationConflictHandler } from "../activation/domain/conflict/DaysActivationConflictHandler";
@@ -26,7 +27,7 @@ const rangeConflictHandler = new RangeActivationConflictHandler(activeScheduleRe
 
 const conflictDetector = new ConflictDetector([
   daysConflictHandler,
-  rangeConflictHandler,
+  // rangeConflictHandler,
 ]);
 
 const conflictResolver = new ConflictResolver(
@@ -41,10 +42,13 @@ const activationRepository = new SQLiteActivationRepository(
   activeScheduleDatesRepository,
 );
 
+const activationFactory = new ActivationFactory();
+
 const addActivationService = new AddActivationService(
   conflictDetector,
   conflictResolver,
   activationRepository,
+  activationFactory,
 );
 
 export const activeScheduleService = new ActiveScheduleService(

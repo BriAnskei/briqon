@@ -7,13 +7,13 @@ export type CreateActivationInput = {
 
   selectedDays?: number[];
 
-  selectedDate?: string;
+  selectedDate?: Date;
 
   overwrite: boolean;
 
   nonReccuringDaysTypeStartsAt?: Date;
 
   scheduleTimeStart: string;
-
+  // both HH:MM format
   sheduleTimeEnd: string;
 };

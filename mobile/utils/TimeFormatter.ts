@@ -177,6 +177,7 @@ export function startOfDay(date: Date): Date {
   return d;
 }
 
+/** new Date('2026-08-16') + 5 → new Date('2026-08-21') */
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -235,4 +236,33 @@ export function parseLocalISODate(date: string): Date {
   const [year, month, day] = date.split("-").map(Number);
 
   return new Date(year, month - 1, day);
+}
+
+/**  Replaces the time portion of a given date with parsed hour and minute from a time
+ string, returning a new Date object */
+export function createDateTimeFromTime(date: Date, time: string): Date {
+  const { hour, minute } = parseTime(time);
+
+  const result = new Date(date);
+  result.setHours(hour, minute, 0, 0);
+
+  return result;
+}
+
+/**  Combines a base date with start and end time strings into a date range, adding one day
+ to the end time if it falls before or at the start time to handle overnight schedules. */
+export function createTimeRange(
+  date: Date,
+  startTime: string,
+  endTime: string,
+): { startsAt: Date; endsAt: Date } {
+  const startsAt = createDateTimeFromTime(date, startTime);
+  const endsAt = createDateTimeFromTime(date, endTime);
+
+  // Schedule crosses midnight.
+  if (endsAt <= startsAt) {
+    endsAt.setDate(endsAt.getDate() + 1);
+  }
+
+  return { startsAt, endsAt };
 }
