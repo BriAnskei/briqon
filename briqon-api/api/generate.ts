@@ -23,6 +23,8 @@ export async function generateHanlder(req: any, res: any) {
     });
   }
 
+  console.log(" prompt: ", prompt);
+
   try {
     let MAX_ATTEMPS = 2;
 

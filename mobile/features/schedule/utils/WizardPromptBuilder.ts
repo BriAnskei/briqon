@@ -98,6 +98,7 @@ function formatDurationMins(mins: number): string {
   return parts.length > 0 ? parts.join(" ") : "0 min";
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 export class WizardPromptBuilder {
   /**
    * A compact rules block (used when embedding scheduler rules into other

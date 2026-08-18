@@ -279,6 +279,8 @@ export function useSetActiveModal(payload: {
    * window spans the full generated schedule.
    */
   const scheduleTimeBounds = useMemo(() => {
+    if (scheduleItems.length === 0) return null;
+
     return {
       scheduleTimeStart: scheduleItems[0].start_time,
       sheduleTimeEnd: scheduleItems[scheduleItems.length - 1].end_time,
@@ -287,6 +289,8 @@ export function useSetActiveModal(payload: {
 
   const buildPayload = useCallback((): CreateActivationInput => {
     if (!generatedScheduleId) throw new Error("No generatedScheduleId");
+
+    if (!scheduleTimeBounds) throw new Error("No bounds detected");
 
     if (isScheduleNeedsToSave && scheduleItems.length === 0)
       throw new Error("No scheduleItem to save`");

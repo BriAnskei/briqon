@@ -1,17 +1,20 @@
 import { ulid } from "ulid";
-import { calculateNextDayMinutes, timeToMinutes } from "@/utils/TimeFormatter";
+import { createWindowMinutesFromTime } from "@/utils/TimeFormatter";
 
 export class OccuringOverflow {
   private constructor(
     readonly id: string,
     readonly activeId: string,
-    readonly startDayMinutes: number,
-    readonly nextDayMinutesExceed: number,
+    readonly windowStartMin: number,
+    readonly windowEndMin: number,
   ) {}
 
   static create(activeId: string, startsAt: string, endsAt: string): OccuringOverflow {
-    const startDayMinutes = timeToMinutes(startsAt);
-    const nextDayMinExceed = calculateNextDayMinutes(startsAt, endsAt);
-    return new OccuringOverflow(ulid(), activeId, startDayMinutes, nextDayMinExceed);
+    const { windowStartMin, windowEndMin } = createWindowMinutesFromTime(
+      startsAt,
+      endsAt,
+    );
+
+    return new OccuringOverflow(ulid(), activeId, windowStartMin, windowEndMin);
   }
 }

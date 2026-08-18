@@ -1,5 +1,6 @@
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 import { Activation } from "./Activation";
+import { ActiveScheduleDate } from "./entity/ActiveScheduleDate";
 import { ActiveScheduleDays } from "./entity/ActiveScheduleDays";
 import { NonOccuringWindowRange } from "./entity/NonOccuringWindowRange";
 import { OccuringOverflow } from "./entity/OccuringOverflow";
@@ -15,7 +16,7 @@ export class ActivationFactory {
     if (input.activeType === "days") {
       this.handleDayTypeActivation(activation, input);
     } else if (input.activeType === "date") {
-      this.addNonOccuringDateRange(activation, input);
+      this.handleDateTypeActivation(activation, input);
     }
 
     return activation;
@@ -31,10 +32,14 @@ export class ActivationFactory {
     }
   }
 
-  private addNonOccuringDateRange(
+  private handleDateTypeActivation(
     activation: Activation,
     input: CreateActivationInput,
   ): void {
+    if (!input.selectedDate)
+      throw new Error("Date type activation requires selected date");
+    activation.setDate(ActiveScheduleDate.create(activation.id, input.selectedDate));
+
     const range = NonOccuringWindowRange.create(
       activation.id,
       0, // No need for adding days for a date type activation

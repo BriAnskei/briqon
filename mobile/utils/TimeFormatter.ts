@@ -249,6 +249,19 @@ export function createDateTimeFromTime(date: Date, time: string): Date {
   return result;
 }
 
+export function createWindowMinutesFromTime(
+  startTime: string,
+  endTime: string,
+): { windowStartMin: number; windowEndMin: number } {
+  const windowStart = timeToMinutes(startTime);
+  let windowEnd = timeToMinutes(endTime);
+  if (windowEnd <= windowStart) windowEnd += 24 * 60;
+  return {
+    windowStartMin: windowStart,
+    windowEndMin: windowEnd,
+  };
+}
+
 /**  Combines a base date with start and end time strings into a date range, adding one day
  to the end time if it falls before or at the start time to handle overnight schedules. */
 export function createTimeRange(
