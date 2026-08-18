@@ -47,7 +47,7 @@ export class Activation {
       throw new Error("Non occuring day type requires one occuring over flow entity");
 
     return {
-      days: this.days,
+      days: [...this.days],
       occuringOverflow: this.occuringOverflow,
     };
   }

@@ -12,7 +12,6 @@ import {
   addDays,
   formatCompact,
   isSameDay,
-  minutesToTime,
   resolveRangeEnd,
   resolveRangeStart,
   startOfDay,
@@ -24,13 +23,13 @@ import type { GenerationResult } from "../../utils/scheduleResponseParser";
 export type DateMode = "today" | "tomorrow" | "range" | "specific" | null;
 
 export const DAYS = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
+  "Sunday", // index 0
+  "Monday", // index 1
+  "Tuesday", // index 2
+  "Wednesday", // index 3
+  "Thursday", // index 4
+  "Friday", // index 5
+  "Saturday", // index 6
 ];
 
 export interface UseSetActiveModalState {

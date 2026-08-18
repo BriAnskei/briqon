@@ -114,15 +114,16 @@ export const migrateDatabase = async () => {
     CREATE TABLE IF NOT EXISTS occurring_overflow (
       id TEXT PRIMARY KEY NOT NULL,
       active_id TEXT NOT NULL,
-      minutes_exceeded INTEGER NOT NULL,
+      window_start_min INTEGER NOT NULL,
+      window_end_min INTEGER NOT NULL,
 
-      foreign key (active_id)
-        references active_schedules(id)
-        on delete cascade
+      FOREIGN KEY (active_id)
+        REFERENCES active_schedules(id)
+        ON DELETE CASCADE
     );
 
-    CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
-      ON occurring_overflow(active_id);
+  CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
+    ON occurring_overflow(active_id);active_id);
 
 
 

@@ -3,11 +3,10 @@ import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.r
 import type { Activation } from "../Activation";
 import type { ConflictHandler } from "./ConflictHandler";
 
-export class DaysActivationConflictHandler implements ConflictHandler {
+export class OccurringActivationHandler implements ConflictHandler {
   constructor(private readonly activeScheduleRepository: ActiveScheduleRepository) {}
-  async check(context: Activation): Promise<ScheduleConflict[]> {
-    if (!context.reccuring) return [];
 
-    return this.activeScheduleRepository.findDayConflicts(payload.selectedDays ?? []);
+  async check(context: Activation): Promise<ScheduleConflict[]> {
+    return [];
   }
 }

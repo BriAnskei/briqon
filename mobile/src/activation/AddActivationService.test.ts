@@ -109,8 +109,11 @@ describe("AddActivationService — activation + factory output", () => {
   // Non-recurring days  (activeType = "days", recurring = false)
   // ===================================================================
   describe("day type — non-recurring", () => {
-    // Aug 18 2026 is a Tuesday.
-    const startDate = new Date("2026-08-18T00:00:00");
+    // Aug 17 2026 is a Monday — a weekday that is in the selectedDays arrays
+    // below ([1,3,5] and [1]), matching what useSetActiveModal.buildPayload
+    // produces via resolveRangeStart (the start date always lands on a
+    // selected weekday).
+    const startDate = new Date("2026-08-17T00:00:00");
 
     it("creates one NonOccuringWindowRange per selected day, each offset by dayIndex from startDate", async () => {
       const input: CreateActivationInput = {
@@ -137,20 +140,20 @@ describe("AddActivationService — activation + factory output", () => {
       expect(ranges).toHaveLength(3);
       expect(ranges.length).toBe(days.length); // one range per day
 
-      // Range 0 → startDate + 0 days (Tue, day 2)
+      // Range 0 → startDate + 0 days (Mon, day 1)
       expect(ranges[0].startsAt.getHours()).toBe(8);
       expect(ranges[0].startsAt.getMinutes()).toBe(0);
       expect(ranges[0].endsAt.getHours()).toBe(16);
       expect(ranges[0].endsAt.getMinutes()).toBe(0);
       // Same calendar day — no midnight crossing
       expect(ranges[0].startsAt.getDay()).toBe(ranges[0].endsAt.getDay());
-      expect(ranges[0].startsAt.getDay()).toBe(2); // Tuesday
+      expect(ranges[0].startsAt.getDay()).toBe(1); // Monday
 
-      // Range 1 → startDate + 1 day (Wed, day 3)
-      expect(ranges[1].startsAt.getDay()).toBe(3);
+      // Range 1 → startDate + 1 day (Tue, day 2)
+      expect(ranges[1].startsAt.getDay()).toBe(2);
 
-      // Range 2 → startDate + 2 days (Thu, day 4)
-      expect(ranges[2].startsAt.getDay()).toBe(4);
+      // Range 2 → startDate + 2 days (Wed, day 3)
+      expect(ranges[2].startsAt.getDay()).toBe(3);
 
       // Each range is exactly one calendar day apart
       expect(ranges[1].startsAt.getDate()).toBe(ranges[0].startsAt.getDate() + 1);
@@ -180,21 +183,21 @@ describe("AddActivationService — activation + factory output", () => {
       const context = new ActivationFactory().create(input);
       const { ranges } = context.getDayTypeNonOccuring();
 
-      // startsAt on startDate (Tuesday) at 22:00
+      // startsAt on startDate (Monday) at 22:00
       expect(ranges[0].startsAt.getHours()).toBe(22);
       expect(ranges[0].startsAt.getMinutes()).toBe(0);
-      expect(ranges[0].startsAt.getDay()).toBe(2); // Tuesday
+      expect(ranges[0].startsAt.getDay()).toBe(1); // Monday
 
-      // endsAt should wrap to the next day (Wednesday) at 06:00
+      // endsAt should wrap to the next day (Tuesday) at 06:00
       expect(ranges[0].endsAt.getHours()).toBe(6);
       expect(ranges[0].endsAt.getMinutes()).toBe(0);
-      expect(ranges[0].endsAt.getDay()).toBe(3); // Wednesday
+      expect(ranges[0].endsAt.getDay()).toBe(2); // Tuesday
       expect(ranges[0].endsAt.getDate()).toBe(ranges[0].startsAt.getDate() + 1);
 
       const logMsg = consoleSpy.mock.calls[0][0] as string;
       expect(logMsg).toContain("[Activation Debug] DayTypeNonOccuring");
       // The ISO timestamp for the start should reflect 22:00 on the start date
-      expect(logMsg).toContain("2026-08-18T22:00:00");
+      expect(logMsg).toContain("2026-08-17T22:00:00");
     });
   });
 

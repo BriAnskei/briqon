@@ -35,8 +35,6 @@ export class ActiveScheduleRepository extends BaseRepository {
       schedule_id: row.schedule_id,
       active_type: row.active_type,
       recurring: !!row.repeat_weekly,
-      starts_at: row.starts_at ? new Date(row.starts_at) : undefined,
-      ends_at: row.ends_at ? new Date(row.ends_at) : undefined,
     };
   }
 
@@ -104,8 +102,6 @@ export class ActiveScheduleRepository extends BaseRepository {
         activeSchedule.schedule_id,
         activeSchedule.active_type,
         activeSchedule.recurring,
-        activeSchedule.starts_at ? toLocalISODate(activeSchedule.starts_at) : null,
-        activeSchedule.ends_at ? toLocalISODate(activeSchedule.ends_at) : null,
       ],
       db ?? undefined,
     );
