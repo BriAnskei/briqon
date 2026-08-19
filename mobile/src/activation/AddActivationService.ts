@@ -107,7 +107,7 @@ export class AddActivationService {
       );
     }
 
-    // const conflicts = await this.conflictDetector.detect(context);
+    const conflicts = await this.conflictDetector.detect(context);
     //
     // if (!context.overwrite && conflicts.length > 0) {
     //   throw new ScheduleConflictError(

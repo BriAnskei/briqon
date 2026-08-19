@@ -123,7 +123,7 @@ export const migrateDatabase = async () => {
     );
 
   CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
-    ON occurring_overflow(active_id);active_id);
+    ON occurring_overflow(active_id);
 
 
 

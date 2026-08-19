@@ -1,8 +1,10 @@
 import type * as SQLite from "expo-sqlite";
 import { parseLocalISODate, toLocalISODate } from "@/utils/TimeFormatter";
+import type { FindReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindReccuringActivationConflictInput";
 import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "../models/activeSchedule.model";
 import { BaseRepository } from "./base.repository";
+import { FindNonReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
 
 type ConflictRow = {
   id: string;
@@ -105,6 +107,99 @@ export class ActiveScheduleRepository extends BaseRepository {
       ],
       db ?? undefined,
     );
+  }
+
+  async findReccuringConflict(input: FindReccuringActivationConflictInput) {
+    const placeholders = input.weekDays.map(() => "?").join(", ");
+
+    const rows = await this.all<ConflictRow>(
+      `
+        SELECT
+        a.id,
+        a.schedule_id,
+        s.name AS schedule_name,
+
+        a.active_type,
+        a.recurring,
+
+        d.weekday AS selected_day,
+
+        NULL AS selected_date,
+
+        o.window_start_min,
+        o.window_end_min
+
+      FROM active_schedules a
+
+      JOIN schedules s
+        ON s.id = a.schedule_id
+
+      JOIN active_schedule_days d
+        ON d.active_schedule_id = a.id
+
+      JOIN occurring_overflow o
+        ON o.active_id = a.id
+
+      WHERE a.active_type = 'days'
+        AND a.recurring = 1
+
+        AND d.weekday IN (${placeholders})
+
+        AND o.window_start_min < ?
+        AND o.window_end_min > ?
+
+`,
+      [...input.weekDays, input.windowEndMin, input.windowStartMin],
+    );
+    return this.groupConflicts(rows);
+  }
+
+  async findNonOccurringConflict(
+    ranges: FindNonReccuringActivationConflictInput[],
+  ): Promise<ScheduleConflict[]> {
+    if (ranges.length === 0) {
+      return [];
+    }
+
+    const conditions = ranges
+      .map(() => `(r.starts_at < ? AND r.ends_at > ?)`)
+      .join(" OR ");
+
+    const params = ranges.flatMap((range) => [
+      range.endsAt.toISOString(),
+      range.startsAt.toISOString(),
+    ]);
+
+    const rows = await this.all<ConflictRow>(
+      `
+      SELECT
+        a.id,
+        a.schedule_id,
+        s.name AS schedule_name,
+
+        a.active_type,
+        a.recurring,
+
+        r.starts_at,
+        r.ends_at,
+
+        NULL AS selected_day,
+        NULL AS selected_date
+
+      FROM non_recurring_ranges r
+
+      JOIN active_schedules a
+        ON a.id = r.active_id
+
+      JOIN schedules s
+        ON s.id = a.schedule_id
+
+      WHERE ${conditions}
+    `,
+      params,
+    );
+
+    return this.groupConflicts(rows);
   }
 
   async findRangeOverlaps(

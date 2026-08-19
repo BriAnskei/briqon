@@ -4,8 +4,9 @@ import { AddActivationService } from "../activation/AddActivationService";
 import { ActivationFactory } from "../activation/domain/ActivationFactory";
 import { ConflictDetector } from "../activation/domain/conflict/ConflictDetector";
 import { ConflictResolver } from "../activation/domain/conflict/ConflictResolver";
-import { DaysActivationConflictHandler } from "../activation/domain/conflict/NonOccuringActivationHandler";
-import { RangeActivationConflictHandler } from "../activation/domain/conflict/OccurringActivationHandler";
+import { NonOccuringActivationHandler } from "../activation/domain/conflict/NonOccuringActivationHandler";
+import { OccurringActivationHandler } from "../activation/domain/conflict/OccurringActivationHandler";
+
 import { SQLiteActivationRepository } from "../activation/SQLiteActivationRepository";
 import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
@@ -21,33 +22,35 @@ const activeScheduleDatesRepository = new ActiveScheduleDatesRepository();
 
 const scheduleRepository = new ScheduleRepository();
 
-const daysConflictHandler = new DaysActivationConflictHandler(activeScheduleRepository);
-
-const rangeConflictHandler = new RangeActivationConflictHandler(activeScheduleRepository);
-
-const conflictDetector = new ConflictDetector([
-  daysConflictHandler,
-  // rangeConflictHandler,
-]);
-
 const conflictResolver = new ConflictResolver(
   activeScheduleRepository,
   activeScheduleDaysRepository,
 );
 
-const activationRepository = new SQLiteActivationRepository(
+const sqliteActivationRepository = new SQLiteActivationRepository(
   activeScheduleRepository,
   scheduleRepository,
   activeScheduleDaysRepository,
   activeScheduleDatesRepository,
 );
 
+const occuringActivationHandler = new OccurringActivationHandler(
+  activeScheduleRepository,
+);
+
+const nonOccuringHandler = new NonOccuringActivationHandler(activeScheduleRepository);
+
+const conflictDetector = new ConflictDetector([
+  occuringActivationHandler,
+  // rangeConflictHandler,
+]);
+
 const activationFactory = new ActivationFactory();
 
 const addActivationService = new AddActivationService(
   conflictDetector,
   conflictResolver,
-  activationRepository,
+  sqliteActivationRepository,
   activationFactory,
 );
 

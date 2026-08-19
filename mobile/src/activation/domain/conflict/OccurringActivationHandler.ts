@@ -7,6 +7,12 @@ export class OccurringActivationHandler implements ConflictHandler {
   constructor(private readonly activeScheduleRepository: ActiveScheduleRepository) {}
 
   async check(context: Activation): Promise<ScheduleConflict[]> {
-    return [];
+    const { days, occuringOverflow } = context.getDayTypeOccuring();
+
+    return await this.activeScheduleRepository.findReccuringConflict({
+      weekDays: days.map((d) => d.weekday),
+      windowStartMin: occuringOverflow.windowStartMin,
+      windowEndMin: occuringOverflow.windowEndMin,
+    });
   }
 }
