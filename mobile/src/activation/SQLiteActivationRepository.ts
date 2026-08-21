@@ -1,11 +1,14 @@
-import type { SQLiteDatabase } from "expo-sqlite";
-import { ulid } from "ulid";
-import type { CreationPayload } from "@/type/services/activationService.types";
+import type * as SQLite from "expo-sqlite";
 import type { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import type { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import type { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import type { ScheduleRepository } from "../repository/schedule.repository";
 import type { ActivationRepository } from "./ActivationRepository";
+import type { Activation } from "./domain/Activation";
+import type { ActiveScheduleDays } from "./domain/entity/ActiveScheduleDays";
+import type { CreateActiveScheduleInput } from "./types/CreateActiveScheduleInput";
+import { OccuringTimeWindow } from "./domain/entity/OccurinngTimeWindow";
+import { DayTypeNonOccuringActivation } from "./types/payloads/DayTypeNonOccuringActivation";
 
 export class SQLiteActivationRepository implements ActivationRepository {
   constructor(
@@ -15,48 +18,26 @@ export class SQLiteActivationRepository implements ActivationRepository {
     private readonly activeScheduleDateRepo: ActiveScheduleDatesRepository,
   ) {}
 
-  async create(payload: CreationPayload): Promise<void> {
-    const activeScheduleId = ulid();
-
-    await this.repo.transaction(async (db) => {
-      if (payload.isScheduleNeedsToSave && payload.newSchedule) {
-        await this.scheduleRepo.create(payload.newSchedule, db);
-      }
-
-      await this.repo.create({ ...payload.newActiveSchedule, id: activeScheduleId }, db);
-
-      await this.persistActiveType(payload, activeScheduleId, db);
-    });
+  async create(payload: Activation): Promise<void> {
+    await this.repo.transaction(async (db) => {});
   }
 
-  private async persistActiveType(
-    payload: CreationPayload,
-    activeScheduleId: string,
-    db: SQLiteDatabase,
+  private async handleOccuring(payload: DayTypeNonOccuringActivation): Promise<void> {
+    
+  }
+  
+
+  private async persistActivation(
+    activeSchedule: CreateActiveScheduleInput,
+    db: SQLite.SQLiteDatabase,
   ) {
-    if (payload.newActiveSchedule.active_type === "days") {
-      await this.createSelectedDays(payload.selectedDays ?? [], activeScheduleId, db);
-
-      return;
-    }
-
-    if (payload.newActiveSchedule.active_type === "date") {
-      if (!payload.selectedDate) {
-        throw new Error("No data for the date selection");
-      }
-
-      await this.createDate(payload.selectedDate, activeScheduleId, db);
-    }
+    await this.repo.create(activeSchedule, db);
   }
 
-  private async createSelectedDays(
-    selectedDays: number[],
-    activeScheduleId: string,
-    db: SQLiteDatabase,
-  ) {}
-  private async createDate(
-    selectedDate: Date,
-    activeScheduleId: string,
-    db: SQLiteDatabase,
-  ) {}
+  private async persistDays(
+    activeScheduleDays: ActiveScheduleDays,
+    db: SQLite.SQLiteDatabase,
+  ): Promise<void> {}
+
+  private async persistOccuringtimeWindow(payload: OccuringTimeWindow): Promise<void>;
 }

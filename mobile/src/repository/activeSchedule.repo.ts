@@ -1,10 +1,12 @@
 import type * as SQLite from "expo-sqlite";
-import { parseLocalISODate, toLocalISODate } from "@/utils/TimeFormatter";
+import { CreateActivationInput } from "@/type/ui/schedule/activation.types";
+import { parseLocalISODate } from "@/utils/TimeFormatter";
+import type { CreateActiveScheduleInput } from "../activation/types/CreateActiveScheduleInput";
+import type { FindNonReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
 import type { FindReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindReccuringActivationConflictInput";
 import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "../models/activeSchedule.model";
 import { BaseRepository } from "./base.repository";
-import { FindNonReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
 
 type ConflictRow = {
   id: string;
@@ -19,6 +21,10 @@ type ConflictRow = {
 
   selected_day: number | null;
   selected_date: string | null;
+
+  /** Minutes-from-midnight — populated for recurring (occurring) conflicts. */
+  window_start_min: number | null;
+  window_end_min: number | null;
 };
 
 type ActiveScheduleRow = {
@@ -86,7 +92,7 @@ export class ActiveScheduleRepository extends BaseRepository {
     return Array.from(conflicts.values());
   }
 
-  async create(activeSchedule: ActiveSchedule, db?: SQLite.SQLiteDatabase) {
+  async create(activeSchedule: CreateActiveScheduleInput, db: SQLite.SQLiteDatabase) {
     return await this.run(
       `
       INSERT INTO active_schedules (
@@ -94,16 +100,14 @@ export class ActiveScheduleRepository extends BaseRepository {
         schedule_id,
         active_type,
         recurring,
-        starts_at,
-        ends_at
       )
       VALUES (?, ?, ?, ?, ?, ?)
       `,
       [
         activeSchedule.id,
-        activeSchedule.schedule_id,
-        activeSchedule.active_type,
-        activeSchedule.recurring,
+        activeSchedule.scheduleId,
+        activeSchedule.activeType,
+        activeSchedule.reccuring,
       ],
       db ?? undefined,
     );
@@ -112,45 +116,85 @@ export class ActiveScheduleRepository extends BaseRepository {
   async findReccuringConflict(input: FindReccuringActivationConflictInput) {
     const placeholders = input.weekDays.map(() => "?").join(", ");
 
+    const previousWeekDays = input.weekDays.map((day) => (day - 1 + 7) % 7);
+
+    const previousPlaceholders = previousWeekDays.map(() => "?").join(", ");
+
     const rows = await this.all<ConflictRow>(
       `
-        SELECT
-        a.id,
-        a.schedule_id,
-        s.name AS schedule_name,
+    SELECT DISTINCT
+      a.id,
+      a.schedule_id,
+      s.name AS schedule_name,
 
-        a.active_type,
-        a.recurring,
+      a.active_type,
+      a.recurring,
 
-        d.weekday AS selected_day,
+      d.weekday AS selected_day,
 
-        NULL AS selected_date,
+      NULL AS selected_date,
 
-        o.window_start_min,
-        o.window_end_min
+      o.window_start_min,
+      o.window_end_min
 
-      FROM active_schedules a
+    FROM active_schedules a
 
-      JOIN schedules s
-        ON s.id = a.schedule_id
+    JOIN schedules s
+      ON s.id = a.schedule_id
 
-      JOIN active_schedule_days d
-        ON d.active_schedule_id = a.id
+    JOIN active_schedule_days d
+      ON d.active_schedule_id = a.id
 
-      JOIN occurring_overflow o
-        ON o.active_id = a.id
+    JOIN occurring_time_window o
+      ON o.active_id = a.id
 
-      WHERE a.active_type = 'days'
-        AND a.recurring = 1
+    WHERE a.active_type = 'days'
+      AND a.recurring = 1
 
-        AND d.weekday IN (${placeholders})
+      AND EXISTS (
+        SELECT 1
 
-        AND o.window_start_min < ?
-        AND o.window_end_min > ?
+        FROM active_schedule_days conflict_day
 
-`,
-      [...input.weekDays, input.windowEndMin, input.windowStartMin],
+        JOIN occurring_time_window conflict_window
+          ON conflict_window.active_id = a.id
+
+        WHERE conflict_day.active_schedule_id = a.id
+
+          AND (
+            -- Same weekday conflict
+            (
+              conflict_day.weekday IN (${placeholders})
+
+              AND conflict_window.window_start_min < ?
+              AND conflict_window.window_end_min > ?
+            )
+
+            OR
+
+            -- Previous weekday / overnight conflict
+            (
+              conflict_day.weekday IN (${previousPlaceholders})
+
+              AND conflict_window.window_end_min > 1440
+
+              AND (conflict_window.window_end_min - 1440) > ?
+            )
+          )
+      )
+    `,
+      [
+        ...input.weekDays,
+
+        input.windowEndMin,
+        input.windowStartMin,
+
+        ...previousWeekDays,
+
+        input.windowStartMin,
+      ],
     );
+
     return this.groupConflicts(rows);
   }
 
@@ -172,118 +216,39 @@ export class ActiveScheduleRepository extends BaseRepository {
 
     const rows = await this.all<ConflictRow>(
       `
-      SELECT
-        a.id,
-        a.schedule_id,
-        s.name AS schedule_name,
+    SELECT
+    a.id,
+    a.schedule_id,
+    s.name AS schedule_name,
 
-        a.active_type,
-        a.recurring,
+    a.active_type,
+    a.recurring,
 
-        r.starts_at,
-        r.ends_at,
+    r.starts_at,
+    r.ends_at,
 
-        NULL AS selected_day,
-        NULL AS selected_date
+    d.weekday AS selected_day,
+    ad.date AS selected_date
 
-      FROM non_recurring_ranges r
+  FROM non_recurring_ranges r
 
-      JOIN active_schedules a
-        ON a.id = r.active_id
+  JOIN active_schedules a
+    ON a.id = r.active_id
 
-      JOIN schedules s
-        ON s.id = a.schedule_id
+  JOIN schedules s
+    ON s.id = a.schedule_id
 
-      WHERE ${conditions}
+  LEFT JOIN active_schedule_days d
+    ON d.active_schedule_id = a.id
+
+  LEFT JOIN active_schedule_dates ad
+    ON ad.active_schedule_id = a.id
+
+  WHERE
+  a.recurring = 1 AND
+ ${conditions}
     `,
       params,
-    );
-
-    return this.groupConflicts(rows);
-  }
-
-  async findRangeOverlaps(
-    startsAt?: string,
-    endsAt?: string,
-  ): Promise<ScheduleConflict[]> {
-    if (!startsAt || !endsAt) return [];
-
-    const rows = await this.all<ConflictRow>(
-      `
-			SELECT
-				a.id,
-				a.schedule_id,
-				s.name AS schedule_name,
-
-				a.active_type,
-				a.recurring,
-
-				a.starts_at,
-				a.ends_at,
-
-				d.weekday AS selected_day,
-				ad.date AS selected_date
-
-			FROM active_schedules a
-
-			INNER JOIN schedules s
-				ON s.id = a.schedule_id
-
-			LEFT JOIN active_schedule_days d
-				ON d.active_schedule_id = a.id
-
-			LEFT JOIN active_schedule_dates ad
-				ON ad.active_schedule_id = a.id
-
-			WHERE
-				a.starts_at <= ?
-				AND a.ends_at >= ?
-			`,
-      [endsAt, startsAt],
-    );
-
-    return this.groupConflicts(rows);
-  }
-
-  /** returns reccuring days conflicts */
-  async findDayConflicts(days: number[]): Promise<ScheduleConflict[]> {
-    const placeholders = days.map(() => "?").join(",");
-
-    const rows = await this.all<ConflictRow>(
-      `
-			SELECT
-				a.id,
-				a.schedule_id,
-				s.name AS schedule_name,
-
-				a.active_type,
-				a.recurring,
-
-				a.starts_at,
-				a.ends_at,
-
-				d.weekday AS selected_day,
-				NULL AS selected_date
-
-			FROM active_schedules a
-
-			INNER JOIN schedules s
-				ON s.id = a.schedule_id
-
-			INNER JOIN active_schedule_days d
-				ON d.active_schedule_id = a.id
-
-			WHERE
-				a.recurring = 1
-				AND EXISTS (
-					SELECT 1
-					FROM active_schedule_days conflict_days
-					WHERE
-						conflict_days.active_schedule_id = a.id
-						AND conflict_days.weekday IN (${placeholders})
-				)
-			`,
-      days,
     );
 
     return this.groupConflicts(rows);

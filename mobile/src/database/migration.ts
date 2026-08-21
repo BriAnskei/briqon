@@ -109,9 +109,7 @@ export const migrateDatabase = async () => {
 
 
 
-
-    -- Occurring Ending Window
-    CREATE TABLE IF NOT EXISTS occurring_overflow (
+    CREATE TABLE IF NOT EXISTS occurring_time_window (
       id TEXT PRIMARY KEY NOT NULL,
       active_id TEXT NOT NULL,
       window_start_min INTEGER NOT NULL,
@@ -123,7 +121,7 @@ export const migrateDatabase = async () => {
     );
 
   CREATE INDEX IF NOT EXISTS idx_occurring_overflow_active_id
-    ON occurring_overflow(active_id);
+    ON occurring_time_window(active_id);
 
 
 

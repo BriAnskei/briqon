@@ -27,7 +27,7 @@ const conflictResolver = new ConflictResolver(
   activeScheduleDaysRepository,
 );
 
-const sqliteActivationRepository = new SQLiteActivationRepository(
+const activationRepository = new SQLiteActivationRepository(
   activeScheduleRepository,
   scheduleRepository,
   activeScheduleDaysRepository,
@@ -42,7 +42,7 @@ const nonOccuringHandler = new NonOccuringActivationHandler(activeScheduleReposi
 
 const conflictDetector = new ConflictDetector([
   occuringActivationHandler,
-  // rangeConflictHandler,
+  nonOccuringHandler,
 ]);
 
 const activationFactory = new ActivationFactory();
@@ -50,7 +50,7 @@ const activationFactory = new ActivationFactory();
 const addActivationService = new AddActivationService(
   conflictDetector,
   conflictResolver,
-  sqliteActivationRepository,
+  activationRepository,
   activationFactory,
 );
 

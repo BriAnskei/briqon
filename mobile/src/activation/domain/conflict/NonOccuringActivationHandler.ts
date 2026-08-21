@@ -6,7 +6,7 @@ import type { ConflictHandler } from "./ConflictHandler";
 export class NonOccuringActivationHandler implements ConflictHandler {
   constructor(private readonly activeScheduleRepository: ActiveScheduleRepository) {}
   async check(context: Activation): Promise<ScheduleConflict[]> {
-    if (!context.reccuring) return [];
+    if (context.reccuring) return [];
 
     const dateConflicts = await this.handleDateTypeConflict(context);
     const daysConflicts = await this.handleDaysTypeConflict(context);

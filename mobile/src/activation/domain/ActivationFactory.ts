@@ -3,7 +3,7 @@ import { Activation } from "./Activation";
 import { ActiveScheduleDate } from "./entity/ActiveScheduleDate";
 import { ActiveScheduleDays } from "./entity/ActiveScheduleDays";
 import { NonOccuringWindowRange } from "./entity/NonOccuringWindowRange";
-import { OccuringOverflow } from "./entity/OccuringOverflow";
+import { OccuringTimeWindow } from "./entity/OccurinngTimeWindow";
 
 export class ActivationFactory {
   create(input: CreateActivationInput): Activation {
@@ -62,7 +62,7 @@ export class ActivationFactory {
     activation: Activation,
     input: CreateActivationInput,
   ): void {
-    const overflow = OccuringOverflow.create(
+    const overflow = OccuringTimeWindow.create(
       activation.id,
       input.scheduleTimeStart,
       input.sheduleTimeEnd,

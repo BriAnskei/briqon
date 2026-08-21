@@ -1,6 +1,7 @@
 import type { ActiveType } from "./ActiveType";
 
-export interface CreateActivationData {
+export interface CreateActiveScheduleInput {
+  id: string;
   scheduleId: string;
   activeType: ActiveType;
   reccuring: boolean;

@@ -13,8 +13,7 @@ const mockActivationRepository = { create: jest.fn() };
 
 /**
  * Builds a service whose ActivationFactory is the *real* one.  This lets us
- * verify the end-to-end output of the factory aggregate as observed through
- * the service's debug-log branches.
+ * verify the end-to-end output of the factory aggregate.
  */
 function makeService() {
   return new AddActivationService(
@@ -26,15 +25,8 @@ function makeService() {
 }
 
 describe("AddActivationService — activation + factory output", () => {
-  let consoleSpy: jest.SpyInstance;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleSpy = jest.spyOn(console, "log").mockImplementation();
-  });
-
-  afterEach(() => {
-    consoleSpy.mockRestore();
   });
 
   // ===================================================================
@@ -67,14 +59,6 @@ describe("AddActivationService — activation + factory output", () => {
       expect(occuringOverflow.windowStartMin).toBe(480); // 08:00 → 8*60
       expect(occuringOverflow.windowEndMin).toBe(960); // 16:00 → 16*60
       expect(occuringOverflow.id).toBeTruthy();
-
-      // Service debug log -------------------------------------------------------
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("[Activation Debug] DayTypeOccuring");
-      expect(logMsg).toContain("occuringOverflow");
-      expect(logMsg).toContain("480");
-      expect(logMsg).toContain("960");
     });
 
     it("handles a night shift by wrapping windowEndMin past midnight (+24h)", async () => {
@@ -97,11 +81,6 @@ describe("AddActivationService — activation + factory output", () => {
       // Because 360 ≤ 1320 the factory adds 24*60 = 1440 → 1800.
       expect(occuringOverflow.windowStartMin).toBe(1320);
       expect(occuringOverflow.windowEndMin).toBe(1800);
-
-      // The debug log should reflect the wrapped value too.
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("1320");
-      expect(logMsg).toContain("1800");
     });
   });
 
@@ -158,12 +137,6 @@ describe("AddActivationService — activation + factory output", () => {
       // Each range is exactly one calendar day apart
       expect(ranges[1].startsAt.getDate()).toBe(ranges[0].startsAt.getDate() + 1);
       expect(ranges[2].startsAt.getDate()).toBe(ranges[1].startsAt.getDate() + 1);
-
-      // Service debug log
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("[Activation Debug] DayTypeNonOccuring");
-      expect(logMsg).toContain("ranges");
     });
 
     it("handles night shift in non-recurring ranges by moving endsAt to the next day", async () => {
@@ -193,11 +166,6 @@ describe("AddActivationService — activation + factory output", () => {
       expect(ranges[0].endsAt.getMinutes()).toBe(0);
       expect(ranges[0].endsAt.getDay()).toBe(2); // Tuesday
       expect(ranges[0].endsAt.getDate()).toBe(ranges[0].startsAt.getDate() + 1);
-
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("[Activation Debug] DayTypeNonOccuring");
-      // The ISO timestamp for the start should reflect 22:00 on the start date
-      expect(logMsg).toContain("2026-08-17T22:00:00");
     });
   });
 
@@ -237,14 +205,6 @@ describe("AddActivationService — activation + factory output", () => {
       // Same calendar day — no midnight crossing
       expect(range.startsAt.getDay()).toBe(range.endsAt.getDay());
       expect(range.startsAt.getDay()).toBe(4); // Thursday
-
-      // Service debug log
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("[Activation Debug] DateType");
-      expect(logMsg).toContain("range");
-      expect(logMsg).toContain("startsAt");
-      expect(logMsg).toContain("endsAt");
     });
 
     it("handles a night shift in date type by moving endsAt to the next day", async () => {
@@ -276,9 +236,6 @@ describe("AddActivationService — activation + factory output", () => {
       expect(range.endsAt.getMinutes()).toBe(0);
       expect(range.endsAt.getDay()).toBe(5); // Friday
       expect(range.endsAt.getDate()).toBe(21); // Aug 21
-
-      const logMsg = consoleSpy.mock.calls[0][0] as string;
-      expect(logMsg).toContain("[Activation Debug] DateType");
     });
   });
 
