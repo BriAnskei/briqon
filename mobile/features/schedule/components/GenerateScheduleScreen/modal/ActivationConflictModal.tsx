@@ -13,7 +13,7 @@ import { useActivationConflictModal } from "@/features/schedule/hooks/generation
 import { DAYS } from "@/features/schedule/hooks/generation/useSetActiveModal";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import { Colors, Radius } from "@/type/theme";
-import { formatCompact, isSameDay } from "@/utils/TimeFormatter";
+import { formatCompact, formatTime, minutesToTime } from "@/utils/TimeFormatter";
 import { ResolveInfoPopover } from "../components/ResolveInfoPopover";
 
 interface ActivationConflictModalProp {
@@ -140,18 +140,34 @@ function ConflictCard({
 }) {
   const s = useCStyles();
 
-  const conflictingDayIndices = useMemo(() => {
-    if (!conflict.selectedDays) return [];
-    return conflict.selectedDays.filter((d) => activationDayIndices.includes(d));
-  }, [conflict.selectedDays, activationDayIndices]);
+  const allSelectedDays = useMemo(() => {
+    if (conflict.occuring) return conflict.occuring.selectedDays;
+    return conflict.nonOccuring?.selectedDays ?? [];
+  }, [conflict.occuring, conflict.nonOccuring]);
+
+  const conflictingDayIndices = useMemo(
+    () => allSelectedDays.filter((d) => activationDayIndices.includes(d)),
+    [allSelectedDays, activationDayIndices],
+  );
+
+  const timeLabel = useMemo(() => {
+    if (conflict.occuring) {
+      return `${minutesToTime(conflict.occuring.windowStartMin)} – ${minutesToTime(conflict.occuring.windowEndMin)}`;
+    }
+    if (conflict.nonOccuring?.ranges?.length) {
+      const range = conflict.nonOccuring.ranges[0];
+      return `${formatTime(range.startsAt)} – ${formatTime(range.endsAt)}`;
+    }
+    return "";
+  }, [conflict.occuring, conflict.nonOccuring]);
 
   const dateLabel = useMemo(() => {
-    if (!conflict.startsAt) return conflict.selectedDate ?? "";
-    const end = conflict.endsAt ?? conflict.startsAt;
-    return isSameDay(conflict.startsAt, end)
-      ? formatCompact(conflict.startsAt)
-      : `${formatCompact(conflict.startsAt)} – ${formatCompact(end)}`;
-  }, [conflict.startsAt, conflict.endsAt, conflict.selectedDate]);
+    if (conflict.nonOccuring?.selectedDate) return conflict.nonOccuring.selectedDate;
+    if (conflict.nonOccuring?.ranges?.length) {
+      return formatCompact(conflict.nonOccuring.ranges[0].startsAt);
+    }
+    return "";
+  }, [conflict.nonOccuring]);
 
   const isDaysType = conflict.activeType === "days";
 
@@ -175,6 +191,11 @@ function ConflictCard({
               {conflict.recurring ? "Repeats weekly" : "Not repeating"}
             </Text>
           </View>
+          {timeLabel ? (
+            <View style={[s.recurringBadge, { marginLeft: 8 }]}>
+              <Text style={s.recurringBadgeText}>{timeLabel}</Text>
+            </View>
+          ) : null}
         </View>
       ) : (
         <View style={s.collapsedRow}>
@@ -182,6 +203,11 @@ function ConflictCard({
           <View style={s.recurringBadge}>
             <Text style={s.recurringBadgeText}>Date Type</Text>
           </View>
+          {timeLabel ? (
+            <View style={[s.recurringBadge, { marginLeft: 8 }]}>
+              <Text style={s.recurringBadgeText}>{timeLabel}</Text>
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -194,7 +220,7 @@ function ConflictCard({
           {isDaysType && (
             <View style={s.dayChipRow}>
               {DAYS.map((day, index) => {
-                const belongsToSchedule = conflict.selectedDays?.includes(index) ?? false;
+                const belongsToSchedule = allSelectedDays.includes(index);
                 const isConflicting = conflictingDayIndices.includes(index);
 
                 return (

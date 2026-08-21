@@ -6,9 +6,9 @@ import type { ScheduleRepository } from "../repository/schedule.repository";
 import type { ActivationRepository } from "./ActivationRepository";
 import type { Activation } from "./domain/Activation";
 import type { ActiveScheduleDays } from "./domain/entity/ActiveScheduleDays";
+import type { OccuringTimeWindow } from "./domain/entity/OccurinngTimeWindow";
 import type { CreateActiveScheduleInput } from "./types/CreateActiveScheduleInput";
-import { OccuringTimeWindow } from "./domain/entity/OccurinngTimeWindow";
-import { DayTypeNonOccuringActivation } from "./types/payloads/DayTypeNonOccuringActivation";
+import type { DayTypeNonOccuringActivation } from "./types/payloads/DayTypeNonOccuringActivation";
 
 export class SQLiteActivationRepository implements ActivationRepository {
   constructor(
@@ -22,10 +22,7 @@ export class SQLiteActivationRepository implements ActivationRepository {
     await this.repo.transaction(async (db) => {});
   }
 
-  private async handleOccuring(payload: DayTypeNonOccuringActivation): Promise<void> {
-    
-  }
-  
+  private async handleOccuring(payload: DayTypeNonOccuringActivation): Promise<void> {}
 
   private async persistActivation(
     activeSchedule: CreateActiveScheduleInput,
@@ -39,5 +36,7 @@ export class SQLiteActivationRepository implements ActivationRepository {
     db: SQLite.SQLiteDatabase,
   ): Promise<void> {}
 
-  private async persistOccuringtimeWindow(payload: OccuringTimeWindow): Promise<void>;
+  private async persistOccuringtimeWindow(payload: OccuringTimeWindow): Promise<void> {
+    
+}
 }

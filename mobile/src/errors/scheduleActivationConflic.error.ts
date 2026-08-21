@@ -10,7 +10,7 @@ type NonOccuringTypeActivation = {
     dayNumber: number;
     startsAt: Date;
     endsAt: Date;
-  };
+  }[];
 };
 
 type OccuringTypeActivation = {
@@ -26,8 +26,10 @@ export type ScheduleConflict = {
   activeType: ActiveSchedule["active_type"];
   recurring: boolean;
 
-  nonOccuring: NonOccuringTypeActivation;
-  occuring: OccuringTypeActivation
+  /** Populated for non-recurring (non-occurring) conflicts. */
+  nonOccuring?: NonOccuringTypeActivation;
+  /** Populated for recurring (occurring) conflicts. */
+  occuring?: OccuringTypeActivation;
 };
 
 export class ScheduleConflictError extends BaseError<ScheduleConflict[]> {}

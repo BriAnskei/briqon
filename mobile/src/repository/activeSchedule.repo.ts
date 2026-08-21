@@ -51,45 +51,74 @@ export class ActiveScheduleRepository extends BaseRepository {
 
     for (const row of rows) {
       const existing = conflicts.get(row.id);
+      const isRecurring = Boolean(row.recurring);
 
       if (!existing) {
-        conflicts.set(row.id, {
+        const conflict: ScheduleConflict = {
           id: row.id,
-
           scheduleName: row.schedule_name,
           scheduleId: row.schedule_id,
-
           activeType: row.active_type,
-          recurring: Boolean(row.recurring),
+          recurring: isRecurring,
+          nonOccuring: isRecurring
+            ? undefined
+            : { selectedDays: [], selectedDate: "", ranges: [] },
+          occuring: isRecurring
+            ? { selectedDays: [], windowStartMin: 0, windowEndMin: 0 }
+            : undefined,
+        };
 
-          startsAt: row.starts_at ? parseLocalISODate(row.starts_at) : undefined,
-
-          endsAt: row.ends_at ? parseLocalISODate(row.ends_at) : undefined,
-
-          selectedDays: row.selected_day !== null ? [row.selected_day] : undefined,
-
-          selectedDate: row.selected_date ?? undefined,
-        });
-
+        this.applyRowToConflict(conflict, row);
+        conflicts.set(row.id, conflict);
         continue;
       }
 
-      // append additional weekdays
-      if (row.selected_day !== null) {
-        existing.selectedDays ??= [];
-
-        if (!existing.selectedDays.includes(row.selected_day)) {
-          existing.selectedDays.push(row.selected_day);
-        }
-      }
-
-      // append date if needed
-      if (row.selected_date) {
-        existing.selectedDate = row.selected_date;
-      }
+      this.applyRowToConflict(existing, row);
     }
 
     return Array.from(conflicts.values());
+  }
+
+  /**
+   * Merges a single SQL row into the appropriate nested branch
+   * (`occuring` for recurring, `nonOccuring` for non-recurring)
+   * of a `ScheduleConflict` object.
+   */
+  private applyRowToConflict(conflict: ScheduleConflict, row: ConflictRow): void {
+    if (conflict.occuring) {
+      // Recurring conflict — collect every selected weekday and the window
+      if (row.selected_day !== null) {
+        if (!conflict.occuring.selectedDays.includes(row.selected_day)) {
+          conflict.occuring.selectedDays.push(row.selected_day);
+        }
+      }
+      if (row.window_start_min !== null) {
+        conflict.occuring.windowStartMin = row.window_start_min;
+      }
+      if (row.window_end_min !== null) {
+        conflict.occuring.windowEndMin = row.window_end_min;
+      }
+    }
+
+    if (conflict.nonOccuring) {
+      // Non-recurring conflict — collect selected days, date and all ranges
+      if (row.selected_day !== null) {
+        conflict.nonOccuring.selectedDays ??= [];
+        if (!conflict.nonOccuring.selectedDays.includes(row.selected_day)) {
+          conflict.nonOccuring.selectedDays.push(row.selected_day);
+        }
+      }
+      if (row.selected_date) {
+        conflict.nonOccuring.selectedDate = row.selected_date;
+      }
+      if (row.starts_at && row.ends_at) {
+        conflict.nonOccuring.ranges.push({
+          dayNumber: row.selected_day ?? 0,
+          startsAt: parseLocalISODate(row.starts_at),
+          endsAt: parseLocalISODate(row.ends_at),
+        });
+      }
+    }
   }
 
   async create(activeSchedule: CreateActiveScheduleInput, db: SQLite.SQLiteDatabase) {
@@ -245,7 +274,7 @@ export class ActiveScheduleRepository extends BaseRepository {
     ON ad.active_schedule_id = a.id
 
   WHERE
-  a.recurring = 1 AND
+  a.recurring = 0 AND
  ${conditions}
     `,
       params,

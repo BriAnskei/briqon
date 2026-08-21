@@ -1,6 +1,6 @@
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
-import { Activation } from "../Activation";
+import type { Activation } from "../Activation";
 import type { ConflictHandler } from "./ConflictHandler";
 
 export class OccurringActivationHandler implements ConflictHandler {

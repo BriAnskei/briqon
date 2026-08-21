@@ -52,9 +52,11 @@ export class ConflictResolver {
     conflict: ScheduleConflict,
     newActivationDays: number[],
   ): Promise<void> {
-    const remainingDays = (conflict.selectedDays ?? []).filter(
-      (d) => !newActivationDays.includes(d),
-    );
+    const selectedDays = conflict.recurring
+      ? (conflict.occuring?.selectedDays ?? [])
+      : (conflict.nonOccuring?.selectedDays ?? []);
+
+    const remainingDays = selectedDays.filter((d) => !newActivationDays.includes(d));
 
     if (remainingDays.length === 0)
       await this.activeScheduleRepository.delete(conflict.id);
