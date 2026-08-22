@@ -20,15 +20,53 @@ interface ActivationConflictModalProp {
   isConflictModalOpen: boolean;
   conflicts: ScheduleConflict[];
   activationDayIndices: number[];
+  /**
+   * Time-of-day window (minutes since midnight) of the activation
+   * currently being created. Used to compute, per conflict, the actual
+   * overlapping time range rather than displaying the full existing
+   * schedule's window.
+   */
+  activationWindowStartMin: number | null;
+  activationWindowEndMin: number | null;
   isResolvingConflict: boolean;
   handleCancelConflicts: () => void;
   handleResolveConflicts: () => Promise<void>;
+}
+
+type MinuteRange = { start: number; end: number };
+
+/**
+ * Intersects two time-of-day windows (minutes since midnight).
+ * Handles windows that cross midnight (e.g. 22:00–02:00) by treating
+ * the "end" as belonging to the next day whenever end <= start.
+ * Returns null when the two windows don't actually overlap.
+ */
+function getMinuteOverlap(
+  aStart: number,
+  aEnd: number,
+  bStart: number,
+  bEnd: number,
+): MinuteRange | null {
+  const normalize = (start: number, end: number): [number, number] =>
+    end <= start ? [start, end + 1440] : [start, end];
+
+  const [aS, aE] = normalize(aStart, aEnd);
+  const [bS, bE] = normalize(bStart, bEnd);
+
+  const start = Math.max(aS, bS);
+  const end = Math.min(aE, bE);
+
+  if (start >= end) return null;
+
+  return { start: start % 1440, end: end % 1440 === 0 ? 1440 : end % 1440 };
 }
 
 export function ActivationConflictModal({
   isConflictModalOpen,
   conflicts,
   activationDayIndices,
+  activationWindowStartMin,
+  activationWindowEndMin,
   isResolvingConflict,
   handleCancelConflicts,
   handleResolveConflicts,
@@ -63,7 +101,7 @@ export function ActivationConflictModal({
                     strokeWidth={2.25}
                   />
                 </View>
-                <Text style={s.title}>Schedule Conflicts</Text>
+                <Text style={s.title}>Activation Conflicts</Text>
               </View>
               <TouchableOpacity
                 ref={infoButtonRef}
@@ -90,6 +128,8 @@ export function ActivationConflictModal({
                 key={conflict.id}
                 conflict={conflict}
                 activationDayIndices={activationDayIndices}
+                activationWindowStartMin={activationWindowStartMin}
+                activationWindowEndMin={activationWindowEndMin}
                 isExpanded={expandedConflictId === conflict.id}
                 onToggle={() => toggleExpand(conflict.id)}
               />
@@ -130,11 +170,15 @@ export function ActivationConflictModal({
 function ConflictCard({
   conflict,
   activationDayIndices,
+  activationWindowStartMin,
+  activationWindowEndMin,
   isExpanded,
   onToggle,
 }: {
   conflict: ScheduleConflict;
   activationDayIndices: number[];
+  activationWindowStartMin: number | null;
+  activationWindowEndMin: number | null;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
@@ -150,6 +194,7 @@ function ConflictCard({
     [allSelectedDays, activationDayIndices],
   );
 
+  // Full window of the EXISTING conflicting schedule.
   const timeLabel = useMemo(() => {
     if (conflict.occuring) {
       return `${minutesToTime(conflict.occuring.windowStartMin)} – ${minutesToTime(conflict.occuring.windowEndMin)}`;
@@ -160,6 +205,52 @@ function ConflictCard({
     }
     return "";
   }, [conflict.occuring, conflict.nonOccuring]);
+
+  // Same window, but as minutes-since-midnight, so it can be intersected
+  // with the new activation's window below.
+  const conflictMinuteWindow = useMemo((): MinuteRange | null => {
+    if (conflict.occuring) {
+      return {
+        start: conflict.occuring.windowStartMin,
+        end: conflict.occuring.windowEndMin,
+      };
+    }
+    if (conflict.nonOccuring?.ranges?.length) {
+      const range = conflict.nonOccuring.ranges[0];
+      const start = new Date(range.startsAt);
+      const end = new Date(range.endsAt);
+      return {
+        start: start.getHours() * 60 + start.getMinutes(),
+        end: end.getHours() * 60 + end.getMinutes(),
+      };
+    }
+    return null;
+  }, [conflict.occuring, conflict.nonOccuring]);
+
+  // The slice of the existing schedule's window that actually overlaps
+  // with the activation currently being created. Falls back to the full
+  // existing window if either side's window is unavailable or if, for
+  // some edge case, no overlap can be computed.
+  const overlapTimeLabel = useMemo(() => {
+    if (
+      !conflictMinuteWindow ||
+      activationWindowStartMin == null ||
+      activationWindowEndMin == null
+    ) {
+      return timeLabel;
+    }
+
+    const overlap = getMinuteOverlap(
+      conflictMinuteWindow.start,
+      conflictMinuteWindow.end,
+      activationWindowStartMin,
+      activationWindowEndMin,
+    );
+
+    if (!overlap) return timeLabel;
+
+    return `${minutesToTime(overlap.start)} – ${minutesToTime(overlap.end)}`;
+  }, [conflictMinuteWindow, activationWindowStartMin, activationWindowEndMin, timeLabel]);
 
   const dateLabel = useMemo(() => {
     if (conflict.nonOccuring?.selectedDate) return conflict.nonOccuring.selectedDate;
@@ -191,9 +282,11 @@ function ConflictCard({
               {conflict.recurring ? "Repeats weekly" : "Not repeating"}
             </Text>
           </View>
-          {timeLabel ? (
-            <View style={[s.recurringBadge, { marginLeft: 8 }]}>
-              <Text style={s.recurringBadgeText}>{timeLabel}</Text>
+          {overlapTimeLabel ? (
+            <View style={[s.recurringBadge, s.conflictTimeBadge, { marginLeft: 8 }]}>
+              <Text style={[s.recurringBadgeText, s.conflictTimeBadgeText]}>
+                {overlapTimeLabel}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -203,9 +296,11 @@ function ConflictCard({
           <View style={s.recurringBadge}>
             <Text style={s.recurringBadgeText}>Date Type</Text>
           </View>
-          {timeLabel ? (
-            <View style={[s.recurringBadge, { marginLeft: 8 }]}>
-              <Text style={s.recurringBadgeText}>{timeLabel}</Text>
+          {overlapTimeLabel ? (
+            <View style={[s.recurringBadge, s.conflictTimeBadge, { marginLeft: 8 }]}>
+              <Text style={[s.recurringBadgeText, s.conflictTimeBadgeText]}>
+                {overlapTimeLabel}
+              </Text>
             </View>
           ) : null}
         </View>
@@ -216,6 +311,12 @@ function ConflictCard({
           {conflict.scheduleName !== "N/A" && (
             <Text style={s.cardTitle}>{conflict.scheduleName}</Text>
           )}
+
+          {/* Full existing-schedule window, shown only when expanded so the
+             collapsed badge above (the overlap) stays the primary signal. */}
+          {timeLabel ? (
+            <Text style={s.fullWindowText}>Existing schedule: {timeLabel}</Text>
+          ) : null}
 
           {isDaysType && (
             <View style={s.dayChipRow}>
@@ -379,6 +480,15 @@ function useCStyles() {
           textTransform: "uppercase",
           letterSpacing: 0.5,
         },
+        // Distinguishes the overlap-time badge (the actual conflicting
+        // window) from the neutral "Repeats weekly" / "Date Type" badges.
+        conflictTimeBadge: {
+          backgroundColor: (Colors.danger ?? "#E5484D") + "1A",
+          borderColor: (Colors.danger ?? "#E5484D") + "33",
+        },
+        conflictTimeBadgeText: {
+          color: Colors.danger ?? "#E5484D",
+        },
         dateRangeText: {
           fontSize: 13,
           fontFamily: "Inter-SemiBold",
@@ -397,6 +507,12 @@ function useCStyles() {
           fontFamily: "Inter-SemiBold",
           fontWeight: "600",
           color: Colors.textPrimary,
+        },
+        fullWindowText: {
+          fontSize: 12,
+          fontFamily: "Inter",
+          fontWeight: "400",
+          color: Colors.textMuted,
         },
         dayChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
         dayChip: {

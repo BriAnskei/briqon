@@ -28,7 +28,7 @@ export class AddActivationService {
     if (input.overwrite) {
       await this.conflictResolver.resolve(conflicts, context);
     }
-    //
-    // await this.activationRepository.create(context.payload);
+
+    await this.activationRepository.execute(context);
   }
 }

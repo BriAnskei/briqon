@@ -15,6 +15,8 @@ export class NonOccuringActivationHandler implements ConflictHandler {
   }
 
   private handleDateTypeConflict(context: Activation) {
+    if (context.activeType === "days") return [];
+
     const { range } = context.getDateType();
 
     return this.activeScheduleRepository.findNonOccurringConflict([
@@ -23,6 +25,7 @@ export class NonOccuringActivationHandler implements ConflictHandler {
   }
 
   private handleDaysTypeConflict(context: Activation) {
+    if (context.activeType === "date") return [];
     const { ranges } = context.getDayTypeNonOccuring();
 
     const rangesInput = ranges.map((range) => ({

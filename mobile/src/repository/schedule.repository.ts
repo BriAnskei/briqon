@@ -49,6 +49,14 @@ export class ScheduleRepository extends BaseRepository {
     return mappedData;
   }
 
+  async exists(id: string): Promise<boolean> {
+    const row = await this.first<{ id: string }>(
+      `SELECT id FROM schedules WHERE id = ? LIMIT 1`,
+      [id],
+    );
+    return !!row;
+  }
+
   async findAll(): Promise<Schedule[]> {
     const rows = await this.all(`
       SELECT * FROM schedules

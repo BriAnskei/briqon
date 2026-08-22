@@ -8,11 +8,15 @@ import { NonOccuringActivationHandler } from "../activation/domain/conflict/NonO
 import { OccurringActivationHandler } from "../activation/domain/conflict/OccurringActivationHandler";
 
 import { SQLiteActivationRepository } from "../activation/SQLiteActivationRepository";
+import { NonRecurringAgainstRecurringHandler } from "../activation/types/conflictHandler/NonRecurringAgainstRecurringHandler";
+import { RecurringAgainstNonRecurringHandler } from "../activation/types/conflictHandler/RecurringAgainstNonRecurringHandler";
 import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
-import { ScheduleRepository } from "../repository/schedule.repository";
+import { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
+import { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
 import { ActiveScheduleService } from "../service/activeSchedule.service";
+import { ScheduleService } from "../service/schedule.service";
 
 const activeScheduleRepository = new ActiveScheduleRepository();
 
@@ -20,18 +24,21 @@ const activeScheduleDaysRepository = new ActiveScheduleDaysRepository();
 
 const activeScheduleDatesRepository = new ActiveScheduleDatesRepository();
 
-const scheduleRepository = new ScheduleRepository();
-
 const conflictResolver = new ConflictResolver(
   activeScheduleRepository,
   activeScheduleDaysRepository,
 );
 
+const occuringTimeWindowRepository = new OccurringTimeWindowRepository();
+
+const nonReccuringRangeRepository = new NonReccurringRangeRepository();
+
 const activationRepository = new SQLiteActivationRepository(
   activeScheduleRepository,
-  scheduleRepository,
   activeScheduleDaysRepository,
   activeScheduleDatesRepository,
+  occuringTimeWindowRepository,
+  nonReccuringRangeRepository,
 );
 
 const occuringActivationHandler = new OccurringActivationHandler(
@@ -40,12 +47,24 @@ const occuringActivationHandler = new OccurringActivationHandler(
 
 const nonOccuringHandler = new NonOccuringActivationHandler(activeScheduleRepository);
 
+const reccuringAgaintsNonreccuring = new RecurringAgainstNonRecurringHandler(
+  activeScheduleRepository,
+);
+
+const nonRecurringAgaintsRecurringHandler = new NonRecurringAgainstRecurringHandler(
+  activeScheduleRepository,
+);
+
 const conflictDetector = new ConflictDetector([
   occuringActivationHandler,
   nonOccuringHandler,
+  reccuringAgaintsNonreccuring,
+  nonRecurringAgaintsRecurringHandler,
 ]);
 
 const activationFactory = new ActivationFactory();
+
+const scheduleService = new ScheduleService();
 
 const addActivationService = new AddActivationService(
   conflictDetector,
@@ -57,4 +76,5 @@ const addActivationService = new AddActivationService(
 export const activeScheduleService = new ActiveScheduleService(
   addActivationService,
   activeScheduleRepository,
+  scheduleService,
 );

@@ -21,7 +21,6 @@ export function useGenerateScheduleScreen() {
     generatedScheduleId: aiState.generatedScheduleId,
     isScheduleSavedDirectly,
     setIsScheduleSavedDirectly,
-    isScheduleSavedByActivation,
   });
 
   const setActiveModalState = useSetActiveModal({

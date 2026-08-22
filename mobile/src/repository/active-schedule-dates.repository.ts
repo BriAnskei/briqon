@@ -1,18 +1,10 @@
 import type * as SQLite from "expo-sqlite";
 import { toLocalISODate } from "@/utils/TimeFormatter";
-import type { ActiveScheduleDates } from "../models/active_schedule_dates.model";
+import type { ActiveScheduleDate } from "../activation/domain/entity/ActiveScheduleDate";
 import { BaseRepository } from "./base.repository";
 
 export class ActiveScheduleDatesRepository extends BaseRepository {
-  private mapRow(row: any): ActiveScheduleDates {
-    return {
-      id: row.id,
-      active_schedule_id: row.active_schedule_id,
-      date: new Date(row.date),
-    };
-  }
-
-  async create(activeScheduleDate: ActiveScheduleDates, db?: SQLite.SQLiteDatabase) {
+  async create(activeScheduleDate: ActiveScheduleDate, db: SQLite.SQLiteDatabase) {
     return await this.run(
       `
       INSERT INTO active_schedule_dates (
@@ -23,22 +15,10 @@ export class ActiveScheduleDatesRepository extends BaseRepository {
       `,
       [
         activeScheduleDate.id,
-        activeScheduleDate.active_schedule_id,
+        activeScheduleDate.activeId,
         toLocalISODate(activeScheduleDate.date),
       ],
       db,
     );
-  }
-
-  async fetchByActiveScheduleId(activeScheduleId: string): Promise<ActiveScheduleDates> {
-    const row = this.first(
-      `
-      SELECT * FROM active_schedule_dates
-      WHERE active_schedule_id = ?
-      `,
-      [activeScheduleId],
-    );
-
-    return this.mapRow(row);
   }
 }

@@ -48,7 +48,7 @@ describe("AddActivationService — activation + factory output", () => {
 
       // Factory output (via getDayTypeOccuring) --------------------------------
       const context = new ActivationFactory().create(input);
-      const { days, occuringOverflow } = context.getDayTypeOccuring();
+      const { days, occuringTimeWindow: occuringOverflow } = context.getDayTypeOccuring();
 
       expect(days).toHaveLength(3);
       expect(days.map((d) => d.weekday).sort()).toEqual([1, 3, 5]);
@@ -75,7 +75,7 @@ describe("AddActivationService — activation + factory output", () => {
       await makeService().add(input);
 
       const context = new ActivationFactory().create(input);
-      const { occuringOverflow } = context.getDayTypeOccuring();
+      const { occuringTimeWindow: occuringOverflow } = context.getDayTypeOccuring();
 
       // 22:00 → 1320 min; 06:00 → 360 min.
       // Because 360 ≤ 1320 the factory adds 24*60 = 1440 → 1800.

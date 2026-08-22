@@ -15,7 +15,7 @@ export class Activation {
   private date: ActiveScheduleDate | null = null;
 
   private nonReccuringRange: NonOccuringWindowRange[] = [];
-  private occuringOverflow: OccuringTimeWindow | null = null;
+  private occuringTimeWindow: OccuringTimeWindow | null = null;
 
   private constructor(
     readonly id: string,
@@ -37,7 +37,7 @@ export class Activation {
   }
 
   setReccuringOverflow(occuringOverflow: OccuringTimeWindow) {
-    this.occuringOverflow = occuringOverflow;
+    this.occuringTimeWindow = occuringOverflow;
   }
 
   addNonReccuringRange(nonOccuringRange: NonOccuringWindowRange) {
@@ -65,13 +65,12 @@ export class Activation {
   }
 
   getDayTypeOccuring(): DayTypeOccuringActivation {
-    if (!this.occuringOverflow)
+    if (!this.occuringTimeWindow)
       throw new Error("Non occuring day type requires one occuring over flow entity");
 
     return {
-      activeSchedule: this.getActiveSchedule(),
       days: [...this.days],
-      occuringOverflow: this.occuringOverflow,
+      occuringTimeWindow: this.occuringTimeWindow,
     };
   }
 
@@ -80,7 +79,6 @@ export class Activation {
       throw new Error("Days type non reccuring requires a reccuring ranges for each day");
 
     return {
-      activeSchedule: this.getActiveSchedule(),
       days: this.days,
       ranges: this.nonReccuringRange,
     };
@@ -91,7 +89,6 @@ export class Activation {
     if (this.nonReccuringRange.length === 0)
       throw new Error("Date type activation requies one nonOccuring range");
     return {
-      activeSchedule: this.getActiveSchedule(),
       date: this.date,
       range: this.nonReccuringRange[this.nonReccuringRange.length - 1],
     };

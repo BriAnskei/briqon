@@ -1,6 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 import { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import { parseLocalISODate } from "@/utils/TimeFormatter";
+import { getMinutesOfDay, isSameDay, parseLocalISODate } from "@/utils/TimeFormatter";
 import type { CreateActiveScheduleInput } from "../activation/types/CreateActiveScheduleInput";
 import type { FindNonReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
 import type { FindReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindReccuringActivationConflictInput";
@@ -31,9 +31,7 @@ type ActiveScheduleRow = {
   id: string;
   schedule_id: string;
   active_type: ActiveSchedule["active_type"];
-  repeat_weekly: number; // SQLite stores booleans as 0/1
-  starts_at: string | null;
-  ends_at: string | null;
+  recurring: number; // SQLite stores booleans as 0/1
 };
 
 export class ActiveScheduleRepository extends BaseRepository {
@@ -42,7 +40,7 @@ export class ActiveScheduleRepository extends BaseRepository {
       id: row.id,
       schedule_id: row.schedule_id,
       active_type: row.active_type,
-      recurring: !!row.repeat_weekly,
+      recurring: !!row.recurring,
     };
   }
 
@@ -86,36 +84,39 @@ export class ActiveScheduleRepository extends BaseRepository {
    */
   private applyRowToConflict(conflict: ScheduleConflict, row: ConflictRow): void {
     if (conflict.occuring) {
-      // Recurring conflict — collect every selected weekday and the window
       if (row.selected_day !== null) {
         if (!conflict.occuring.selectedDays.includes(row.selected_day)) {
           conflict.occuring.selectedDays.push(row.selected_day);
         }
       }
+
       if (row.window_start_min !== null) {
         conflict.occuring.windowStartMin = row.window_start_min;
       }
+
       if (row.window_end_min !== null) {
         conflict.occuring.windowEndMin = row.window_end_min;
       }
     }
 
     if (conflict.nonOccuring) {
-      // Non-recurring conflict — collect selected days, date and all ranges
       if (row.selected_day !== null) {
         conflict.nonOccuring.selectedDays ??= [];
+
         if (!conflict.nonOccuring.selectedDays.includes(row.selected_day)) {
           conflict.nonOccuring.selectedDays.push(row.selected_day);
         }
       }
+
       if (row.selected_date) {
         conflict.nonOccuring.selectedDate = row.selected_date;
       }
+
       if (row.starts_at && row.ends_at) {
         conflict.nonOccuring.ranges.push({
           dayNumber: row.selected_day ?? 0,
-          startsAt: parseLocalISODate(row.starts_at),
-          endsAt: parseLocalISODate(row.ends_at),
+          startsAt: new Date(row.starts_at),
+          endsAt: new Date(row.ends_at),
         });
       }
     }
@@ -128,18 +129,26 @@ export class ActiveScheduleRepository extends BaseRepository {
         id,
         schedule_id,
         active_type,
-        recurring,
+        recurring
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?)
       `,
       [
         activeSchedule.id,
         activeSchedule.scheduleId,
         activeSchedule.activeType,
-        activeSchedule.reccuring,
+        activeSchedule.reccuring ? 1 : 0,
       ],
       db ?? undefined,
     );
+  }
+
+  async exists(id: string): Promise<boolean> {
+    const row = await this.first<{ id: string }>(
+      `SELECT id FROM active_schedules WHERE id = ? LIMIT 1`,
+      [id],
+    );
+    return !!row;
   }
 
   async findReccuringConflict(input: FindReccuringActivationConflictInput) {
@@ -313,25 +322,128 @@ export class ActiveScheduleRepository extends BaseRepository {
       UPDATE active_schedules
       SET
         schedule_id = ?,
-        specific_date = ?,
-        selected_days = ?,
-        repeat_weekly = ?,
-        starts_at = ?,
-        ends_at = ?
+        active_type = ?,
+        recurring = ?
       WHERE id = ?
       `,
-      [
-        // updated.schedule_id,
-        // updated.specific_date?.toISOString() ?? null,
-        // JSON.stringify(updated.selected_days),
-        // updated.repeat_weekly ? 1 : 0,
-        // updated.starts_at?.toISOString() ?? null,
-        // updated.ends_at?.toISOString() ?? null,
-        // id,
-      ],
+      [updated.schedule_id, updated.active_type, updated.recurring ? 1 : 0, id],
     );
 
     return updated;
+  }
+
+  async findNonRecurringConflictsForRecurring(
+    input: FindReccuringActivationConflictInput,
+  ): Promise<ScheduleConflict[]> {
+    const sameDayPlaceholders = input.weekDays.map(() => "?").join(", ");
+    const previousWeekDays = input.weekDays.map((day) => (day - 1 + 7) % 7);
+    const previousPlaceholders = previousWeekDays.map(() => "?").join(", ");
+    const nextWeekDays = input.weekDays.map((day) => (day + 1) % 7);
+    const nextPlaceholders = nextWeekDays.map(() => "?").join(", ");
+
+    const rows = await this.all<ConflictRow>(
+      `
+    WITH range_info AS (
+      SELECT
+        r.active_id,
+        CAST(strftime('%w', r.starts_at) AS INTEGER) AS weekday,
+        (CAST(strftime('%H', r.starts_at) AS INTEGER) * 60
+          + CAST(strftime('%M', r.starts_at) AS INTEGER)) AS start_min,
+        CASE
+          WHEN date(r.ends_at) != date(r.starts_at)
+          THEN (CAST(strftime('%H', r.ends_at) AS INTEGER) * 60
+            + CAST(strftime('%M', r.ends_at) AS INTEGER)) + 1440
+          ELSE (CAST(strftime('%H', r.ends_at) AS INTEGER) * 60
+            + CAST(strftime('%M', r.ends_at) AS INTEGER))
+        END AS end_min
+      FROM non_recurring_ranges r
+      JOIN active_schedules a ON a.id = r.active_id
+      WHERE a.recurring = 0
+    )
+    SELECT DISTINCT
+      a.id, a.schedule_id, s.name AS schedule_name, a.active_type, a.recurring,
+      NULL AS selected_day, NULL AS selected_date,
+      ri.start_min AS window_start_min, ri.end_min AS window_end_min
+    FROM range_info ri
+    JOIN active_schedules a ON a.id = ri.active_id
+    JOIN schedules s ON s.id = a.schedule_id
+    WHERE
+      -- same-day overlap
+      (ri.weekday IN (${sameDayPlaceholders}) AND ri.start_min < ? AND ri.end_min > ?)
+      OR
+      -- existing non-recurring range bleeds forward into the new pattern's day
+      (ri.weekday IN (${previousPlaceholders}) AND ? > 1440 AND (? - 1440) > ri.start_min)
+      OR
+      -- new recurring pattern bleeds forward into the range's day
+      (ri.weekday IN (${nextPlaceholders}) AND ri.end_min > 1440 AND (ri.end_min - 1440) > ?)
+    `,
+      [
+        ...input.weekDays,
+        input.windowEndMin,
+        input.windowStartMin,
+        ...previousWeekDays,
+        input.windowEndMin,
+        input.windowEndMin,
+        ...nextWeekDays,
+        input.windowStartMin,
+      ],
+    );
+    return this.groupConflicts(rows);
+  }
+
+  async findRecurringConflictsForNonRecurring(
+    ranges: FindNonReccuringActivationConflictInput[],
+  ): Promise<ScheduleConflict[]> {
+    if (ranges.length === 0) return [];
+
+    const rangeInfos = ranges.map((range) => {
+      const weekday = range.startsAt.getDay();
+      const startMin = getMinutesOfDay(range.startsAt);
+      const endMin = isSameDay(range.startsAt, range.endsAt)
+        ? getMinutesOfDay(range.endsAt)
+        : getMinutesOfDay(range.endsAt) + 1440;
+      return { weekday, startMin, endMin };
+    });
+
+    const conditions = rangeInfos
+      .map(
+        () => `
+      (d.weekday = ? AND o.window_start_min < ? AND o.window_end_min > ?)
+      OR
+      (d.weekday = ? AND o.window_end_min > 1440 AND (o.window_end_min - 1440) > ?)
+      OR
+      (d.weekday = ? AND ? > 1440 AND (? - 1440) > o.window_start_min)
+    `,
+      )
+      .join(" OR ");
+
+    const params = rangeInfos.flatMap(({ weekday, startMin, endMin }) => [
+      weekday,
+      endMin,
+      startMin,
+      (weekday - 1 + 7) % 7,
+      startMin,
+      (weekday + 1) % 7,
+      endMin,
+      endMin,
+    ]);
+
+    const rows = await this.all<ConflictRow>(
+      `
+    SELECT DISTINCT
+      a.id, a.schedule_id, s.name AS schedule_name, a.active_type, a.recurring,
+      d.weekday AS selected_day, NULL AS selected_date,
+      o.window_start_min, o.window_end_min
+    FROM active_schedules a
+    JOIN schedules s ON s.id = a.schedule_id
+    JOIN active_schedule_days d ON d.active_schedule_id = a.id
+    JOIN occurring_time_window o ON o.active_id = a.id
+    WHERE a.active_type = 'days' AND a.recurring = 1
+      AND (${conditions})
+    `,
+      params,
+    );
+    return this.groupConflicts(rows);
   }
 
   async delete(id: string) {

@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
 import useModal from "@/hooks/useModal";
-import type { Schedule } from "@/src/models/schedule.model";
+import type { ScheduleItem } from "@/src/models/schedule.model";
 import type { SubSummary } from "@/src/models/sub_summaries.model";
 import type { ScheduleSummary } from "@/src/models/summaries.model";
 import { ScheduleService } from "@/src/service/schedule.service";
-import type { ScheduleItem } from "../../components/GenerateScheduleScreen/types";
 
 const useSaveScheduleModal = (payload: {
   summaries: ScheduleSummary[];
@@ -13,14 +12,12 @@ const useSaveScheduleModal = (payload: {
   scheduleItem: ScheduleItem[];
   generatedScheduleId?: string;
   isScheduleSavedDirectly: boolean;
-  isScheduleSavedByActivation: boolean;
   setIsScheduleSavedDirectly: (b: boolean) => void;
 }) => {
   const {
     summaries,
     subSummaries,
     scheduleItem,
-    isScheduleSavedByActivation,
     isScheduleSavedDirectly,
     setIsScheduleSavedDirectly,
     generatedScheduleId,
@@ -37,21 +34,12 @@ const useSaveScheduleModal = (payload: {
     close();
   };
 
-  const buildSchedule = useCallback((): Schedule => {
-    if (!generatedScheduleId) throw new Error("No Schedule id");
-    if (scheduleItem.length === 0) throw new Error("No scheduleItem to save`");
-
-    return {
-      id: generatedScheduleId,
-      schedule_list: scheduleItem,
-      name,
-      temporary: false,
-    };
-  }, [generatedScheduleId, scheduleItem, name]);
-
   const handleSaveSchedule = useCallback(async () => {
     if (isSaving || name.length === 0) return;
-    if (isScheduleSavedByActivation && isScheduleSavedDirectly) {
+
+    // If the schedule was already saved directly (permanent), there is nothing
+    // more to do.
+    if (isScheduleSavedDirectly) {
       Toast.show({
         type: "info",
         text1: "Already Saved",
@@ -64,21 +52,16 @@ const useSaveScheduleModal = (payload: {
     setIsSaving(true);
 
     try {
-      const schedule = buildSchedule();
-
-      if (!isScheduleSavedByActivation && !isScheduleSavedDirectly) {
-        await service.createSchedule({
-          summaries,
-          subSummaries,
-          schedule,
-        });
-      } else {
-        // mark as markAsPermanent
-        await service.markAsPermanent({
-          name: schedule.name,
-          id: schedule.id,
-        });
-      }
+      // The domain layer decides whether to create a new permanent schedule
+      // or promote an existing temporary one (saved during "Set Active")
+      // to permanent. The UI only provides the payload.
+      await service.saveSchedule({
+        id: generatedScheduleId!,
+        name,
+        scheduleItems: scheduleItem,
+        summaries,
+        subSummaries,
+      });
 
       Toast.show({
         type: "success",
@@ -103,15 +86,15 @@ const useSaveScheduleModal = (payload: {
     }
   }, [
     isScheduleSavedDirectly,
-    isScheduleSavedByActivation,
-    setIsScheduleSavedDirectly,
     service,
     summaries,
     subSummaries,
     isSaving,
     name,
     close,
-    buildSchedule,
+    generatedScheduleId,
+    scheduleItem,
+    setIsScheduleSavedDirectly,
   ]);
 
   return {

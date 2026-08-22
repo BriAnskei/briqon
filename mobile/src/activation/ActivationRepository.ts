@@ -1,16 +1,5 @@
-import type { CreationPayload } from "@/type/services/activationService.types";
+import type { Activation } from "./domain/Activation";
 
 export interface ActivationRepository {
-  create(payload: CreationPayload): Promise<void>;
+  execute(payload: Activation): Promise<void>;
 }
-
-// ActivationRepository
-//     create()
-//     update()
-//     delete()
-
-// ActiveScheduleQueryRepository
-//     findDayConflicts()
-//     findRangeConflicts()
-//     findCurrent()
-//     findNext()

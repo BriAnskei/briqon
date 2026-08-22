@@ -6,6 +6,11 @@ import type { ScheduleItem } from "@/src/models/schedule.model";
 
 const mockCreateAsync = jest.fn().mockResolvedValue(undefined);
 
+jest.mock("react-native-toast-message", () => ({
+  __esModule: true,
+  default: { show: jest.fn() },
+}));
+
 jest.mock("@/hooks/useModal", () => ({
   __esModule: true,
   default: () => ({
@@ -112,6 +117,12 @@ describe("useSetActiveModal — payload building", () => {
       expect(payload.scheduleTimeStart).toBe("08:00");
       expect(payload.sheduleTimeEnd).toBe("16:00");
       expect(payload.selectedDate).toBeUndefined();
+
+      // Schedule data should be included when the schedule has not yet been
+      // persisted (isScheduleNeedsToSave = !isScheduleSavedDirectly && !isScheduleSavedByActivation)
+      expect(payload.scheduleItems).toEqual(scheduleItems);
+      expect(payload.summaries).toEqual([]);
+      expect(payload.subSummaries).toEqual([]);
     });
 
     it("exposes day-name strings in hook state but weekday indices in the payload", () => {
@@ -240,6 +251,93 @@ describe("useSetActiveModal — payload building", () => {
     });
   });
 
+  // ── Schedule data payload inclusion ──────────────────────────────
+
+  describe("schedule data in payload", () => {
+    it("includes scheduleItems, summaries, and subSummaries when schedule has not been saved", () => {
+      const { result } = renderHook(() => useSetActiveModal(makeProps()));
+
+      act(() => result.current.handleModeSelect("range"));
+      act(() => result.current.toggleDay("Monday"));
+
+      const payload = result.current.buildPayload();
+
+      // isScheduleNeedsToSave = !isScheduleSavedDirectly && !isScheduleSavedByActivation
+      // Both are false by default in makeProps(), so schedule data should be present
+      expect(payload.scheduleItems).toEqual(scheduleItems);
+      expect(payload.summaries).toEqual([]);
+      expect(payload.subSummaries).toEqual([]);
+    });
+
+    it("omits scheduleItems when isScheduleSavedDirectly is true", () => {
+      const { result } = renderHook(() =>
+        useSetActiveModal(
+          makeProps({
+            isScheduleSavedDirectly: true,
+          }),
+        ),
+      );
+
+      act(() => result.current.handleModeSelect("range"));
+      act(() => result.current.toggleDay("Monday"));
+
+      const payload = result.current.buildPayload();
+
+      // When already saved directly, no schedule data should be included
+      expect(payload.scheduleItems).toBeUndefined();
+      expect(payload.summaries).toBeUndefined();
+      expect(payload.subSummaries).toBeUndefined();
+    });
+  });
+
+  // ── Toast notifications ─────────────────────────────────────────────────────
+
+  describe("toast notifications", () => {
+    it("shows a success toast and closes the modal on successful activation", async () => {
+      const { result } = renderHook(() => useSetActiveModal(makeProps()));
+
+      act(() => result.current.handleModeSelect("range"));
+      act(() => result.current.toggleDay("Monday"));
+
+      await act(async () => {
+        await result.current.handleConfirm();
+      });
+
+      expect(mockCreateAsync).toHaveBeenCalledTimes(1);
+      expect(mockToastShow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "success",
+          text1: "Success",
+          text2: "Schedule has been set as active",
+          position: "top",
+        }),
+      );
+    });
+
+    it("does not show a success toast when activation fails", async () => {
+      mockCreateAsync.mockRejectedValueOnce(new Error("DB error"));
+
+      const { result } = renderHook(() => useSetActiveModal(makeProps()));
+
+      act(() => result.current.handleModeSelect("range"));
+      act(() => result.current.toggleDay("Monday"));
+
+      await act(async () => {
+        await result.current.handleConfirm();
+      });
+
+      // No success toast should have been shown
+      const successToasts = mockToastShow.mock.calls.filter(
+        (call) => call[0]?.type === "success",
+      );
+      expect(successToasts).toHaveLength(0);
+
+      // Reset the mock for subsequent tests
+      mockCreateAsync.mockReset();
+      mockCreateAsync.mockResolvedValue(undefined);
+    });
+  });
+
   // ── handleConfirm ────────────────────────────────────────────────────────────
 
   describe("handleConfirm", () => {
@@ -267,6 +365,13 @@ describe("useSetActiveModal — payload building", () => {
 
       // The start date must be on a selected weekday (Mon=1 or Wed=3)
       expect([1, 3]).toContain(sentPayload.nonReccuringDaysTypeStartsAt.getDay());
+
+      // Schedule data should be included in the payload sent to the service
+      // so the activation domain can save it as temporary before creating
+      // the activation record
+      expect(sentPayload.scheduleItems).toEqual(scheduleItems);
+      expect(sentPayload.summaries).toEqual([]);
+      expect(sentPayload.subSummaries).toEqual([]);
     });
   });
 });

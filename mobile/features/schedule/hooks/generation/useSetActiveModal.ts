@@ -1,6 +1,7 @@
 import type { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
+import Toast from "react-native-toast-message";
 import useModal from "@/hooks/useModal";
 import { activeScheduleService } from "@/src/composition/activationServiceComposition";
 import {
@@ -69,6 +70,16 @@ export interface UseSetActiveModalState {
   handleCancelConflicts: () => void;
   handleResolveConflicts: () => Promise<void>;
   activationDayIndices: number[];
+  /**
+   * Time-of-day window (minutes since midnight) that THIS activation
+   * attempt would occupy — derived from scheduleTimeBounds, which the
+   * factory uses unconditionally for both "days" and "date" activeType.
+   * Used by the conflict modal to compute, per conflicting schedule,
+   * the actual overlapping time range rather than the full existing
+   * schedule's window.
+   */
+  activationWindowStartMin: number | null;
+  activationWindowEndMin: number | null;
 }
 
 export function useSetActiveModal(payload: {
@@ -286,6 +297,24 @@ export function useSetActiveModal(payload: {
     };
   }, [scheduleItems]);
 
+  /**
+   * scheduleTimeBounds as minutes-since-midnight. This is the actual
+   * time-of-day window ActivationFactory uses for every activeType
+   * ("days" recurring/non-recurring and "date"), so it's the correct
+   * value to intersect against a conflicting schedule's own window when
+   * showing "what part of this actually conflicts" in the conflict modal.
+   */
+  const activationWindowStartMin = useMemo(
+    () =>
+      scheduleTimeBounds ? timeToMinutes(scheduleTimeBounds.scheduleTimeStart) : null,
+    [scheduleTimeBounds],
+  );
+
+  const activationWindowEndMin = useMemo(
+    () => (scheduleTimeBounds ? timeToMinutes(scheduleTimeBounds.sheduleTimeEnd) : null),
+    [scheduleTimeBounds],
+  );
+
   const buildPayload = useCallback((): CreateActivationInput => {
     if (!generatedScheduleId) throw new Error("No generatedScheduleId");
 
@@ -348,6 +377,15 @@ export function useSetActiveModal(payload: {
       nonReccuringDaysTypeStartsAt,
       scheduleTimeStart: scheduleTimeBounds.scheduleTimeStart,
       sheduleTimeEnd: scheduleTimeBounds.sheduleTimeEnd,
+      // When the schedule has not yet been persisted, include the schedule
+      // data so the activation domain can save it as temporary (temporary=true)
+      // before creating the activation record.
+      ...(isScheduleNeedsToSave &&
+        scheduleItems.length > 0 && {
+          scheduleItems,
+          summaries: result?.summary ?? [],
+          subSummaries: result?.subSummary ?? [],
+        }),
     };
   }, [
     dateMode,
@@ -357,8 +395,8 @@ export function useSetActiveModal(payload: {
     generatedScheduleId,
     todayWeekdayIndex,
     rangeResolvedStart,
-    rangeResolvedEnd,
     scheduleItems,
+    result,
     isScheduleNeedsToSave,
     scheduleTimeBounds,
   ]);
@@ -376,8 +414,15 @@ export function useSetActiveModal(payload: {
         setIsScheduleSavedByActivation(true);
       }
 
-      // resetState();
-      // close();
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "Schedule has been set as active",
+        position: "top",
+      });
+
+      resetState();
+      close();
     } catch (err) {
       console.log(err);
       if (err instanceof ScheduleConflictError) {
@@ -395,6 +440,8 @@ export function useSetActiveModal(payload: {
     buildPayload,
     isScheduleNeedsToSave,
     setIsScheduleSavedByActivation,
+    resetState,
+    close,
   ]);
 
   // ── conflict resolution handlers ────────────────────────────────────────
@@ -426,14 +473,23 @@ export function useSetActiveModal(payload: {
       const input = { ...buildPayload(), overwrite: true };
       await service.createAsync(input);
 
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "Schedule has been set as active",
+        position: "top",
+      });
+
       setConflicts([]);
       setIsConflictModalOpen(false);
+      resetState();
+      close();
     } catch (err) {
       console.log("Conflict resolution failed", err);
     } finally {
       setIsResolvingConflict(false);
     }
-  }, [conflicts, buildPayload]);
+  }, [conflicts, buildPayload, resetState, close]);
 
   return {
     dateMode,
@@ -474,5 +530,7 @@ export function useSetActiveModal(payload: {
     handleCancelConflicts,
     handleResolveConflicts,
     activationDayIndices,
+    activationWindowStartMin,
+    activationWindowEndMin,
   };
 }

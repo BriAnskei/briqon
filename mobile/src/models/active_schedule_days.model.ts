@@ -7,8 +7,6 @@ export const ActiveScheduleDaysSchema = z.object({
   weekday: z.number(),
 });
 
-export type ActiveScheduleDays = z.infer<typeof ActiveScheduleDaysSchema>;
-
 // insertion schema
 export const CreateActiveScheduleDaysSchema = ActiveScheduleDaysSchema.omit({
   id: true,

@@ -6,8 +6,6 @@ export const ActiveSheduleDatesSchema = z.object({
   date: z.date(),
 });
 
-export type ActiveScheduleDates = z.infer<typeof ActiveSheduleDatesSchema>;
-
 export const CreateActiveScheduleDatesSchema = ActiveSheduleDatesSchema.omit({
   id: true,
 });
