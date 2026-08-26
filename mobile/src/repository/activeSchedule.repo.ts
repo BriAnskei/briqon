@@ -346,15 +346,17 @@ export class ActiveScheduleRepository extends BaseRepository {
     WITH range_info AS (
       SELECT
         r.active_id,
-        CAST(strftime('%w', r.starts_at) AS INTEGER) AS weekday,
-        (CAST(strftime('%H', r.starts_at) AS INTEGER) * 60
-          + CAST(strftime('%M', r.starts_at) AS INTEGER)) AS start_min,
+        r.starts_at,
+        r.ends_at,
+        CAST(strftime('%w', r.starts_at, 'localtime') AS INTEGER) AS weekday,
+        (CAST(strftime('%H', r.starts_at, 'localtime') AS INTEGER) * 60
+          + CAST(strftime('%M', r.starts_at, 'localtime') AS INTEGER)) AS start_min,
         CASE
-          WHEN date(r.ends_at) != date(r.starts_at)
-          THEN (CAST(strftime('%H', r.ends_at) AS INTEGER) * 60
-            + CAST(strftime('%M', r.ends_at) AS INTEGER)) + 1440
-          ELSE (CAST(strftime('%H', r.ends_at) AS INTEGER) * 60
-            + CAST(strftime('%M', r.ends_at) AS INTEGER))
+          WHEN date(r.ends_at, 'localtime') != date(r.starts_at, 'localtime')
+          THEN (CAST(strftime('%H', r.ends_at, 'localtime') AS INTEGER) * 60
+            + CAST(strftime('%M', r.ends_at, 'localtime') AS INTEGER)) + 1440
+          ELSE (CAST(strftime('%H', r.ends_at, 'localtime') AS INTEGER) * 60
+            + CAST(strftime('%M', r.ends_at, 'localtime') AS INTEGER))
         END AS end_min
       FROM non_recurring_ranges r
       JOIN active_schedules a ON a.id = r.active_id
@@ -362,30 +364,34 @@ export class ActiveScheduleRepository extends BaseRepository {
     )
     SELECT DISTINCT
       a.id, a.schedule_id, s.name AS schedule_name, a.active_type, a.recurring,
-      NULL AS selected_day, NULL AS selected_date,
+      ri.starts_at, ri.ends_at,
+      d.weekday AS selected_day,
+      ad.date AS selected_date,
       ri.start_min AS window_start_min, ri.end_min AS window_end_min
     FROM range_info ri
     JOIN active_schedules a ON a.id = ri.active_id
     JOIN schedules s ON s.id = a.schedule_id
+    LEFT JOIN active_schedule_days d ON d.active_schedule_id = a.id
+    LEFT JOIN active_schedule_dates ad ON ad.active_schedule_id = a.id
     WHERE
       -- same-day overlap
       (ri.weekday IN (${sameDayPlaceholders}) AND ri.start_min < ? AND ri.end_min > ?)
       OR
       -- existing non-recurring range bleeds forward into the new pattern's day
-      (ri.weekday IN (${previousPlaceholders}) AND ? > 1440 AND (? - 1440) > ri.start_min)
+      (ri.weekday IN (${previousPlaceholders}) AND ri.end_min > 1440 AND (ri.end_min - 1440) > ?)
       OR
       -- new recurring pattern bleeds forward into the range's day
-      (ri.weekday IN (${nextPlaceholders}) AND ri.end_min > 1440 AND (ri.end_min - 1440) > ?)
+      (ri.weekday IN (${nextPlaceholders}) AND ? > 1440 AND (? - 1440) > ri.start_min)
     `,
       [
         ...input.weekDays,
         input.windowEndMin,
         input.windowStartMin,
         ...previousWeekDays,
-        input.windowEndMin,
-        input.windowEndMin,
-        ...nextWeekDays,
         input.windowStartMin,
+        ...nextWeekDays,
+        input.windowEndMin,
+        input.windowEndMin,
       ],
     );
     return this.groupConflicts(rows);

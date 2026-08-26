@@ -44,7 +44,14 @@ export class ConflictResolver {
 
       if (conflict.activeType === "date")
         await this.activeScheduleRepository.delete(conflict.id);
-      else this.resolveDay(conflict, context.getSelectedDaysArr());
+      else {
+        const dayNums =
+          context.activeType === "days"
+            ? context.getSelectedDaysArr()
+            : [context.getSelectedDateWeekNumber()];
+        // resolve day or date type(day number)
+        this.resolveDay(conflict, dayNums);
+      }
     }
   }
 

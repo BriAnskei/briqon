@@ -6,21 +6,8 @@ export class ConflictDetector {
   constructor(private readonly handlers: ConflictHandler[]) {}
 
   async detect(context: Activation): Promise<ScheduleConflict[]> {
-    const res = await Promise.all(this.handlers.map((handler) => handler.check(context)));
-
-    console.log(
-      "conflicts:",
-      JSON.stringify(
-        res.flat(),
-        (key, value) => {
-          if (value instanceof Date) {
-            return value.toLocaleString();
-          }
-
-          return value;
-        },
-        2,
-      ),
+    const res = await Promise.all(
+      this.handlers.map(async (handler) => handler.check(context)),
     );
     return res.flat();
   }

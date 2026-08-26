@@ -6,7 +6,7 @@ export class OccurringTimeWindowRepository extends BaseRepository {
   async create(payload: OccuringTimeWindow, db: SQLite.SQLiteDatabase): Promise<void> {
     await this.run(
       `
-    INSERT INTO occuring_time_window (
+    INSERT INTO occurring_time_window (
     id,
     active_id,
     window_start_min,

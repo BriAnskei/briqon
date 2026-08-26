@@ -10,9 +10,10 @@ export class ActiveScheduleDatesRepository extends BaseRepository {
       INSERT INTO active_schedule_dates (
         id,
         active_schedule_id,
-        specific_date
+        date
       )
-      `,
+      VALUES (?, ?, ?)
+`,
       [
         activeScheduleDate.id,
         activeScheduleDate.activeId,

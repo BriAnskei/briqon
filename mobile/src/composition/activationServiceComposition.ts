@@ -4,8 +4,8 @@ import { AddActivationService } from "../activation/AddActivationService";
 import { ActivationFactory } from "../activation/domain/ActivationFactory";
 import { ConflictDetector } from "../activation/domain/conflict/ConflictDetector";
 import { ConflictResolver } from "../activation/domain/conflict/ConflictResolver";
-import { NonOccuringActivationHandler } from "../activation/domain/conflict/NonOccuringActivationHandler";
-import { OccurringActivationHandler } from "../activation/domain/conflict/OccurringActivationHandler";
+import { NonReccuringActivationHandler } from "../activation/domain/conflict/NonReccuringActivationHandler";
+import { ReccuringActivationHandler } from "../activation/domain/conflict/ReccuringActivationHandler";
 
 import { SQLiteActivationRepository } from "../activation/SQLiteActivationRepository";
 import { NonRecurringAgainstRecurringHandler } from "../activation/types/conflictHandler/NonRecurringAgainstRecurringHandler";
@@ -41,11 +41,11 @@ const activationRepository = new SQLiteActivationRepository(
   nonReccuringRangeRepository,
 );
 
-const occuringActivationHandler = new OccurringActivationHandler(
+const occuringActivationHandler = new ReccuringActivationHandler(
   activeScheduleRepository,
 );
 
-const nonOccuringHandler = new NonOccuringActivationHandler(activeScheduleRepository);
+const nonOccuringHandler = new NonReccuringActivationHandler(activeScheduleRepository);
 
 const reccuringAgaintsNonreccuring = new RecurringAgainstNonRecurringHandler(
   activeScheduleRepository,

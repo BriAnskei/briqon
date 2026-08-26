@@ -51,7 +51,7 @@ export class ScheduleRepository extends BaseRepository {
 
   async exists(id: string): Promise<boolean> {
     const row = await this.first<{ id: string }>(
-      `SELECT id FROM schedules WHERE id = ? LIMIT 1`,
+      `SELECT id FROM schedules WHERE id = ?`,
       [id],
     );
     return !!row;

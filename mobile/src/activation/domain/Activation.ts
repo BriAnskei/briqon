@@ -48,6 +48,12 @@ export class Activation {
     return this.days.map((d) => d.weekday);
   }
 
+  getSelectedDateWeekNumber(): number {
+    if(!this.date)
+        throw new Error("No Date selected to resolve");
+    return this.date.date.getDay()
+  }
+
   getDate(): Date {
     if (!this.date) {
       throw new Error("No Date provided");
