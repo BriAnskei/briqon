@@ -1,6 +1,4 @@
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import { AddActivationService } from "./AddActivationService";
-import { ActivationFactory } from "./domain/ActivationFactory";
 
 // ---------------------------------------------------------------------------
 // Test doubles for the three collaborators that AddActivationService delegates
