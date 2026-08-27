@@ -5,11 +5,10 @@ import { ActivationFactory } from "../activation/domain/ActivationFactory";
 import { ConflictDetector } from "../activation/domain/conflict/ConflictDetector";
 import { ConflictResolver } from "../activation/domain/conflict/ConflictResolver";
 import { NonReccuringActivationHandler } from "../activation/domain/conflict/NonReccuringActivationHandler";
+import { NonRecurringAgainstRecurringHandler } from "../activation/domain/conflict/NonRecurringAgainstRecurringHandler";
 import { ReccuringActivationHandler } from "../activation/domain/conflict/ReccuringActivationHandler";
-
+import { RecurringAgainstNonRecurringHandler } from "../activation/domain/conflict/RecurringAgainstNonRecurringHandler";
 import { SQLiteActivationRepository } from "../activation/SQLiteActivationRepository";
-import { NonRecurringAgainstRecurringHandler } from "../activation/types/conflictHandler/NonRecurringAgainstRecurringHandler";
-import { RecurringAgainstNonRecurringHandler } from "../activation/types/conflictHandler/RecurringAgainstNonRecurringHandler";
 import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
 import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";

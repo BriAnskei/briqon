@@ -20,7 +20,7 @@ describe("ScheduleFormWindowtimeRuleValidator", () => {
     meals: [
       {
         id: "m1",
-        type: "breakfast",
+        type: "breakfast / morning outine",
         durationMinutes: 30,
         placement: "flexible",
       },
@@ -342,7 +342,7 @@ describe("ScheduleFormWindowtimeRuleValidator", () => {
       meals: [
         {
           id: "m1",
-          type: "breakfast",
+          type: "breakfast / morning outine",
           durationMinutes: 20,
           placement: "flexible",
         },

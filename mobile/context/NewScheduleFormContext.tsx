@@ -5,7 +5,7 @@ import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 type NewScheduleFormContextProvider = {
   inputForm: NewScheduleFormState | undefined;
   resetState: () => void;
-  generateFormInput: (form: NewScheduleFormState) => void;
+  generateScheduleBasedOnForm: (form: NewScheduleFormState) => void;
 };
 
 const NewScheduleFormContext = createContext<NewScheduleFormContextProvider | null>(null);
@@ -14,11 +14,10 @@ export function NewScheduleFormProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [inputForm, setInputForm] = useState<NewScheduleFormState | undefined>(undefined);
 
-  const generateFormInput = (form: NewScheduleFormState) => {
-    if (inputForm) return;
-
+  const generateScheduleBasedOnForm = (form: NewScheduleFormState) => {
     setInputForm(form);
-    router.push("/schedule/generation");
+
+    if (inputForm) router.push("/schedule/generation");
   };
 
   const resetState = () => {
@@ -30,7 +29,7 @@ export function NewScheduleFormProvider({ children }: { children: ReactNode }) {
       value={{
         resetState,
         inputForm,
-        generateFormInput,
+        generateScheduleBasedOnForm,
       }}
     >
       {children}

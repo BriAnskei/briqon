@@ -49,9 +49,8 @@ export class Activation {
   }
 
   getSelectedDateWeekNumber(): number {
-    if(!this.date)
-        throw new Error("No Date selected to resolve");
-    return this.date.date.getDay()
+    if (!this.date) throw new Error("No Date selected to resolve");
+    return this.date.date.getDay();
   }
 
   getDate(): Date {

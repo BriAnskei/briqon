@@ -329,7 +329,7 @@ describe("useWizardForm", () => {
           meals: [
             {
               id: "m1",
-              type: "breakfast",
+              type: "breakfast / morning outine",
               durationMinutes: 30,
               placement: "flexible",
             },
@@ -604,7 +604,9 @@ describe("useWizardForm", () => {
         overAllMinutes: 0,
       });
 
-      act(() => result.current.mealsState.toggleMealType("breakfast", 30));
+      act(() =>
+        result.current.mealsState.toggleMealType("breakfast / morning outine", 30),
+      );
       expect(result.current.fixedScheduleDuration.mealMinutes).toBe(30);
 
       act(() => result.current.apptState.showDraft());
@@ -614,7 +616,9 @@ describe("useWizardForm", () => {
       expect(result.current.fixedScheduleDuration.overAllMinutes).toBe(90);
 
       // Toggling the same meal type off again removes it.
-      act(() => result.current.mealsState.toggleMealType("breakfast", 30));
+      act(() =>
+        result.current.mealsState.toggleMealType("breakfast / morning outine", 30),
+      );
       expect(result.current.fixedScheduleDuration.mealMinutes).toBe(0);
     });
   });

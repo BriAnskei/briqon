@@ -1,7 +1,7 @@
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
-import type { Activation } from "../../domain/Activation";
-import type { ConflictHandler } from "../../domain/conflict/ConflictHandler";
+import type { Activation } from "../Activation";
+import type { ConflictHandler } from "./ConflictHandler";
 
 export class RecurringAgainstNonRecurringHandler implements ConflictHandler {
   constructor(private readonly activeScheduleRepository: ActiveScheduleRepository) {}

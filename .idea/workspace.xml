@@ -5,17 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="73b21990-45eb-405f-9a93-fd411354ef4a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/activation/domain/Activation.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/activation/domain/Activation.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/ConflictDetector.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/ConflictDetector.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/ConflictResolver.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/ConflictResolver.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/NonOccuringActivationHandler.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/activation/domain/conflict/OccurringActivationHandler.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/composition/activationServiceComposition.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/composition/activationServiceComposition.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/repository/active-schedule-dates.repository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/repository/active-schedule-dates.repository.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/repository/occuring-time-window.repo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/repository/occuring-time-window.repo.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mobile/src/repository/schedule.repository.ts" beforeDir="false" afterPath="$PROJECT_DIR$/mobile/src/repository/schedule.repository.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -32,7 +32,7 @@ export type EventSummary = {
 
 export function useWizardForm() {
   const router = useRouter();
-  const { generateFormInput } = useNewScheduleForm();
+  const { generateScheduleBasedOnForm } = useNewScheduleForm();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());
@@ -153,8 +153,7 @@ export function useWizardForm() {
     if (apptState.apptDraft.visible) apptState.hideDraft();
     if (eventItemsState.eventItemDraft.visible) eventItemsState.hideDraft();
     if (isLastStep()) {
-      generateFormInput(form);
-      // await AIService?.generateSchedule(prompt, systemInstruction);
+      generateScheduleBasedOnForm(form);
     } else setStep((s) => s + 1);
   };
 

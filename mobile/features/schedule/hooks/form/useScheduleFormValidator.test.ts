@@ -91,7 +91,7 @@ describe("useWizardValidation", () => {
         appt("a2", "medical", "10:30", "11:00"), // 30 min
       ],
       meals: [
-        meal("m1", "breakfast", 30, "flexible"),
+        meal("m1", "breakfast / morning outine", 30, "flexible"),
         meal("m2", "lunch", 45, "fixed_time", "12:00"),
       ],
     };
