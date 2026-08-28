@@ -100,6 +100,17 @@ describe("AddActivationService", () => {
     expect(activationRepository.calls).toEqual([]);
   });
 
+  it("overwrite=false, single conflict present: still throws (boundary at length===1)", async () => {
+    const conflicts = [makeConflict({ id: "c1" })];
+    const { conflictResolver, activationRepository, service } = setup(conflicts);
+    const input = buildInput({ overwrite: false });
+
+    await expect(service.add(input)).rejects.toThrow(ScheduleConflictError);
+
+    expect(conflictResolver.calls).toEqual([]);
+    expect(activationRepository.calls).toEqual([]);
+  });
+
   it("overwrite=false, conflicts present: the thrown error carries the conflict list as context", async () => {
     const conflicts = [makeConflict({ id: "c1" }), makeConflict({ id: "c2" })];
     const { service } = setup(conflicts);
