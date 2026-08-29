@@ -144,7 +144,7 @@ function useSStyles() {
   return useMemo(
     () =>
       StyleSheet.create({
-        root: { flex: 1, backgroundColor: Colors.bg },
+        root: { flex: 1, backgroundColor: colors.bg },
 
         header: {
           flexDirection: "row",
@@ -158,9 +158,9 @@ function useSStyles() {
           width: 38,
           height: 38,
           borderRadius: Radius.md,
-          backgroundColor: Colors.bgElevated,
+          backgroundColor: colors.bgElevated,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
           alignItems: "center",
           justifyContent: "center",
         },
@@ -169,13 +169,13 @@ function useSStyles() {
           fontSize: 24,
           fontFamily: "Inter-SemiBold",
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
         },
         headerSub: {
           fontSize: 11,
           fontFamily: "Inter",
           fontWeight: "400",
-          color: Colors.textMuted,
+          color: colors.textMuted,
           marginTop: 2,
         },
 
@@ -186,16 +186,16 @@ function useSStyles() {
           paddingHorizontal: 24,
           paddingTop: 14,
           paddingBottom: 8,
-          backgroundColor: Colors.bgCard,
+          backgroundColor: colors.bgCard,
           borderTopWidth: 1,
-          borderTopColor: Colors.border,
+          borderTopColor: colors.border,
         },
         nextBtn: {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
           gap: 10,
-          backgroundColor: Colors.accent,
+          backgroundColor: colors.accent,
           borderRadius: 12, // py-3 spec
           paddingVertical: 12,
           ...Shadow.accent,
@@ -205,7 +205,7 @@ function useSStyles() {
           fontSize: 14,
           fontFamily: "Inter-Medium",
           fontWeight: "500",
-          color: Colors.white,
+          color: colors.white,
           letterSpacing: 0.2,
         },
       }),

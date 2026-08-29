@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import type { ScheduleItem } from "@/src/models/schedule.model";
-import { Colors, Radius, Shadow } from "@/type/theme";
+import { Radius, Shadow } from "@/type/theme";
 
 interface ScheduleTimelineProps {
   schedule: ScheduleItem[];
@@ -42,7 +42,7 @@ function useSStyles() {
           fontSize: 15,
           fontFamily: "Inter-SemiBold",
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
           marginBottom: 4,
         },
 
@@ -50,10 +50,10 @@ function useSStyles() {
         scheduleRow: {
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: Colors.bgCard,
+          backgroundColor: colors.bgCard,
           borderRadius: Radius.lg,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
           overflow: "hidden",
           paddingRight: 14,
           gap: 12,
@@ -62,13 +62,13 @@ function useSStyles() {
         scheduleAccent: {
           width: 3,
           alignSelf: "stretch",
-          backgroundColor: Colors.accent,
+          backgroundColor: colors.accent,
         },
         scheduleIndex: {
           fontSize: 11,
           fontFamily: "DMMono-Medium",
           fontWeight: "500",
-          color: Colors.textMuted,
+          color: colors.textMuted,
           letterSpacing: 0.5,
           minWidth: 20,
         },
@@ -85,13 +85,13 @@ function useSStyles() {
           fontSize: 14,
           fontFamily: "Inter-SemiBold",
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
         },
         scheduleTime: {
           fontSize: 12,
           fontFamily: "Inter",
           fontWeight: "400",
-          color: Colors.textMuted,
+          color: colors.textMuted,
           flexShrink: 0,
         },
       }),

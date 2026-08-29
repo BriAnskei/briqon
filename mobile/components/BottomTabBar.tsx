@@ -101,9 +101,9 @@ function useSStyles() {
       StyleSheet.create({
         tabBar: {
           flexDirection: "row",
-          backgroundColor: Colors.bgCard + "CC", // bg-card/80 (80% opacity per spec)
+          backgroundColor: colors.bgCard + "CC", // bg-card/80 (80% opacity per spec)
           borderTopWidth: 1,
-          borderTopColor: Colors.border,
+          borderTopColor: colors.border,
           paddingTop: 12, // py-3
           paddingBottom: 20, // pb-5
         },

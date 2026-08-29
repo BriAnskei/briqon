@@ -5,7 +5,7 @@ import type {
   EventSummary,
   PersonalSummary,
 } from "@/features/schedule/hooks/form/useWizardForm";
-import { Colors, Radius, Shadow } from "@/type/theme";
+import { Radius, Shadow } from "@/type/theme";
 import { formatMinutes } from "@/utils/TimeFormatter";
 
 export type SummaryItem = { label: string; value: string };
@@ -70,29 +70,29 @@ function useSStyles() {
         card: {
           flexDirection: "row",
           alignItems: "center",
-          backgroundColor: Colors.bgCard,
+          backgroundColor: colors.bgCard,
           borderRadius: Radius.lg,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
           paddingVertical: 14,
           paddingHorizontal: 8,
           marginBottom: 20,
           ...Shadow.card,
         },
         item: { flex: 1, alignItems: "center" },
-        divider: { width: 1, height: 28, backgroundColor: Colors.borderLight },
+        divider: { width: 1, height: 28, backgroundColor: colors.borderLight },
         value: {
           fontSize: 16,
           fontFamily: "Inter-SemiBold",
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
           marginBottom: 2,
         },
         label: {
           fontSize: 11,
           fontFamily: "DMMono-Medium",
           fontWeight: "500",
-          color: Colors.textSecondary,
+          color: colors.textSecondary,
         },
       }),
     [colors],

@@ -306,7 +306,7 @@ function useSStyles() {
   return useMemo(
     () =>
       StyleSheet.create({
-        root: { flex: 1, backgroundColor: Colors.bg },
+        root: { flex: 1, backgroundColor: colors.bg },
         disabled: { opacity: 0.4 },
 
         header: {
@@ -317,17 +317,17 @@ function useSStyles() {
           paddingTop: 16,
           paddingBottom: 18,
           borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
+          borderBottomColor: colors.border,
         },
         backBtn: { padding: 4 },
-        backIcon: { fontSize: 22, color: Colors.textSecondary },
+        backIcon: { fontSize: 22, color: colors.textSecondary },
         headerTitle: {
           fontSize: 16,
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
         },
         doneBtn: {
-          backgroundColor: Colors.bgElevated,
+          backgroundColor: colors.bgElevated,
           borderRadius: Radius.full,
           paddingHorizontal: 16,
           paddingVertical: 8,
@@ -335,25 +335,25 @@ function useSStyles() {
           alignItems: "center",
         },
         doneBtnActive: {
-          backgroundColor: Colors.accent,
+          backgroundColor: colors.accent,
           ...Shadow.accent,
         },
         doneBtnLoading: {
-          backgroundColor: Colors.accent,
+          backgroundColor: colors.accent,
           opacity: 0.7,
         },
-        doneBtnText: { fontSize: 13, fontWeight: "600", color: Colors.white },
+        doneBtnText: { fontSize: 13, fontWeight: "600", color: colors.white },
 
         hint: {
           paddingHorizontal: 20,
           paddingVertical: 10,
           borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
-          backgroundColor: Colors.bgElevated,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.bgElevated,
         },
         hintText: {
           fontSize: 12,
-          color: Colors.textMuted,
+          color: colors.textMuted,
           textAlign: "center",
         },
 
@@ -377,14 +377,14 @@ function useSStyles() {
         },
         tlTime: {
           fontSize: 11,
-          color: Colors.textMuted,
+          color: colors.textMuted,
           fontWeight: "500",
           letterSpacing: 0.2,
         },
         tlLine: {
           width: 1,
           flex: 1,
-          backgroundColor: Colors.border,
+          backgroundColor: colors.border,
           marginTop: 8,
           minHeight: 28,
         },
@@ -398,29 +398,29 @@ function useSStyles() {
         tlRight: { flex: 1 },
 
         tlCard: {
-          backgroundColor: Colors.bgCard,
+          backgroundColor: colors.bgCard,
           borderRadius: Radius.md,
           paddingHorizontal: 14,
           paddingVertical: 12,
           marginBottom: 4,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
         },
-        tlCardActive: { borderColor: Colors.accent, borderWidth: 1.5 },
+        tlCardActive: { borderColor: colors.accent, borderWidth: 1.5 },
         tlCardEditing: {
-          borderColor: Colors.accent,
+          borderColor: colors.accent,
           borderWidth: 1.5,
           borderBottomLeftRadius: 0,
           borderBottomRightRadius: 0,
         },
         tlCardDeleted: {
-          backgroundColor: Colors.dangerSoft,
-          borderColor: Colors.danger,
+          backgroundColor: colors.dangerSoft,
+          borderColor: colors.danger,
           borderWidth: 1.5,
           opacity: 0.75,
         },
         tlCardQueued: {
-          borderColor: Colors.accent,
+          borderColor: colors.accent,
           borderWidth: 1.5,
           borderBottomLeftRadius: 0,
           borderBottomRightRadius: 0,
@@ -441,20 +441,20 @@ function useSStyles() {
         tlTitle: {
           fontSize: 14,
           fontWeight: "600",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
           marginBottom: 3,
         },
-        tlMeta: { fontSize: 12, color: Colors.textMuted, lineHeight: 17 },
+        tlMeta: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
 
         deletedTitle: {
-          color: Colors.danger,
+          color: colors.danger,
           textDecorationLine: "line-through",
         },
         deletedText: {
-          color: Colors.danger,
+          color: colors.danger,
           textDecorationLine: "line-through",
         },
-        deletedLine: { backgroundColor: Colors.danger, opacity: 0.4 },
+        deletedLine: { backgroundColor: colors.danger, opacity: 0.4 },
 
         deleteBadge: {
           flexDirection: "row",
@@ -464,27 +464,27 @@ function useSStyles() {
         },
         deleteBadgeText: {
           fontSize: 11,
-          color: Colors.danger,
+          color: colors.danger,
           fontWeight: "500",
         },
         undoBtn: {
           borderWidth: 1,
-          borderColor: Colors.danger,
+          borderColor: colors.danger,
           borderRadius: Radius.full,
           paddingHorizontal: 8,
           paddingVertical: 3,
         },
-        undoBtnText: { fontSize: 11, color: Colors.danger, fontWeight: "600" },
+        undoBtnText: { fontSize: 11, color: colors.danger, fontWeight: "600" },
 
         // Queued edit badge — appears below card after Apply
         queuedBadge: {
           flexDirection: "row",
           alignItems: "flex-start",
           gap: 6,
-          backgroundColor: Colors.accentSoft,
+          backgroundColor: colors.accentSoft,
           borderWidth: 1,
           borderTopWidth: 0,
-          borderColor: Colors.accent,
+          borderColor: colors.accent,
           borderBottomLeftRadius: Radius.md,
           borderBottomRightRadius: Radius.md,
           paddingHorizontal: 12,
@@ -493,13 +493,13 @@ function useSStyles() {
         },
         queuedBadgeIcon: {
           fontSize: 12,
-          color: Colors.accent,
+          color: colors.accent,
           marginTop: 1,
         },
         queuedBadgeText: {
           flex: 1,
           fontSize: 12,
-          color: Colors.accent,
+          color: colors.accent,
           fontWeight: "500",
           lineHeight: 17,
         },
@@ -514,25 +514,25 @@ function useSStyles() {
           width: 32,
           height: 32,
           borderRadius: 8,
-          backgroundColor: Colors.bgElevated,
+          backgroundColor: colors.bgElevated,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
           alignItems: "center",
           justifyContent: "center",
         },
         iconBtnDelete: {
-          borderColor: Colors.danger,
-          backgroundColor: Colors.dangerSoft,
+          borderColor: colors.danger,
+          backgroundColor: colors.dangerSoft,
         },
         iconEdit: { fontSize: 14 },
         iconDelete: { fontSize: 13 },
 
         editInputContainer: { marginBottom: 10 },
         editInputInner: {
-          backgroundColor: Colors.bgElevated,
+          backgroundColor: colors.bgElevated,
           borderWidth: 1.5,
           borderTopWidth: 0,
-          borderColor: Colors.accent,
+          borderColor: colors.accent,
           borderBottomLeftRadius: Radius.md,
           borderBottomRightRadius: Radius.md,
           paddingHorizontal: 14,
@@ -541,7 +541,7 @@ function useSStyles() {
         },
         editInput: {
           fontSize: 13,
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
           minHeight: 40,
           maxHeight: 100,
           textAlignVertical: "top",
@@ -553,11 +553,11 @@ function useSStyles() {
         },
         wordCount: {
           fontSize: 11,
-          color: Colors.textMuted,
+          color: colors.textMuted,
           fontWeight: "500",
         },
         wordCountLimit: {
-          color: Colors.danger,
+          color: colors.danger,
           fontWeight: "600",
         },
         editInputActions: {
@@ -571,29 +571,29 @@ function useSStyles() {
           paddingVertical: 7,
           borderRadius: Radius.md,
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
         },
         cancelBtnText: {
           fontSize: 12,
           fontWeight: "600",
-          color: Colors.textSecondary,
+          color: colors.textSecondary,
         },
         submitBtn: {
           paddingHorizontal: 16,
           paddingVertical: 7,
           borderRadius: Radius.md,
-          backgroundColor: Colors.accent,
+          backgroundColor: colors.accent,
           ...Shadow.accent,
         },
         submitBtnDisabled: {
-          backgroundColor: Colors.bgElevated,
+          backgroundColor: colors.bgElevated,
           shadowOpacity: 0,
           elevation: 0,
         },
-        submitBtnText: { fontSize: 12, fontWeight: "600", color: Colors.white },
+        submitBtnText: { fontSize: 12, fontWeight: "600", color: colors.white },
 
         empty: { flex: 1, alignItems: "center", justifyContent: "center" },
-        emptyText: { fontSize: 14, color: Colors.textMuted },
+        emptyText: { fontSize: 14, color: colors.textMuted },
         bottomSpacer: { height: 40 },
       }),
     [colors],

@@ -13,7 +13,6 @@ import { ActivationConflictModal } from "@/features/schedule/components/Generate
 import { SaveScheduleModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SaveScheduleModal";
 import { SetActiveModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import { useGenerateScheduleScreen } from "@/features/schedule/hooks/generation/useGenerateScheduleScreen";
-import { Colors } from "@/type/theme";
 
 export default function GenerateScheduleScreen() {
   const s = useSStyles();
@@ -89,7 +88,7 @@ function useSStyles() {
   return useMemo(
     () =>
       StyleSheet.create({
-        root: { flex: 1, backgroundColor: Colors.bg },
+        root: { flex: 1, backgroundColor: colors.bg },
 
         scroll: { flex: 1 },
         scrollContent: { paddingHorizontal: 24, paddingTop: 20 },

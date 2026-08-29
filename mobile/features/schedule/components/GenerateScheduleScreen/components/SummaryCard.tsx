@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import type { SubSummary } from "@/src/models/sub_summaries.model";
 import type { ScheduleSummary } from "@/src/models/summaries.model";
-import { Colors, Radius } from "@/type/theme";
+import { Radius } from "@/type/theme";
 
 interface SummaryCardProps {
   summaries: ScheduleSummary[];
@@ -56,16 +56,16 @@ function useSStyles() {
       StyleSheet.create({
         summaryCard: {
           borderWidth: 1,
-          borderColor: Colors.border,
+          borderColor: colors.border,
           borderRadius: Radius.lg,
-          backgroundColor: Colors.bgCard,
+          backgroundColor: colors.bgCard,
           padding: 16,
           gap: 12,
         },
         summaryLabel: {
           fontSize: 11,
           fontWeight: "700",
-          color: Colors.textMuted,
+          color: colors.textMuted,
           letterSpacing: 0.5,
           textTransform: "uppercase",
         },
@@ -74,7 +74,7 @@ function useSStyles() {
         categoryBlock: { gap: 8, paddingBottom: 14 },
         categoryBlockDivider: {
           borderBottomWidth: 1,
-          borderBottomColor: Colors.divider,
+          borderBottomColor: colors.divider,
         },
         categoryHeaderRow: {
           flexDirection: "row",
@@ -84,12 +84,12 @@ function useSStyles() {
         categoryName: {
           fontSize: 14,
           fontWeight: "700",
-          color: Colors.textPrimary,
+          color: colors.textPrimary,
         },
         categoryTotal: {
           fontSize: 13,
           fontWeight: "600",
-          color: Colors.textSecondary,
+          color: colors.textSecondary,
         },
 
         subActivityList: { gap: 6, paddingLeft: 4 },
@@ -98,12 +98,12 @@ function useSStyles() {
           width: 4,
           height: 4,
           borderRadius: 2,
-          backgroundColor: Colors.textMuted,
+          backgroundColor: colors.textMuted,
         },
-        subActivityName: { flex: 1, fontSize: 12, color: Colors.textSecondary },
+        subActivityName: { flex: 1, fontSize: 12, color: colors.textSecondary },
         subActivityTotal: {
           fontSize: 12,
-          color: Colors.textMuted,
+          color: colors.textMuted,
           fontWeight: "500",
         },
       }),
