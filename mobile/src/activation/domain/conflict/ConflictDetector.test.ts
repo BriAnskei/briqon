@@ -1,13 +1,13 @@
-import { ActivationFactory } from "@/src/activation/domain/ActivationFactory";
 import type { Activation } from "@/src/activation/domain/Activation";
+import { ActivationFactory } from "@/src/activation/domain/ActivationFactory";
 import { ConflictDetector } from "@/src/activation/domain/conflict/ConflictDetector";
 import type { ConflictHandler } from "@/src/activation/domain/conflict/ConflictHandler";
 import { NonReccuringActivationHandler } from "@/src/activation/domain/conflict/NonReccuringActivationHandler";
+import { NonRecurringAgainstRecurringHandler } from "@/src/activation/domain/conflict/NonRecurringAgainstRecurringHandler";
 import { ReccuringActivationHandler } from "@/src/activation/domain/conflict/ReccuringActivationHandler";
 import { RecurringAgainstNonRecurringHandler } from "@/src/activation/domain/conflict/RecurringAgainstNonRecurringHandler";
-import { NonRecurringAgainstRecurringHandler } from "@/src/activation/domain/conflict/NonRecurringAgainstRecurringHandler";
-import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
+import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 
 /**
@@ -152,10 +152,12 @@ class FakeActiveScheduleRepository {
     return this.conflictsByMethod.findReccuringConflict ?? [];
   }
 
-  async findNonOccurringConflict(ranges: {
-    startsAt: Date;
-    endsAt: Date;
-  }[]): Promise<ScheduleConflict[]> {
+  async findNonOccurringConflict(
+    ranges: {
+      startsAt: Date;
+      endsAt: Date;
+    }[],
+  ): Promise<ScheduleConflict[]> {
     this.findNonOccurringConflictCalls.push(ranges);
     return this.conflictsByMethod.findNonOccurringConflict ?? [];
   }
@@ -169,10 +171,12 @@ class FakeActiveScheduleRepository {
     return this.conflictsByMethod.findNonRecurringConflictsForRecurring ?? [];
   }
 
-  async findRecurringConflictsForNonRecurring(ranges: {
-    startsAt: Date;
-    endsAt: Date;
-  }[]): Promise<ScheduleConflict[]> {
+  async findRecurringConflictsForNonRecurring(
+    ranges: {
+      startsAt: Date;
+      endsAt: Date;
+    }[],
+  ): Promise<ScheduleConflict[]> {
     this.findRecurringConflictsForNonRecurringCalls.push(ranges);
     return this.conflictsByMethod.findRecurringConflictsForNonRecurring ?? [];
   }
@@ -323,8 +327,12 @@ describe("ConflictDetector (integration — with real handlers)", () => {
     const handlers: ConflictHandler[] = [
       new ReccuringActivationHandler(repo as unknown as ActiveScheduleRepository),
       new NonReccuringActivationHandler(repo as unknown as ActiveScheduleRepository),
-      new RecurringAgainstNonRecurringHandler(repo as unknown as ActiveScheduleRepository),
-      new NonRecurringAgainstRecurringHandler(repo as unknown as ActiveScheduleRepository),
+      new RecurringAgainstNonRecurringHandler(
+        repo as unknown as ActiveScheduleRepository,
+      ),
+      new NonRecurringAgainstRecurringHandler(
+        repo as unknown as ActiveScheduleRepository,
+      ),
     ];
 
     return new ConflictDetector(handlers);
@@ -439,9 +447,7 @@ describe("ConflictDetector (integration — with real handlers)", () => {
       // NonRecurrentAgainstRecurringHandler should have called
       // findRecurringConflictsForNonRecurring with the same ranges.
       expect(repo.findRecurringConflictsForNonRecurringCalls).toHaveLength(1);
-      expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(
-        expectedRanges,
-      );
+      expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(expectedRanges);
 
       // Recurring handlers should NOT have been invoked because
       // the context is non-recurring.
@@ -512,9 +518,7 @@ describe("ConflictDetector (integration — with real handlers)", () => {
       // NonRecurrentAgainstRecurringHandler should have called
       // findRecurringConflictsForNonRecurring with the same single range.
       expect(repo.findRecurringConflictsForNonRecurringCalls).toHaveLength(1);
-      expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(
-        expectedRange,
-      );
+      expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(expectedRange);
 
       // Recurring handlers should NOT have been invoked.
       expect(repo.findReccuringConflictCalls).toHaveLength(0);

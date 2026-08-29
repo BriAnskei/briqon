@@ -113,12 +113,21 @@ function meal(
 }
 
 /** Flexible event item: no explicit time, only a (possibly null) duration. */
-function flexEventItem(id: string, name: string, durationMin: number | null): EventScheduleItem {
+function flexEventItem(
+  id: string,
+  name: string,
+  durationMin: number | null,
+): EventScheduleItem {
   return { id, name, durationMinutes: durationMin, isFixedTime: false };
 }
 
 /** Fixed-time event item with an explicit start time. */
-function fixedEventItem(id: string, name: string, fixedTime: string, durationMin: number | null = null): EventScheduleItem {
+function fixedEventItem(
+  id: string,
+  name: string,
+  fixedTime: string,
+  durationMin: number | null = null,
+): EventScheduleItem {
   return {
     id,
     name,
@@ -656,9 +665,7 @@ describe("useWizardValidation — validator output", () => {
       const form = personalBaseForm({ priorityDurationMinutes: 634 });
       const { result } = setup(form, 5);
       expect(result.current.validation.priorityTime.valid).toBe(false);
-      expect(result.current.validation.priorityTime.message).toContain(
-        "remaining time",
-      );
+      expect(result.current.validation.priorityTime.message).toContain("remaining time");
     });
 
     it("[documents gap] returns valid when breakFrequency is null, even with an absurd priority duration", () => {
@@ -719,9 +726,9 @@ describe("useWizardValidation — validator output", () => {
         breakFrequency: "balanced",
         priorityDurationMinutes: 720,
       });
-      expect(
-        setup(balancedBreak, 5).result.current.validation.priorityTime.valid,
-      ).toBe(false);
+      expect(setup(balancedBreak, 5).result.current.validation.priorityTime.valid).toBe(
+        false,
+      );
     });
 
     it("breaks overflow is triggered by the combination of appointments + meals + break percentage", () => {
@@ -738,9 +745,7 @@ describe("useWizardValidation — validator output", () => {
         appointments: [appt("a1", "work", "08:00", "19:00")], // 660 min
         meals: [meal("m1", "lunch", 60, "flexible")], // 660 + 60 = 720 + 86.4 > 720
       });
-      expect(
-        setup(tooFull, 4).result.current.validation.breaks.valid,
-      ).toBe(false);
+      expect(setup(tooFull, 4).result.current.validation.breaks.valid).toBe(false);
     });
 
     it("appointments and meals share the same window budget — overflowing either triggers its own validator", () => {
@@ -850,9 +855,7 @@ describe("useWizardValidation — validator output", () => {
         ],
       });
       const { result } = setup(form, 2);
-      expect(result.current.stepError).toBe(
-        result.current.validation.conflicts.message,
-      );
+      expect(result.current.stepError).toBe(result.current.validation.conflicts.message);
     });
 
     it("surfaces timeBlockRange errors on step 2", () => {
@@ -893,9 +896,7 @@ describe("useWizardValidation — validator output", () => {
         meals: [meal("m1", "lunch", 750, "flexible")], // 750 > 720
       });
       const { result } = setup(form, 3);
-      expect(result.current.stepError).toBe(
-        result.current.validation.meals.message,
-      );
+      expect(result.current.stepError).toBe(result.current.validation.meals.message);
     });
 
     it("surfaces conflicts and timeBlockRange errors on step 3 as well", () => {
@@ -934,9 +935,7 @@ describe("useWizardValidation — validator output", () => {
         breakFrequency: "balanced",
       });
       const { result } = setup(form, 4);
-      expect(result.current.stepError).toBe(
-        result.current.validation.breaks.message,
-      );
+      expect(result.current.stepError).toBe(result.current.validation.breaks.message);
     });
 
     it("returns undefined on step 4 when breaks are valid even if other validators fail", () => {
@@ -1038,9 +1037,7 @@ describe("useWizardValidation — validator output", () => {
       });
       const { result } = setup(form, 3, true);
       expect(result.current.validation.eventConflicts.valid).toBe(false);
-      expect(result.current.stepError).toContain(
-        "outside the schedule time window",
-      );
+      expect(result.current.stepError).toContain("outside the schedule time window");
     });
 
     it("surfaces eventConflicts error on step 3 when fixed items overlap", () => {
@@ -1426,9 +1423,7 @@ describe("useWizardValidation — validator output", () => {
       });
 
       const { result, rerender } = setup(form, 2);
-      expect(result.current.stepError).toBe(
-        result.current.validation.conflicts.message,
-      );
+      expect(result.current.stepError).toBe(result.current.validation.conflicts.message);
 
       rerender({ form, step: 4, isEvent: false });
       expect(result.current.stepError).toBeUndefined();

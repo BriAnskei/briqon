@@ -14,7 +14,6 @@ import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
 import { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
-import { ActiveScheduleService } from "../service/activeSchedule.service";
 import { ScheduleService } from "../service/schedule.service";
 
 const activeScheduleRepository = new ActiveScheduleRepository();
@@ -65,15 +64,10 @@ const activationFactory = new ActivationFactory();
 
 const scheduleService = new ScheduleService();
 
-const addActivationService = new AddActivationService(
+export const addActivationService = new AddActivationService(
   conflictDetector,
   conflictResolver,
-  activationRepository,
   activationFactory,
-);
-
-export const activeScheduleService = new ActiveScheduleService(
-  addActivationService,
-  activeScheduleRepository,
+  activationRepository,
   scheduleService,
 );

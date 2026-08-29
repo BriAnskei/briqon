@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import Toast from "react-native-toast-message";
 import useModal from "@/hooks/useModal";
-import { activeScheduleService } from "@/src/composition/activationServiceComposition";
+import { addActivationService } from "@/src/composition/activationServiceComposition";
 import {
   type ScheduleConflict,
   ScheduleConflictError,
@@ -100,7 +100,7 @@ export function useSetActiveModal(payload: {
   } = payload;
   const { isOpen, open, close } = useModal();
 
-  const service = activeScheduleService;
+  const service = addActivationService;
 
   const [dateMode, setDateMode] = useState<DateMode>(null);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -408,7 +408,7 @@ export function useSetActiveModal(payload: {
     setIsSubmitting(true);
 
     try {
-      await service.createAsync(input);
+      await service.add(input);
 
       if (isScheduleNeedsToSave) {
         setIsScheduleSavedByActivation(true);

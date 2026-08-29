@@ -130,10 +130,7 @@ describe("SQLiteActivationRepository", () => {
       await sqliteRepo.execute(activation);
 
       expect(repo.create).toHaveBeenCalledTimes(1);
-      expect(repo.create).toHaveBeenCalledWith(
-        activation.getActiveSchedule(),
-        DUMMY_DB,
-      );
+      expect(repo.create).toHaveBeenCalledWith(activation.getActiveSchedule(), DUMMY_DB);
     });
   });
 
@@ -318,10 +315,7 @@ describe("SQLiteActivationRepository", () => {
       expect(capturedDbs).toEqual([DUMMY_DB]);
 
       // Every sub-repo create should have received DUMMY_DB as the 2nd arg.
-      expect(repo.create).toHaveBeenLastCalledWith(
-        expect.anything(),
-        DUMMY_DB,
-      );
+      expect(repo.create).toHaveBeenLastCalledWith(expect.anything(), DUMMY_DB);
       expect(activeScheduleDaysRepo.create).toHaveBeenCalledWith(
         expect.anything(),
         DUMMY_DB,

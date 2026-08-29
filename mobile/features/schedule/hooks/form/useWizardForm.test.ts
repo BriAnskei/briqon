@@ -21,9 +21,9 @@ jest.mock("react-native-toast-message", () => ({
 }));
 
 jest.mock("@/context/ScheduleContext");
-jest.mock("@/context/AIContext");
+jest.mock("@/context/NewScheduleFormContext");
 
-jest.mock("../utils/WizardPromptBuilder", () => ({
+jest.mock("../../utils/WizardPromptBuilder", () => ({
   WizardPromptBuilder: {
     build: jest.fn(() => ({
       systemInstruction: "mock-system",
@@ -40,8 +40,8 @@ jest.mock("uuid", () => ({ v4: () => "test-uuid" }));
 // needs to fake those), but replace the three "starting state" factories
 // with fixed, deterministic values instead of the real new Date()-based
 // ones, so tests don't depend on what time it happens to be when they run.
-jest.mock("../utils/wizardHelpers", () => ({
-  ...jest.requireActual("../utils/wizardHelpers"),
+jest.mock("../../utils/wizardHelpers", () => ({
+  ...jest.requireActual("../../utils/wizardHelpers"),
   defaultForm: jest.fn(),
   defaultEventItemDraft: jest.fn(),
   defaultAppointmentDraft: jest.fn(),
@@ -50,8 +50,8 @@ jest.mock("../utils/wizardHelpers", () => ({
 // PERSONAL_TOTAL_STEPS / EVENT_TOTAL_STEPS mocked to fixed values so tests
 // aren't coupled to product decisions that are still evolving. Everything
 // else in the module (e.g. APPOINTMENT_TYPES) stays real.
-jest.mock("../contants/wizardOptions", () => ({
-  ...jest.requireActual("../contants/wizardOptions"),
+jest.mock("../../contants/wizardOptions", () => ({
+  ...jest.requireActual("../../contants/wizardOptions"),
   PERSONAL_TOTAL_STEPS: 6,
   EVENT_TOTAL_STEPS: 4,
 }));
@@ -84,8 +84,7 @@ function makeDefaultForm(): NewScheduleFormState {
   };
 }
 
-const mockGenerateSchedule = jest.fn().mockResolvedValue(undefined);
-const mockSetInputForm = jest.fn();
+const mockGenerateScheduleBasedOnForm = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
@@ -94,7 +93,6 @@ const mockHandleScheduleGeneration = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockGenerateSchedule.mockResolvedValue(undefined);
 
   (defaultForm as jest.Mock).mockImplementation(makeDefaultForm);
   (defaultEventItemDraft as jest.Mock).mockImplementation(() => ({
@@ -129,8 +127,7 @@ beforeEach(() => {
   });
 
   (useNewScheduleForm as jest.Mock).mockReturnValue({
-    service: { generateSchedule: mockGenerateSchedule },
-    setInputForm: mockSetInputForm,
+    generateScheduleBasedOnForm: mockGenerateScheduleBasedOnForm,
   });
 });
 
@@ -409,10 +406,11 @@ describe("useWizardForm", () => {
       // The prompt is NOT built here — generation is deferred to the
       // generation screen, so build() should not be invoked by the hook.
       expect(WizardPromptBuilder.build).not.toHaveBeenCalled();
-      // The hook hands the form to the AI context and routes to generation.
-      expect(mockSetInputForm).toHaveBeenCalledWith(result.current.form);
-      expect(mockRouterPush).toHaveBeenCalledWith("/schedule/generation");
-      expect(mockGenerateSchedule).not.toHaveBeenCalled();
+      // The hook hands the form to the AI context via generateScheduleBasedOnForm,
+      // which is responsible for storing the form and routing to generation.
+      expect(mockGenerateScheduleBasedOnForm).toHaveBeenCalledWith(
+        result.current.form,
+      );
       // Submitting doesn't advance past the last step index.
       expect(result.current.step).toBe(5);
     });

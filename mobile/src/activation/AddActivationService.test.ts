@@ -6,7 +6,12 @@ import type { ConflictDetector } from "@/src/activation/domain/conflict/Conflict
 import type { ConflictResolver } from "@/src/activation/domain/conflict/ConflictResolver";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
+import type { ScheduleItem } from "@/type/MessageTypes";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
+import type {
+  CreateSchedulePayloadType,
+  ScheduleService,
+} from "../service/schedule.service";
 
 /** Records the context it was asked to detect conflicts for, returns a
  * pre-configured list. */
@@ -39,6 +44,23 @@ class FakeActivationRepository {
   }
 }
 
+/** Records exists() and createSchedule() calls. */
+class FakeScheduleService {
+  existsCalls: string[] = [];
+  createScheduleCalls: CreateSchedulePayloadType[] = [];
+
+  constructor(private readonly scheduleExists = false) {}
+
+  async exists(id: string): Promise<boolean> {
+    this.existsCalls.push(id);
+    return this.scheduleExists;
+  }
+
+  async createSchedule(payload: CreateSchedulePayloadType): Promise<void> {
+    this.createScheduleCalls.push(payload);
+  }
+}
+
 function makeConflict(overrides: Partial<ScheduleConflict> = {}): ScheduleConflict {
   return {
     id: "conflict-1",
@@ -66,17 +88,28 @@ function buildInput(overrides: Partial<CreateActivationInput>): CreateActivation
 describe("AddActivationService", () => {
   const activationFactory = new ActivationFactory();
 
-  function setup(conflictsToReturn: ScheduleConflict[] = []) {
+  function setup(
+    conflictsToReturn: ScheduleConflict[] = [],
+    options: { scheduleExists?: boolean } = {},
+  ) {
     const conflictDetector = new FakeConflictDetector(conflictsToReturn);
     const conflictResolver = new FakeConflictResolver();
     const activationRepository = new FakeActivationRepository();
+    const scheduleService = new FakeScheduleService(options.scheduleExists ?? false);
     const service = new AddActivationService(
       conflictDetector as unknown as ConflictDetector,
       conflictResolver as unknown as ConflictResolver,
-      activationRepository as unknown as ActivationRepository,
       activationFactory,
+      activationRepository as unknown as ActivationRepository,
+      scheduleService as unknown as ScheduleService,
     );
-    return { conflictDetector, conflictResolver, activationRepository, service };
+    return {
+      conflictDetector,
+      conflictResolver,
+      activationRepository,
+      scheduleService,
+      service,
+    };
   }
 
   it("overwrite=false, no conflicts: skips resolve and persists the activation", async () => {
@@ -154,6 +187,69 @@ describe("AddActivationService", () => {
     await service.add(input);
 
     expect(activationRepository.calls[0]).toBe(conflictDetector.calls[0]);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Schedule pre-persistence (ensureScheduleSavedAsTemporary)
+  //
+  // When the input carries scheduleItems the schedule has not yet been saved,
+  // so AddActivationService persists it as a temporary row before building the
+  // activation aggregate.
+  // ---------------------------------------------------------------------------
+  describe("scheduleItems pre-persistence", () => {
+    const scheduleItems: ScheduleItem[] = [
+      { start_time: "08:00", end_time: "09:00", activity: "standup" },
+    ];
+
+    it("when scheduleItems provided and schedule does not exist: saves as temporary then persists activation", async () => {
+      const { scheduleService, activationRepository, service } = setup([]);
+      const input = buildInput({
+        scheduleItems,
+        summaries: [],
+        subSummaries: [],
+      });
+
+      await service.add(input);
+
+      // exists() is checked for the scheduleId
+      expect(scheduleService.existsCalls).toEqual(["sched-1"]);
+      // createSchedule() is called with the temporary schedule
+      expect(scheduleService.createScheduleCalls).toHaveLength(1);
+      const created = scheduleService.createScheduleCalls[0];
+      expect(created.schedule.temporary).toBe(true);
+      expect(created.schedule.name).toBe("");
+      expect(created.schedule.schedule_list).toBe(scheduleItems);
+      // The activation is still persisted
+      expect(activationRepository.calls).toHaveLength(1);
+    });
+
+    it("when scheduleItems provided and schedule already exists: skips createSchedule", async () => {
+      const { scheduleService, activationRepository, service } = setup([], {
+        scheduleExists: true,
+      });
+      const input = buildInput({
+        scheduleItems,
+        summaries: [],
+        subSummaries: [],
+      });
+
+      await service.add(input);
+
+      expect(scheduleService.existsCalls).toEqual(["sched-1"]);
+      expect(scheduleService.createScheduleCalls).toEqual([]);
+      // Activation is still persisted — the schedule already satisfies the FK
+      expect(activationRepository.calls).toHaveLength(1);
+    });
+
+    it("when scheduleItems not provided: scheduleService is never called", async () => {
+      const { scheduleService, service } = setup([]);
+      const input = buildInput({ overwrite: false }); // no scheduleItems
+
+      await service.add(input);
+
+      expect(scheduleService.existsCalls).toEqual([]);
+      expect(scheduleService.createScheduleCalls).toEqual([]);
+    });
   });
 
   // ---------------------------------------------------------------------------

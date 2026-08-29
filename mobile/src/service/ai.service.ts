@@ -1,12 +1,12 @@
 import { ulid } from "ulid";
 import { api } from "@/api/client";
-import { getTokenAsync } from "@/features/schedule/auth/auth.service";
 import type { Step } from "@/features/schedule/components/GenerateScheduleScreen/constants";
 import {
   type GenerationResult,
   parseScheduleResponse,
 } from "@/features/schedule/utils/scheduleResponseParser";
 import { WizardPromptBuilder } from "@/features/schedule/utils/WizardPromptBuilder";
+import { getTokenAsync } from "@/src/service/auth.service";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 export class AIService {
