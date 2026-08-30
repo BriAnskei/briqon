@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react-native";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
-import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import { useNewScheduleFormContext } from "@/context/NewScheduleFormContext";
 import { useSchedule } from "@/context/ScheduleContext";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { WizardPromptBuilder } from "../../utils/WizardPromptBuilder";
@@ -126,7 +126,7 @@ beforeEach(() => {
     setPrevScheduleFormInput: mockSetPrevScheduleFormInput,
   });
 
-  (useNewScheduleForm as jest.Mock).mockReturnValue({
+  (useNewScheduleFormContext as jest.Mock).mockReturnValue({
     generateScheduleBasedOnForm: mockGenerateScheduleBasedOnForm,
   });
 });
@@ -408,9 +408,7 @@ describe("useWizardForm", () => {
       expect(WizardPromptBuilder.build).not.toHaveBeenCalled();
       // The hook hands the form to the AI context via generateScheduleBasedOnForm,
       // which is responsible for storing the form and routing to generation.
-      expect(mockGenerateScheduleBasedOnForm).toHaveBeenCalledWith(
-        result.current.form,
-      );
+      expect(mockGenerateScheduleBasedOnForm).toHaveBeenCalledWith(result.current.form);
       // Submitting doesn't advance past the last step index.
       expect(result.current.step).toBe(5);
     });

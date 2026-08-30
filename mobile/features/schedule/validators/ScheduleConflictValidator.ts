@@ -1,4 +1,4 @@
-import { type NewScheduleFormState } from "@/type/NewScheduleTypes";
+import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { getMinutesOfDay, normalizeMinute } from "@/utils/TimeFormatter";
 import type { ValidatorResType } from "../types/FormValidatorTypes";
 

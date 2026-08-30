@@ -25,7 +25,6 @@ import { renderHook } from "@testing-library/react-native";
 import type {
   Appointment,
   AppointmentType,
-  BreakFrequency,
   EventScheduleItem,
   MealPlacement,
   MealType,
@@ -438,8 +437,8 @@ describe("useWizardValidation — validator output", () => {
     it("includes fixed-time meals as blocks and detects their overlaps", () => {
       const form = personalBaseForm({
         meals: [
-          meal("m1", "breakfast", 30, "fixed_time", "08:00"),
-          meal("m2", "brunch", 30, "fixed_time", "08:15"), // overlaps m1
+          meal("m1", "breakfast / morning outine", 30, "fixed_time", "08:00"),
+          meal("m2", "lunch", 30, "fixed_time", "08:15"), // overlaps m1
         ],
       });
       const { result } = setup(form, 2);

@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Toast from "react-native-toast-message";
-import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import { useNewScheduleFormContext } from "@/context/NewScheduleFormContext";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { EVENT_TOTAL_STEPS, PERSONAL_TOTAL_STEPS } from "../../contants/wizardOptions";
 import { defaultForm } from "../../utils/wizardHelpers";
@@ -32,7 +32,7 @@ export type EventSummary = {
 
 export function useWizardForm() {
   const router = useRouter();
-  const { generateScheduleBasedOnForm } = useNewScheduleForm();
+  const { generateScheduleBasedOnForm } = useNewScheduleFormContext();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<NewScheduleFormState>(defaultForm());

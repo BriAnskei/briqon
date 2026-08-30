@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Toast from "react-native-toast-message";
 import useModal from "@/hooks/useModal";
+import { scheduleService } from "@/src/composition/scheduleServiceComposition";
 import type { ScheduleItem } from "@/src/models/schedule.model";
 import type { SubSummary } from "@/src/models/sub_summaries.model";
 import type { ScheduleSummary } from "@/src/models/summaries.model";
-import { ScheduleService } from "@/src/service/schedule.service";
 
 const useSaveScheduleModal = (payload: {
   summaries: ScheduleSummary[];
@@ -24,7 +24,7 @@ const useSaveScheduleModal = (payload: {
   } = payload;
 
   const { isOpen, open, close } = useModal();
-  const service = useMemo(() => new ScheduleService(), []);
+  const service = scheduleService;
 
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -56,7 +56,7 @@ const useSaveScheduleModal = (payload: {
       // or promote an existing temporary one (saved during "Set Active")
       // to permanent. The UI only provides the payload.
       await service.saveSchedule({
-        id: generatedScheduleId!,
+        id: generatedScheduleId ?? "",
         name,
         scheduleItems: scheduleItem,
         summaries,
@@ -86,7 +86,6 @@ const useSaveScheduleModal = (payload: {
     }
   }, [
     isScheduleSavedDirectly,
-    service,
     summaries,
     subSummaries,
     isSaving,

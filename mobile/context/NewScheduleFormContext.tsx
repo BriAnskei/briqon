@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 
 type NewScheduleFormContextProvider = {
@@ -14,13 +14,26 @@ export function NewScheduleFormProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [inputForm, setInputForm] = useState<NewScheduleFormState | undefined>(undefined);
 
+  useEffect(() => {
+    console.log("form update: ", inputForm);
+  }, [inputForm]);
+
   const generateScheduleBasedOnForm = (form: NewScheduleFormState) => {
+    if (inputForm) return;
+
+    console.log("1. generating");
+
     setInputForm(form);
 
-    if (inputForm) router.push("/schedule/generation");
+    console.log("2. before push");
+
+    router.push("/schedule/generation");
+
+    console.log("3. after push");
   };
 
   const resetState = () => {
+    console.log("rest form");
     setInputForm(undefined);
   };
 
@@ -37,7 +50,7 @@ export function NewScheduleFormProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useNewScheduleForm() {
+export function useNewScheduleFormContext() {
   const ctx = useContext(NewScheduleFormContext);
   if (!ctx) throw new Error("useAI must be used inside AIProvider");
 

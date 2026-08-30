@@ -1,5 +1,3 @@
-// activation/composition/activeScheduleService.ts
-
 import { AddActivationService } from "../activation/AddActivationService";
 import { ActivationFactory } from "../activation/domain/ActivationFactory";
 import { ConflictDetector } from "../activation/domain/conflict/ConflictDetector";
@@ -14,7 +12,7 @@ import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
 import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
 import { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
 import { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
-import { ScheduleService } from "../service/schedule.service";
+import { scheduleService } from "./scheduleServiceComposition";
 
 const activeScheduleRepository = new ActiveScheduleRepository();
 
@@ -61,8 +59,6 @@ const conflictDetector = new ConflictDetector([
 ]);
 
 const activationFactory = new ActivationFactory();
-
-const scheduleService = new ScheduleService();
 
 export const addActivationService = new AddActivationService(
   conflictDetector,

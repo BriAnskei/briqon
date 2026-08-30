@@ -15,6 +15,7 @@ export function ScheduleTimeline({ schedule }: ScheduleTimelineProps) {
       <Text style={s.timelineTitle}>Your Schedule</Text>
       <View style={s.scheduleList}>
         {schedule.map((item, idx) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: this is for this case
           <View key={idx} style={s.scheduleRow}>
             <View style={s.scheduleAccent} />
             <Text style={s.scheduleIndex}>{String(idx + 1).padStart(2, "0")}</Text>

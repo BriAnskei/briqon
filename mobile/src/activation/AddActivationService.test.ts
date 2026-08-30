@@ -7,11 +7,9 @@ import type { ConflictResolver } from "@/src/activation/domain/conflict/Conflict
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
 import type { ScheduleItem } from "@/type/MessageTypes";
+import type { CreateSchedulePayloadType } from "@/type/services/scheduleService.types";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import type {
-  CreateSchedulePayloadType,
-  ScheduleService,
-} from "../service/schedule.service";
+import type { ScheduleService } from "../service/schedule.service";
 
 /** Records the context it was asked to detect conflicts for, returns a
  * pre-configured list. */

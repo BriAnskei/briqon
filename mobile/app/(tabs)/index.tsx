@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useTheme } from "@/context/ThemeContext";
-import { SetActiveModal } from "@/features/schedule/components/GenerateScheduleScreen/modal/SetActiveModal";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
 import { Colors, Radius, Shadow } from "../../type/theme";
 

@@ -471,7 +471,7 @@ export function useSetActiveModal(payload: {
       // then retry activation with overwrite enabled
 
       const input = { ...buildPayload(), overwrite: true };
-      await service.createAsync(input);
+      await service.add(input);
 
       Toast.show({
         type: "success",

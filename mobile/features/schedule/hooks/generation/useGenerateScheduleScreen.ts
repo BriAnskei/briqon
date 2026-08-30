@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { useNewScheduleForm } from "@/context/NewScheduleFormContext";
+import { useNewScheduleFormContext } from "@/context/NewScheduleFormContext";
 import useAi from "@/hooks/useAi";
 import useSaveScheduleModal from "./useSaveScheduleModal";
 import { useSetActiveModal } from "./useSetActiveModal";
 
 export function useGenerateScheduleScreen() {
   const router = useRouter();
-  const { inputForm, resetState: resetFormState } = useNewScheduleForm();
+  const { inputForm, resetState: resetFormState } = useNewScheduleFormContext();
 
   const [isScheduleSavedDirectly, setIsScheduleSavedDirectly] = useState(false);
   const [isScheduleSavedByActivation, setIsScheduleSavedByActivation] = useState(false);
@@ -44,31 +44,25 @@ export function useGenerateScheduleScreen() {
   }, [aiState.isGenerating]);
 
   useEffect(() => {
+    if (!inputForm || aiState.result) return;
     aiState.handleGenerateSchedule(inputForm);
-  }, [aiState.handleGenerateSchedule, inputForm]);
+  }, [aiState.handleGenerateSchedule, aiState.result, inputForm]);
 
-  const resetGenerationState = () => {
+  const resetScheduleGenerationFullState = () => {
     aiState.resetState();
     setActiveModalState.resetState();
     saveScheduleModalState.closeSaveSchedModal();
     setShowRegenerateCard(false);
-    // reset from context form
     resetFormState();
-  };
-
-  const resetFullGenerateFormState = () => {
-    resetFormState();
-    setShowRegenerateCard(false);
-    resetFullGenerateFormState();
   };
 
   const handleGoHome = () => {
-    resetFullGenerateFormState();
+    resetScheduleGenerationFullState();
     router.replace("/");
   };
 
   const handleBackToForm = () => {
-    resetGenerationState();
+    resetScheduleGenerationFullState();
     router.back();
   };
 
@@ -81,10 +75,10 @@ export function useGenerateScheduleScreen() {
   };
 
   const handleRegenerate = useCallback(() => {
-    if (aiState.isGenerating) return;
+    if (aiState.isGenerating || !aiState.error || !inputForm) return;
 
     aiState.handleGenerateSchedule(inputForm);
-  }, [aiState.handleGenerateSchedule, aiState.isGenerating, inputForm]);
+  }, [aiState.handleGenerateSchedule, aiState.isGenerating, aiState.error, inputForm]);
 
   return {
     handleRegenerate,
