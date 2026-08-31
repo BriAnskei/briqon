@@ -15,9 +15,19 @@ const useAi = () => {
   const isGeneratingRef = useRef(false);
   const newScheduleGeneratedIdRef = useRef<string | undefined>(undefined);
 
+  const resetState = useCallback(() => {
+    setError(undefined);
+    setResult(null);
+    SetCompletedSteps([]);
+    newScheduleGeneratedIdRef.current = undefined;
+    isGeneratingRef.current = false;
+  }, []);
+
   const handleGenerateSchedule = useCallback(
     async (formState: NewScheduleFormState | undefined): Promise<void> => {
       if (isGeneratingRef.current) return;
+      resetState();
+
       if (!formState) {
         setError("No Input state data");
         return;
@@ -38,16 +48,8 @@ const useAi = () => {
         isGeneratingRef.current = false;
       }
     },
-    [aiService],
+    [aiService, resetState],
   );
-
-  const resetState = () => {
-    setError(undefined);
-    setResult(null);
-    SetCompletedSteps([]);
-    newScheduleGeneratedIdRef.current = undefined;
-    isGeneratingRef.current = false;
-  };
 
   return {
     result,

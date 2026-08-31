@@ -23,8 +23,6 @@ export async function generateHanlder(req: any, res: any) {
     });
   }
 
-  console.log(" prompt: ", prompt);
-
   try {
     let MAX_ATTEMPS = 2;
 
@@ -44,15 +42,14 @@ export async function generateHanlder(req: any, res: any) {
       const parsed = CreateScheduleResponseSchema.safeParse(
         JSON.parse(response.text as string),
       );
-      console.log("responseded");
       if (parsed.success) {
-        console.log("invalid scheama, retriying");
         return res.status(200).json({
           success: true,
           res: parsed.data,
         });
       }
 
+      console.log("invalid scheama, retriying");
       MAX_ATTEMPS--;
     }
 
@@ -60,14 +57,42 @@ export async function generateHanlder(req: any, res: any) {
       success: false,
       error: "Failed request",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
+
+    const aiError = getGeminiError(err);
 
     return res.status(500).json({
       success: false,
-      error: err.message,
+      error: aiError,
     });
   }
 }
 
+function getGeminiError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return {
+      code: "UNKNOWN_ERROR",
+      message: "An unexpected error occurred.",
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(error.message);
+
+    if (parsed?.error) {
+      return {
+        code: parsed.error.status ?? "AI_ERROR",
+        message: parsed.error.message ?? "AI generation failed.",
+      };
+    }
+  } catch {
+    // error.message wasn't JSON
+  }
+
+  return {
+    code: "AI_ERROR",
+    message: error.message,
+  };
+}
 export default withAuth(withRateLimit(generateHanlder));

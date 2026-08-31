@@ -35,13 +35,13 @@ export function useGenerateScheduleScreen() {
   const [showRegenerateCard, setShowRegenerateCard] = useState(false);
 
   useEffect(() => {
-    if (!aiState.isGenerating) {
+    if (aiState.isGenerating || !aiState.result) {
       setShowRegenerateCard(false);
       return;
     }
-    const t = setTimeout(() => setShowRegenerateCard(true), 3000);
+    const t = setTimeout(() => setShowRegenerateCard(true), 5500);
     return () => clearTimeout(t);
-  }, [aiState.isGenerating]);
+  }, [aiState.isGenerating, aiState.result]);
 
   useEffect(() => {
     if (!inputForm || aiState.result) return;
@@ -57,11 +57,15 @@ export function useGenerateScheduleScreen() {
   };
 
   const handleGoHome = () => {
+    if (aiState.isGenerating) return;
+
     resetScheduleGenerationFullState();
     router.replace("/");
   };
 
   const handleBackToForm = () => {
+    if (aiState.isGenerating) return;
+
     resetScheduleGenerationFullState();
     router.back();
   };
@@ -75,10 +79,10 @@ export function useGenerateScheduleScreen() {
   };
 
   const handleRegenerate = useCallback(() => {
-    if (aiState.isGenerating || !aiState.error || !inputForm) return;
+    if (aiState.isGenerating || !inputForm) return;
 
     aiState.handleGenerateSchedule(inputForm);
-  }, [aiState.handleGenerateSchedule, aiState.isGenerating, aiState.error, inputForm]);
+  }, [aiState.handleGenerateSchedule, aiState.isGenerating, inputForm]);
 
   return {
     handleRegenerate,

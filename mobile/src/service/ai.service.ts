@@ -14,12 +14,15 @@ export class AIService {
     formState: NewScheduleFormState,
     onStepProgress: (s: Step) => void,
   ): Promise<{ generationResult: GenerationResult; newScheduleId: string }> {
-    onStepProgress("creating");
-
-    const formRequestPrompt = WizardPromptBuilder.build(formState);
+    onStepProgress("understanding");
+    const formRequestPrompt = await withMinDuration(
+      Promise.resolve(WizardPromptBuilder.build(formState)),
+      500,
+    );
     const token = await getTokenAsync();
 
-    onStepProgress("understanding");
+    onStepProgress("creating");
+    // real network call — no padding, this is where the actual time is spent
     const res = await api.post(
       `/api/generate`,
       { ...formRequestPrompt },
@@ -30,17 +33,23 @@ export class AIService {
         },
       },
     );
-
     if (!res.data.success)
-      throw new Error(res.data.error ?? "Failed to generate schedule");
+      throw new Error(res.data.error.message ?? "Failed to generate schedule");
 
     onStepProgress("parsing");
-
-    const newScheduleId = ulid();
+    const newScheduleId = await withMinDuration(Promise.resolve(ulid()), 500);
 
     return {
       generationResult: parseScheduleResponse(res.data.res, newScheduleId),
       newScheduleId,
     };
   }
+}
+
+async function withMinDuration<T>(promise: Promise<T>, ms: number): Promise<T> {
+  const [result] = await Promise.all([
+    promise,
+    new Promise((resolve) => setTimeout(resolve, ms)),
+  ]);
+  return result;
 }
