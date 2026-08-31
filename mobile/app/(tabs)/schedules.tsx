@@ -1,13 +1,26 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { FlatList, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { AppHeader, HeaderIconButton } from "@/components/AppHeader";
 import { useTheme } from "@/context/ThemeContext";
 import {
   type ActivationScheduleInput,
   ScheduleActivationModal,
 } from "@/features/schedule/components/ScheduleManagement/modal/ScheduleActivationModal";
+import { WeekActiveSchedulesModal } from "@/features/schedule/components/ScheduleManagement/modal/WeekActiveScheduleModal";
 import type { ScheduleItem } from "@/type/MessageTypes";
-import { FontFamily, Radius, Shadow } from "@/type/theme";
+import { Colors, FontFamily, Radius, Shadow } from "@/type/theme";
 
 // ---------------------------------------------------------------------------
 type ActiveType = "days" | "date";
@@ -124,10 +137,7 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     activation: { active_type: "days", recurring: true, days_of_week: [0, 6] },
     schedule_list: [{ start_time: "10:00", end_time: "12:00", activity: "Sleep in" }],
   },
-
-  // --- Additional mock data below ---
   {
-    // Active + saved + "date" type (non-recurring, single-day contract)
     id: "01J8Z6",
     name: "Flight to Tokyo",
     temporary: true,
@@ -140,7 +150,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     ],
   },
   {
-    // Active + saved + "days" type, recurring (currently live, weekly repeat)
     id: "01J8Z7",
     name: "Gym Days",
     temporary: false,
@@ -151,7 +160,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     ],
   },
   {
-    // Active + "date" type where the date is today (tests single-date contract label)
     id: "01J8Z8",
     name: "Product Launch Day",
     temporary: true,
@@ -164,7 +172,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     ],
   },
   {
-    // Inactive + "date" type, different weekday than existing example
     id: "01J8Z9",
     name: "Dentist Visit",
     temporary: true,
@@ -174,7 +181,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     schedule_list: [{ start_time: "11:00", end_time: "11:30", activity: "Checkup" }],
   },
   {
-    // Inactive + "days" type, non-recurring, multi-week contract spanning a month boundary
     id: "01J8ZA",
     name: "New Hire Onboarding",
     temporary: true,
@@ -187,8 +193,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     ],
   },
   {
-    // Active + unsaved draft + "days" type already configured
-    // (tests Unsaved tag + badges + chips rendering together)
     id: undefined,
     name: "",
     temporary: true,
@@ -198,7 +202,6 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     schedule_list: [{ start_time: "14:00", end_time: "16:00", activity: "Deep work" }],
   },
   {
-    // Inactive + "days" type, recurring, single day only (edge case: one day chip active)
     id: "01J8ZB",
     name: "Sunday Meal Prep",
     temporary: false,
@@ -209,6 +212,39 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     ],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Search & filter types
+// ---------------------------------------------------------------------------
+type StatusFilter = "all" | "active" | "inactive";
+type MoreFacet = "unsaved" | "recurring" | "one_time" | "days_type" | "date_type";
+
+const MORE_FACET_OPTIONS: { key: MoreFacet; label: string }[] = [
+  { key: "unsaved", label: "Unsaved" },
+  { key: "recurring", label: "Recurring" },
+  { key: "one_time", label: "One-time" },
+  { key: "days_type", label: "Days type" },
+  { key: "date_type", label: "Date type" },
+];
+
+function matchesMoreFacet(schedule: MockSchedule, facet: MoreFacet): boolean {
+  switch (facet) {
+    case "unsaved":
+      return !schedule.id;
+    case "recurring":
+      return schedule.activation?.recurring === true;
+    case "one_time":
+      return schedule.activation?.recurring === false;
+    case "days_type":
+      return schedule.activation?.active_type === "days";
+    case "date_type":
+      return schedule.activation?.active_type === "date";
+  }
+}
+
+function displayName(schedule: MockSchedule): string {
+  return schedule.name.trim() || "Untitled Schedule";
+}
 
 // ---------------------------------------------------------------------------
 // Day chips
@@ -252,23 +288,20 @@ function ScheduleCard({
   const s = useSStyles();
   const { colors } = useTheme();
   const isSaved = !!schedule.id;
-  const displayName = schedule.name || "Untitled Schedule";
+  const name = displayName(schedule);
 
-  // Not active: name only.
   if (!schedule.is_active) {
     return (
       <Pressable
         onPress={() => onPress(schedule)}
         style={({ pressed }) => [s.card, s.cardRow, pressed && s.cardPressed]}
       >
-        <Text style={s.cardTitle}>{displayName}</Text>
+        <Text style={s.cardTitle}>{name}</Text>
         <ChevronRight size={18} color={colors.textMuted} />
       </Pressable>
     );
   }
 
-  // Active (saved or not): name/placeholder + tags, badges/chips only if
-  // configured, contract shown whenever present regardless of save state.
   const activation = schedule.activation;
   const activeDays =
     activation?.active_type === "days"
@@ -283,7 +316,7 @@ function ScheduleCard({
       style={({ pressed }) => [s.card, s.cardActive, pressed && s.cardPressed]}
     >
       <View style={s.cardHeaderRow}>
-        <Text style={isSaved ? s.cardTitle : s.namePlaceholderTitle}>{displayName}</Text>
+        <Text style={isSaved ? s.cardTitle : s.namePlaceholderTitle}>{name}</Text>
         <View style={s.headerRightGroup}>
           {!isSaved && (
             <View style={s.unsavedTag}>
@@ -323,6 +356,122 @@ function ScheduleCard({
 }
 
 // ---------------------------------------------------------------------------
+// Search + filter bar
+// ---------------------------------------------------------------------------
+function SearchFilterBar({
+  query,
+  onQueryChange,
+  statusFilter,
+  onStatusChange,
+  untitledOnly,
+  onToggleUntitled,
+  moreFacets,
+  onToggleMoreFacet,
+  moreOpen,
+  onToggleMoreOpen,
+  onClearAll,
+  hasActiveFilters,
+}: {
+  query: string;
+  onQueryChange: (v: string) => void;
+  statusFilter: StatusFilter;
+  onStatusChange: (v: StatusFilter) => void;
+  untitledOnly: boolean;
+  onToggleUntitled: () => void;
+  moreFacets: Set<MoreFacet>;
+  onToggleMoreFacet: (f: MoreFacet) => void;
+  moreOpen: boolean;
+  onToggleMoreOpen: () => void;
+  onClearAll: () => void;
+  hasActiveFilters: boolean;
+}) {
+  const s = useSStyles();
+  const { colors } = useTheme();
+
+  return (
+    <View style={s.searchArea}>
+      <View style={s.searchInputRow}>
+        <Ionicons name="search-outline" size={16} color={colors.textMuted} />
+        <TextInput
+          value={query}
+          onChangeText={onQueryChange}
+          placeholder="Search schedules"
+          placeholderTextColor={colors.textMuted}
+          style={s.searchInput}
+          returnKeyType="search"
+          autoCorrect={false}
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => onQueryChange("")} hitSlop={8}>
+            <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={s.segmentRow}>
+        {(["all", "active", "inactive"] as StatusFilter[]).map((opt) => (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onStatusChange(opt)}
+            style={[s.segment, statusFilter === opt && s.segmentActive]}
+          >
+            <Text style={[s.segmentText, statusFilter === opt && s.segmentTextActive]}>
+              {opt === "all" ? "All" : opt === "active" ? "Active" : "Inactive"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        <View style={s.segmentDivider} />
+
+        <TouchableOpacity
+          onPress={onToggleUntitled}
+          style={[s.segment, untitledOnly && s.segmentActive]}
+        >
+          <Text style={[s.segmentText, untitledOnly && s.segmentTextActive]}>
+            Untitled
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onToggleMoreOpen} style={s.moreBtn} hitSlop={6}>
+          <Text style={s.moreBtnText}>More filters</Text>
+          <Ionicons
+            name={moreOpen ? "chevron-up" : "chevron-down"}
+            size={13}
+            color={colors.textMuted}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {moreOpen && (
+        <View style={s.facetRow}>
+          {MORE_FACET_OPTIONS.map(({ key, label }) => {
+            const on = moreFacets.has(key);
+            return (
+              <TouchableOpacity
+                key={key}
+                onPress={() => onToggleMoreFacet(key)}
+                style={[s.facetChip, on && s.facetChipActive]}
+              >
+                <Text style={[s.facetChipText, on && s.facetChipTextActive]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
+      {hasActiveFilters && (
+        <TouchableOpacity onPress={onClearAll} hitSlop={6} style={s.clearFiltersBtn}>
+          <Ionicons name="close" size={12} color={colors.accent} />
+          <Text style={s.clearFiltersText}>Clear filters</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 export default function SchedulesScreen() {
@@ -330,6 +479,61 @@ export default function SchedulesScreen() {
   const [schedules, setSchedules] = useState<MockSchedule[]>(INITIAL_SCHEDULES);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // --- search & filter state ---
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [untitledOnly, setUntitledOnly] = useState(false);
+  const [moreFacets, setMoreFacets] = useState<Set<MoreFacet>>(new Set());
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // --- week overview modal ---
+  const [weekModalVisible, setWeekModalVisible] = useState(false);
+
+  const toggleMoreFacet = useCallback((facet: MoreFacet) => {
+    setMoreFacets((prev) => {
+      const next = new Set(prev);
+      if (next.has(facet)) {
+        next.delete(facet);
+      } else {
+        next.add(facet);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setQuery("");
+    setStatusFilter("all");
+    setUntitledOnly(false);
+    setMoreFacets(new Set());
+  }, []);
+
+  const hasActiveFilters =
+    query.trim().length > 0 ||
+    statusFilter !== "all" ||
+    untitledOnly ||
+    moreFacets.size > 0;
+
+  const filteredSchedules = useMemo(() => {
+    const q = query.trim().toLowerCase();
+
+    return schedules.filter((sch) => {
+      if (statusFilter === "active" && !sch.is_active) return false;
+      if (statusFilter === "inactive" && sch.is_active) return false;
+
+      if (untitledOnly && sch.name.trim().length > 0) return false;
+
+      if (q && !displayName(sch).toLowerCase().includes(q)) return false;
+
+      for (const facet of moreFacets) {
+        if (!matchesMoreFacet(sch, facet)) return false;
+      }
+
+      return true;
+    });
+  }, [schedules, query, statusFilter, untitledOnly, moreFacets]);
 
   const selected = selectedIndex !== null ? schedules[selectedIndex] : null;
 
@@ -383,23 +587,82 @@ export default function SchedulesScreen() {
     ? { id: selected.id, name: selected.name, schedule_list: selected.schedule_list }
     : null;
 
+  const aiGenerateTest = async () => {};
+
+  const toggleSearchOpen = useCallback(() => {
+    setSearchOpen((prev) => {
+      const next = !prev;
+      if (!next) {
+        // Closing the search area clears filters so the list returns to
+        // its default state instead of silently staying filtered offscreen.
+        clearAllFilters();
+        setMoreOpen(false);
+      }
+      return next;
+    });
+  }, [clearAllFilters]);
+
   return (
     <View style={s.root}>
-      <View style={s.header}>
-        <Text style={s.brandName}>Briqon</Text>
-        <Text style={s.brandTagline}>Smart Alarm Scheduling</Text>
-      </View>
+      <AppHeader
+        right={
+          <>
+            <HeaderIconButton
+              icon="calendar-outline"
+              onPress={() => setWeekModalVisible(true)}
+            />
+            <HeaderIconButton
+              icon={searchOpen ? "close" : "search-outline"}
+              onPress={toggleSearchOpen}
+            />
+            <HeaderIconButton
+              icon="add"
+              iconSize={22}
+              accent
+              onPress={() => router.push("/schedule/add")}
+            />
+          </>
+        }
+      />
+
+      {searchOpen && (
+        <SearchFilterBar
+          query={query}
+          onQueryChange={setQuery}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          untitledOnly={untitledOnly}
+          onToggleUntitled={() => setUntitledOnly((v) => !v)}
+          moreFacets={moreFacets}
+          onToggleMoreFacet={toggleMoreFacet}
+          moreOpen={moreOpen}
+          onToggleMoreOpen={() => setMoreOpen((v) => !v)}
+          onClearAll={clearAllFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+      )}
 
       {schedules.length === 0 ? (
         <View style={s.body}>
           <Text style={s.label}>Schedules</Text>
           <Text style={s.sub}>Your saved schedules will appear here.</Text>
         </View>
+      ) : filteredSchedules.length === 0 ? (
+        <View style={s.body}>
+          <Text style={s.label}>No matches</Text>
+          <Text style={s.sub}>Try a different search or adjust your filters.</Text>
+          {hasActiveFilters && (
+            <TouchableOpacity onPress={clearAllFilters} style={s.emptyClearBtn}>
+              <Text style={s.clearFiltersText}>Clear filters</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       ) : (
         <FlatList
-          data={schedules}
+          data={filteredSchedules}
           keyExtractor={(item, idx) => item.id ?? `draft-${idx}`}
           contentContainerStyle={s.listContent}
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
             <ScheduleCard schedule={item} onPress={handleOpenSchedule} />
           )}
@@ -412,8 +675,23 @@ export default function SchedulesScreen() {
         schedule={activationInput}
         isActive={selected?.is_active ?? false}
         onSave={handleSave}
-        onSetActive={handleSetActive}
         onRename={handleRename}
+        onConfigureActivation={(): void => {
+          throw new Error("Function not implemented.");
+        }}
+        onDelete={(): void => {
+          throw new Error("Function not implemented.");
+        }}
+      />
+
+      <WeekActiveSchedulesModal
+        visible={weekModalVisible}
+        onClose={() => setWeekModalVisible(false)}
+        schedules={schedules}
+        onOpenSchedule={(sch) => {
+          setWeekModalVisible(false);
+          handleOpenSchedule(sch as MockSchedule);
+        }}
       />
     </View>
   );
@@ -425,26 +703,6 @@ function useSStyles() {
     () =>
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.bg },
-        header: {
-          paddingHorizontal: 24,
-          paddingTop: Platform.OS === "ios" ? 62 : 44,
-          paddingBottom: 8,
-        },
-        brandName: {
-          fontSize: 24,
-          fontFamily: FontFamily.bodySemiBold,
-          fontWeight: "600",
-          color: colors.textPrimary,
-          letterSpacing: -0.4,
-        },
-        brandTagline: {
-          fontSize: 11,
-          fontFamily: FontFamily.mono,
-          fontWeight: "400",
-          color: colors.textMuted,
-          marginTop: 2,
-          letterSpacing: 0.3,
-        },
         body: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
         label: {
           fontSize: 24,
@@ -557,6 +815,104 @@ function useSStyles() {
           fontWeight: "400",
           color: colors.textSecondary,
         },
+
+        // --- search / filter bar ---
+        searchArea: {
+          paddingHorizontal: 20,
+          paddingTop: 4,
+          paddingBottom: 12,
+          gap: 10,
+        },
+        searchInputRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          backgroundColor: colors.bgElevated,
+          borderRadius: Radius.lg,
+          paddingHorizontal: 12,
+          height: 40,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+        },
+        searchInput: {
+          flex: 1,
+          fontSize: 14,
+          fontFamily: FontFamily.body,
+          color: colors.textPrimary,
+          paddingVertical: 0,
+        },
+        segmentRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap",
+        },
+        segment: {
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: Radius.full,
+          backgroundColor: colors.bgElevated,
+        },
+        segmentActive: { backgroundColor: colors.accent },
+        segmentText: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textMuted,
+        },
+        segmentTextActive: { color: colors.white },
+        segmentDivider: {
+          width: StyleSheet.hairlineWidth,
+          height: 16,
+          backgroundColor: colors.border,
+        },
+        moreBtn: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 3,
+          paddingHorizontal: 4,
+          paddingVertical: 6,
+          marginLeft: "auto",
+        },
+        moreBtnText: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textMuted,
+        },
+        facetRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+        facetChip: {
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: Radius.full,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          backgroundColor: colors.bgCard,
+        },
+        facetChipActive: {
+          backgroundColor: colors.accentSoft,
+          borderColor: colors.accent,
+        },
+        facetChipText: {
+          fontSize: 11,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textMuted,
+        },
+        facetChipTextActive: { color: colors.accent },
+        clearFiltersBtn: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          alignSelf: "flex-start",
+        },
+        clearFiltersText: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.accent,
+        },
+        emptyClearBtn: { marginTop: 4 },
       }),
     [colors],
   );

@@ -11,13 +11,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AppHeader, HeaderIconButton } from "@/components/AppHeader";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useTheme } from "@/context/ThemeContext";
 import NativeAlarmModule from "../../specs/NativeAlarmModule";
 import { Colors, Radius, Shadow } from "../../type/theme";
 
 // ─── Category Colors ──────────────────────────────────────────────────────────
-
 const CATEGORY_COLORS: Record<string, string> = {
   wake: "#FFB547",
   work: "#7B6FFF",
@@ -29,7 +29,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
-
 const MOCK_SCHEDULE = {
   name: "Workday Grind",
   alarms: [
@@ -76,8 +75,6 @@ const MOCK_SCHEDULE = {
   ],
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function getTodayLabel() {
   return new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -86,12 +83,9 @@ function getTodayLabel() {
   });
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type Alarm = (typeof MOCK_SCHEDULE.alarms)[0];
 
 // ─── AlarmRow ─────────────────────────────────────────────────────────────────
-
 function AlarmRow({
   alarm,
   index,
@@ -125,7 +119,6 @@ function AlarmRow({
 }
 
 // ─── EmptyState ───────────────────────────────────────────────────────────────
-
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   const s = useSStyles();
   return (
@@ -145,7 +138,6 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 // ─── DotMenu ──────────────────────────────────────────────────────────────────
-
 function DotMenu({
   visible,
   onDismiss,
@@ -210,15 +202,9 @@ function DotMenu({
 }
 
 // ─── HomeScreen ───────────────────────────────────────────────────────────────
-
 export default function HomeScreen() {
   const s = useSStyles();
   const router = useRouter();
-
-  // DB implementation sample usage
-  // useEffect(() => {
-  //   initializeDatabase();
-  // }, []);
 
   useEffect(() => {
     console.log("PRocess env: ", process.env.EXPO_PUBLIC_API_URL);
@@ -241,84 +227,57 @@ export default function HomeScreen() {
   const handleDelete = () => setHasSchedule(false);
 
   const testAlarm = async () => {
-    // 1. Request notification permission (Android 13+)
     if (Platform.OS === "android" && Platform.Version >= 33) {
       await PermissionsAndroid.request("android.permission.POST_NOTIFICATIONS" as any);
     }
-
-    // 2. Check exact alarm permission
     const hasPermission = await NativeAlarmModule.hasExactAlarmPermission();
     if (!hasPermission) {
       NativeAlarmModule.requestExactAlarmPermission();
       return;
     }
-
-    // 3. Mock schedule — two items so we have a current + next
     const mockSchedule = [
       {
         activity: "Wake Up & Morning Routine",
         start_time: "05:30 AM",
         end_time: "06:00 AM",
       },
-      {
-        activity: "Work Shift",
-        start_time: "06:00 AM",
-        end_time: "03:00 PM",
-      },
+      { activity: "Work Shift", start_time: "06:00 AM", end_time: "03:00 PM" },
     ];
-
     const scheduleName = "Workday Grind";
     const current = mockSchedule[0];
     const next = mockSchedule[1];
-
-    // 4. Set alarm 15 seconds from now
     const fifteenSeconds = Date.now() + 15000;
 
     NativeAlarmModule.setAlarm(
-      1001, // Unique ID
+      1001,
       fifteenSeconds,
       current.activity,
       current.start_time,
       current.end_time,
       scheduleName,
-      next.activity, // next alarm activity
-      next.start_time, // next alarm start time
+      next.activity,
+      next.start_time,
     );
-
-    console.log("Alarm set — fires in 15 seconds");
-    console.log("Current:", current.activity);
-    console.log("Next:", next.activity);
   };
 
   const aiGenerateTest = async () => {};
 
   return (
     <View style={s.root}>
-      {/* ── Header ── */}
-      <View style={s.header}>
-        <View>
-          <Text style={s.brandName}>Briqon</Text>
-          <Text style={s.brandTagline}>Smart Alarm Scheduling</Text>
-        </View>
-        <View style={s.headerActions}>
-          {/* temporary test button — remove before release */}
-
-          <TouchableOpacity
-            style={s.headerBtn}
-            activeOpacity={0.75}
-            onPress={() => aiGenerateTest()}
-          >
-            <Ionicons name="menu-outline" size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[s.headerBtn, s.headerBtnAccent]}
-            onPress={() => router.push("/schedule/add")}
-            activeOpacity={0.75}
-          >
-            <Ionicons name="add" size={22} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* ── Header (shared component) ── */}
+      <AppHeader
+        right={
+          <>
+            <HeaderIconButton icon="menu-outline" onPress={aiGenerateTest} />
+            <HeaderIconButton
+              icon="add"
+              iconSize={22}
+              accent
+              onPress={() => router.push("/schedule/add")}
+            />
+          </>
+        }
+      />
 
       {/* ── Body ── */}
       <ScrollView
@@ -378,7 +337,6 @@ export default function HomeScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* ── Dot Menu ── */}
       <DotMenu
         visible={menuVisible}
         onDismiss={() => setMenuVisible(false)}
@@ -389,54 +347,13 @@ export default function HomeScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
+// ─── Styles (header + button styles removed — now in AppHeader.tsx) ──────────
 function useSStyles() {
   const { colors } = useTheme();
   return useMemo(
     () =>
       StyleSheet.create({
         root: { flex: 1, backgroundColor: colors.bg },
-        header: {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 24, // px-6
-          paddingTop: Platform.OS === "ios" ? 54 : 44,
-          paddingBottom: 8, // py-2
-          // Transparent background + no border per spec
-        },
-        brandName: {
-          fontSize: 24, // text-2xl
-          fontFamily: "Inter-SemiBold",
-          fontWeight: "600", // semibold
-          color: colors.textPrimary,
-          letterSpacing: -0.4,
-        },
-        brandTagline: {
-          fontSize: 11,
-          fontFamily: "DMMono",
-          fontWeight: "400",
-          color: colors.textSecondary,
-          marginTop: 2,
-          letterSpacing: 0.3,
-        },
-        headerActions: { flexDirection: "row", gap: 10, alignItems: "center" },
-        headerBtn: {
-          width: 32, // theme toggle button: 32x32
-          height: 32,
-          borderRadius: 999, // full
-          backgroundColor: colors.bgElevated,
-          borderWidth: 1,
-          borderColor: colors.border,
-          alignItems: "center",
-          justifyContent: "center",
-        },
-        headerBtnAccent: {
-          backgroundColor: colors.accent,
-          borderColor: colors.accent,
-          ...Shadow.accent,
-        },
         scroll: { flex: 1 },
         scrollContent: { paddingHorizontal: 24, paddingTop: 28 },
         sectionRow: {
@@ -446,9 +363,9 @@ function useSStyles() {
           marginBottom: 14,
         },
         sectionTitle: {
-          fontSize: 24, // text-2xl
+          fontSize: 24,
           fontFamily: "Inter-SemiBold",
-          fontWeight: "600", // semibold
+          fontWeight: "600",
           color: colors.textPrimary,
           letterSpacing: -0.4,
         },
@@ -508,10 +425,7 @@ function useSStyles() {
           paddingHorizontal: 10,
           paddingVertical: 6,
         },
-        countPillOff: {
-          backgroundColor: colors.bgElevated,
-          borderColor: colors.border,
-        },
+        countPillOff: { backgroundColor: colors.bgElevated, borderColor: colors.border },
         countPillText: {
           fontSize: 12,
           fontFamily: "Inter-Medium",
@@ -523,7 +437,7 @@ function useSStyles() {
           flexDirection: "row",
           alignItems: "center",
           backgroundColor: colors.bgCard,
-          borderRadius: Radius.xl, // rounded-2xl per spec
+          borderRadius: Radius.xl,
           borderWidth: 1,
           borderColor: colors.border,
           overflow: "hidden",
@@ -544,7 +458,7 @@ function useSStyles() {
         },
         alarmBody: { flex: 1, paddingVertical: 14 },
         alarmActivity: {
-          fontSize: 14, // alarm label: 14px / Inter / 400
+          fontSize: 14,
           fontFamily: "Inter",
           fontWeight: "400",
           color: colors.textPrimary,
@@ -599,7 +513,7 @@ function useSStyles() {
         },
         emptyBtn: {
           backgroundColor: colors.accent,
-          borderRadius: 12, // py-3 spec
+          borderRadius: 12,
           paddingHorizontal: 28,
           paddingVertical: 12,
           ...Shadow.accent,
@@ -656,11 +570,7 @@ function useSStyles() {
           color: colors.textMuted,
           lineHeight: 16,
         },
-        menuDivider: {
-          height: 1,
-          backgroundColor: colors.border,
-          marginHorizontal: 16,
-        },
+        menuDivider: { height: 1, backgroundColor: colors.border, marginHorizontal: 16 },
       }),
     [colors],
   );
