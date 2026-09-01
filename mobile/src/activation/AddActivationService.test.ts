@@ -6,8 +6,9 @@ import type { ConflictDetector } from "@/src/activation/domain/conflict/Conflict
 import type { ConflictResolver } from "@/src/activation/domain/conflict/ConflictResolver";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
-import type { ScheduleItem } from "@/type/MessageTypes";
-import type { CreateSchedulePayloadType } from "@/type/services/scheduleService.types";
+import type { ScheduleItem } from "@/src/models/schedule.model";
+import type { SubSummary } from "@/src/models/sub_summaries.model";
+import type { ScheduleSummary } from "@/src/models/summaries.model";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 import type { ScheduleService } from "../service/schedule.service";
 
@@ -42,20 +43,19 @@ class FakeActivationRepository {
   }
 }
 
-/** Records exists() and createSchedule() calls. */
+type EnsureTemporaryScheduleInput = {
+  id: string;
+  items: ScheduleItem[];
+  summaries?: ScheduleSummary[];
+  subSummaries?: SubSummary[];
+};
+
+/** Records ensureTemporarySchedule() calls. */
 class FakeScheduleService {
-  existsCalls: string[] = [];
-  createScheduleCalls: CreateSchedulePayloadType[] = [];
+  ensureTemporaryScheduleCalls: EnsureTemporaryScheduleInput[] = [];
 
-  constructor(private readonly scheduleExists = false) {}
-
-  async exists(id: string): Promise<boolean> {
-    this.existsCalls.push(id);
-    return this.scheduleExists;
-  }
-
-  async createSchedule(payload: CreateSchedulePayloadType): Promise<void> {
-    this.createScheduleCalls.push(payload);
+  async ensureTemporarySchedule(data: EnsureTemporaryScheduleInput): Promise<void> {
+    this.ensureTemporaryScheduleCalls.push(data);
   }
 }
 
@@ -86,14 +86,11 @@ function buildInput(overrides: Partial<CreateActivationInput>): CreateActivation
 describe("AddActivationService", () => {
   const activationFactory = new ActivationFactory();
 
-  function setup(
-    conflictsToReturn: ScheduleConflict[] = [],
-    options: { scheduleExists?: boolean } = {},
-  ) {
+  function setup(conflictsToReturn: ScheduleConflict[] = []) {
     const conflictDetector = new FakeConflictDetector(conflictsToReturn);
     const conflictResolver = new FakeConflictResolver();
     const activationRepository = new FakeActivationRepository();
-    const scheduleService = new FakeScheduleService(options.scheduleExists ?? false);
+    const scheduleService = new FakeScheduleService();
     const service = new AddActivationService(
       conflictDetector as unknown as ConflictDetector,
       conflictResolver as unknown as ConflictResolver,
@@ -188,18 +185,19 @@ describe("AddActivationService", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Schedule pre-persistence (ensureScheduleSavedAsTemporary)
+  // Schedule pre-persistence (ensureScheduleExists → scheduleService.ensureTemporarySchedule)
   //
   // When the input carries scheduleItems the schedule has not yet been saved,
-  // so AddActivationService persists it as a temporary row before building the
-  // activation aggregate.
+  // so AddActivationService delegates to ScheduleService.ensureTemporarySchedule
+  // before building the activation aggregate.  The existence check and
+  // temporary-schedule construction are now internal to ScheduleService.
   // ---------------------------------------------------------------------------
   describe("scheduleItems pre-persistence", () => {
     const scheduleItems: ScheduleItem[] = [
-      { start_time: "08:00", end_time: "09:00", activity: "standup" },
+      { start_time: "08:00", end_time: "09:00", activity: "standup", enabled: true },
     ];
 
-    it("when scheduleItems provided and schedule does not exist: saves as temporary then persists activation", async () => {
+    it("when scheduleItems provided: calls ensureTemporarySchedule with the schedule data then persists activation", async () => {
       const { scheduleService, activationRepository, service } = setup([]);
       const input = buildInput({
         scheduleItems,
@@ -209,44 +207,24 @@ describe("AddActivationService", () => {
 
       await service.add(input);
 
-      // exists() is checked for the scheduleId
-      expect(scheduleService.existsCalls).toEqual(["sched-1"]);
-      // createSchedule() is called with the temporary schedule
-      expect(scheduleService.createScheduleCalls).toHaveLength(1);
-      const created = scheduleService.createScheduleCalls[0];
-      expect(created.schedule.temporary).toBe(true);
-      expect(created.schedule.name).toBe("");
-      expect(created.schedule.schedule_list).toBe(scheduleItems);
+      // ensureTemporarySchedule is called once with id, items, summaries, subSummaries
+      expect(scheduleService.ensureTemporaryScheduleCalls).toHaveLength(1);
+      const call = scheduleService.ensureTemporaryScheduleCalls[0];
+      expect(call.id).toBe("sched-1");
+      expect(call.items).toBe(scheduleItems);
+      expect(call.summaries).toEqual([]);
+      expect(call.subSummaries).toEqual([]);
       // The activation is still persisted
       expect(activationRepository.calls).toHaveLength(1);
     });
 
-    it("when scheduleItems provided and schedule already exists: skips createSchedule", async () => {
-      const { scheduleService, activationRepository, service } = setup([], {
-        scheduleExists: true,
-      });
-      const input = buildInput({
-        scheduleItems,
-        summaries: [],
-        subSummaries: [],
-      });
-
-      await service.add(input);
-
-      expect(scheduleService.existsCalls).toEqual(["sched-1"]);
-      expect(scheduleService.createScheduleCalls).toEqual([]);
-      // Activation is still persisted — the schedule already satisfies the FK
-      expect(activationRepository.calls).toHaveLength(1);
-    });
-
-    it("when scheduleItems not provided: scheduleService is never called", async () => {
+    it("when scheduleItems not provided: ensureTemporarySchedule is never called", async () => {
       const { scheduleService, service } = setup([]);
       const input = buildInput({ overwrite: false }); // no scheduleItems
 
       await service.add(input);
 
-      expect(scheduleService.existsCalls).toEqual([]);
-      expect(scheduleService.createScheduleCalls).toEqual([]);
+      expect(scheduleService.ensureTemporaryScheduleCalls).toEqual([]);
     });
   });
 

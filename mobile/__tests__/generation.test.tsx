@@ -114,11 +114,11 @@ const mockResult: GenerationResult = {
     { id: "sub-004", summary_id: "sum-002", name: "Lunch", total: "30m" },
   ],
   schedule: [
-    { start_time: "09:00", end_time: "12:00", activity: "Deep Work" },
-    { start_time: "12:00", end_time: "12:30", activity: "Coffee Break" },
-    { start_time: "12:30", end_time: "13:30", activity: "Lunch" },
-    { start_time: "13:30", end_time: "15:30", activity: "Meetings" },
-    { start_time: "15:30", end_time: "16:00", activity: "Coffee Break" },
+    { start_time: "09:00", end_time: "12:00", activity: "Deep Work", enabled: false },
+    { start_time: "12:00", end_time: "12:30", activity: "Coffee Break", enabled: false },
+    { start_time: "12:30", end_time: "13:30", activity: "Lunch", enabled: false },
+    { start_time: "13:30", end_time: "15:30", activity: "Meetings", enabled: false },
+    { start_time: "15:30", end_time: "16:00", activity: "Coffee Break", enabled: false },
   ],
 };
 

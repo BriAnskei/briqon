@@ -444,7 +444,7 @@ describe("useWizardValidation — validator output", () => {
       const { result } = setup(form, 2);
       expect(result.current.validation.conflicts.valid).toBe(false);
       expect(result.current.validation.conflicts.message).toBe(
-        '"breakfast" conflicts with "brunch".',
+        '"breakfast / morning outine" conflicts with "lunch".',
       );
     });
 

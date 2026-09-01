@@ -7,7 +7,7 @@ export const ScheduleItemSchema = z.object({
   start_time: TimeSchema,
   end_time: TimeSchema,
   activity: z.string(),
-  enabled: z.boolean().optional(),
+  enabled: z.boolean(),
 });
 
 export type ScheduleItem = z.infer<typeof ScheduleItemSchema>;

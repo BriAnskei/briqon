@@ -2,7 +2,9 @@ import type {
   CreateSchedulePayloadType,
   SaveScheduleInput,
 } from "@/type/services/scheduleService.types";
-import type { Schedule } from "../models/schedule.model";
+import type { Schedule, ScheduleItem } from "../models/schedule.model";
+import type { SubSummary } from "../models/sub_summaries.model";
+import type { ScheduleSummary } from "../models/summaries.model";
 import type { ScheduleRepository } from "../repository/schedule.repository";
 import type { SubSummariesRepository } from "../repository/subSummary.repo";
 import type { SummariesRepository } from "../repository/summaries.repo";
@@ -53,6 +55,33 @@ export class ScheduleService {
         subSummaries: input.subSummaries,
       });
     }
+  }
+
+  async ensureTemporarySchedule(data: {
+    id: string;
+    items: ScheduleItem[];
+    summaries?: ScheduleSummary[];
+    subSummaries?: SubSummary[];
+  }): Promise<void> {
+    const exists = await this.exists(data.id);
+    if (exists) return;
+
+    if (!data.summaries || !data.subSummaries) {
+      throw new Error("Incomplete Data for persisting schedule");
+    }
+
+    const schedule: Schedule = {
+      id: data.id,
+      name: "",
+      schedule_list: data.items as ScheduleItem[],
+      temporary: true,
+    };
+
+    await this.createSchedule({
+      schedule,
+      summaries: data.summaries as ScheduleSummary[],
+      subSummaries: data.subSummaries as SubSummary[],
+    });
   }
 
   async findById(id: string): Promise<Schedule> {

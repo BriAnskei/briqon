@@ -2,7 +2,6 @@ import { act, renderHook } from "@testing-library/react-native";
 import { useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
 import { useNewScheduleFormContext } from "@/context/NewScheduleFormContext";
-import { useSchedule } from "@/context/ScheduleContext";
 import type { NewScheduleFormState } from "@/type/NewScheduleTypes";
 import { WizardPromptBuilder } from "../../utils/WizardPromptBuilder";
 import { useWizardForm } from "./useWizardForm";
@@ -20,7 +19,6 @@ jest.mock("react-native-toast-message", () => ({
   default: { show: jest.fn(), hide: jest.fn() },
 }));
 
-jest.mock("@/context/ScheduleContext");
 jest.mock("@/context/NewScheduleFormContext");
 
 jest.mock("../../utils/WizardPromptBuilder", () => ({
@@ -88,8 +86,6 @@ const mockGenerateScheduleBasedOnForm = jest.fn();
 const mockRouterBack = jest.fn();
 const mockRouterPush = jest.fn();
 const mockRouterReplace = jest.fn();
-const mockSetPrevScheduleFormInput = jest.fn();
-const mockHandleScheduleGeneration = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -118,12 +114,6 @@ beforeEach(() => {
     back: mockRouterBack,
     replace: mockRouterReplace,
     push: mockRouterPush,
-  });
-
-  (useSchedule as jest.Mock).mockReturnValue({
-    handleScheduleGeneration: mockHandleScheduleGeneration,
-    prevScheduleForm: undefined,
-    setPrevScheduleFormInput: mockSetPrevScheduleFormInput,
   });
 
   (useNewScheduleFormContext as jest.Mock).mockReturnValue({

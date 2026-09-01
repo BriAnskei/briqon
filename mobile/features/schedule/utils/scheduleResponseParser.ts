@@ -1,9 +1,8 @@
 import { ulid } from "ulid";
-import { ScheduleItemSchema } from "@/src/models/schedule.model";
+import { type ScheduleItem, ScheduleItemSchema } from "@/src/models/schedule.model";
 import { RawScheduleResponseSchema } from "@/src/models/scheduleApiResponse.model";
 import { SubSummariesSchema, type SubSummary } from "@/src/models/sub_summaries.model";
 import { type ScheduleSummary, SummariesSchema } from "@/src/models/summaries.model";
-import type { ScheduleItem } from "@/type/MessageTypes";
 
 // ── Client-model result (relational shape for UI / SQLite) ─────────────────
 export type GenerationResult = {
@@ -50,7 +49,7 @@ export function parseScheduleResponse(
   });
 
   const schedule: ScheduleItem[] = parsed.schedule.map((item) =>
-    ScheduleItemSchema.parse(item),
+    ScheduleItemSchema.parse({ ...item, enabled: true }),
   );
 
   return { summary, subSummary, schedule };

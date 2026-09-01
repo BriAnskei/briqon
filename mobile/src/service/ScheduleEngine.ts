@@ -1,5 +1,5 @@
 import { minutesToTime, timeToMinutes } from "@/utils/TimeFormatter";
-import type { ScheduleItem } from "../../type/MessageTypes";
+import type { ScheduleItem } from "../../type/";
 
 export interface FixedAppointment {
   activity: string;

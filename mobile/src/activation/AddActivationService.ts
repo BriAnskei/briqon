@@ -1,9 +1,5 @@
-import type { ScheduleItem } from "@/type/MessageTypes";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 import { ScheduleConflictError } from "../errors/scheduleActivationConflic.error";
-import type { Schedule } from "../models/schedule.model";
-import type { SubSummary } from "../models/sub_summaries.model";
-import type { ScheduleSummary } from "../models/summaries.model";
 import type { ScheduleService } from "../service/schedule.service";
 import type { ActivationRepository } from "./ActivationRepository";
 import type { ActivationFactory } from "./domain/ActivationFactory";
@@ -30,9 +26,7 @@ export class AddActivationService {
    * ScheduleService.markAsPermanent).
    */
   async add(input: CreateActivationInput) {
-    if (input.scheduleItems) {
-      await this.ensureScheduleSavedAsTemporary(input);
-    }
+    await this.ensureScheduleExists(input);
 
     const context = this.activationFactory.create(input);
 
@@ -52,30 +46,16 @@ export class AddActivationService {
     await this.activationRepository.execute(context);
   }
 
-  /**
-   * Persists the schedule (and its summaries) as a temporary row so that
-   * the FK from `active_schedules → schedules` is satisfied.
-   * If the schedule already exists in the DB we skip the insert – this
-   * handles the retry-after-conflict case where the schedule was already
-   * saved on a previous attempt.
-   */
-  private async ensureScheduleSavedAsTemporary(
-    input: CreateActivationInput,
-  ): Promise<void> {
-    const exists = await this.scheduleService.exists(input.scheduleId);
-    if (exists) return;
+  private async ensureScheduleExists(input: CreateActivationInput): Promise<void> {
+    if (!input.scheduleItems) {
+      return;
+    }
 
-    const schedule: Schedule = {
+    await this.scheduleService.ensureTemporarySchedule({
       id: input.scheduleId,
-      name: "",
-      schedule_list: input.scheduleItems as ScheduleItem[],
-      temporary: true,
-    };
-
-    await this.scheduleService.createSchedule({
-      schedule,
-      summaries: input.summaries as ScheduleSummary[],
-      subSummaries: input.subSummaries as SubSummary[],
+      items: input.scheduleItems,
+      summaries: input.summaries,
+      subSummaries: input.subSummaries,
     });
   }
 }

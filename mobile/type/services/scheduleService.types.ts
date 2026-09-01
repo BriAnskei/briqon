@@ -1,7 +1,7 @@
 import type { Schedule } from "@/src/models/schedule.model";
 import type { SubSummary } from "@/src/models/sub_summaries.model";
 import type { ScheduleSummary } from "@/src/models/summaries.model";
-import type { ScheduleItem } from "../MessageTypes";
+import type { ScheduleItem } from "../";
 
 export type CreateSchedulePayloadType = {
   schedule: Schedule;

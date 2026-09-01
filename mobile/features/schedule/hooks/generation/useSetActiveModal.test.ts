@@ -5,10 +5,11 @@ import type { ScheduleItem } from "@/src/models/schedule.model";
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 const mockCreateAsync = jest.fn().mockResolvedValue(undefined);
+const mockToastShow = jest.fn();
 
 jest.mock("react-native-toast-message", () => ({
   __esModule: true,
-  default: { show: jest.fn() },
+  default: { show: (...args: unknown[]) => mockToastShow(...args), hide: jest.fn() },
 }));
 
 jest.mock("@/hooks/useModal", () => ({
@@ -22,8 +23,9 @@ jest.mock("@/hooks/useModal", () => ({
 }));
 
 jest.mock("@/src/composition/activationServiceComposition", () => ({
-  activeScheduleService: {
-    createAsync: (...args: unknown[]) => mockCreateAsync(...args),
+  __esModule: true,
+  addActivationService: {
+    add: (...args: unknown[]) => mockCreateAsync(...args),
   },
 }));
 

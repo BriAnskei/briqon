@@ -19,7 +19,7 @@ import {
   ScheduleActivationModal,
 } from "@/features/schedule/components/ScheduleManagement/modal/ScheduleActivationModal";
 import { WeekActiveSchedulesModal } from "@/features/schedule/components/ScheduleManagement/modal/WeekActiveScheduleModal";
-import type { ScheduleItem } from "@/type/MessageTypes";
+import type { ScheduleItem } from "@/src/models/schedule.model";
 import { Colors, FontFamily, Radius, Shadow } from "@/type/theme";
 
 // ---------------------------------------------------------------------------
@@ -82,8 +82,18 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     is_active: true,
     contract: { starts_at: TODAY, ends_at: TODAY },
     schedule_list: [
-      { start_time: "07:00", end_time: "07:30", activity: "Stretch & hydrate" },
-      { start_time: "07:30", end_time: "08:00", activity: "Light cardio" },
+      {
+        start_time: "07:00",
+        end_time: "07:30",
+        activity: "Stretch & hydrate",
+        enabled: false,
+      },
+      {
+        start_time: "07:30",
+        end_time: "08:00",
+        activity: "Light cardio",
+        enabled: false,
+      },
     ],
   },
   {
@@ -94,8 +104,18 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     activation: { active_type: "days", recurring: false, days_of_week: [2, 4] },
     contract: { starts_at: "2026-09-20", ends_at: "2026-09-25" },
     schedule_list: [
-      { start_time: "13:00", end_time: "14:00", activity: "Slide review" },
-      { start_time: "14:00", end_time: "15:00", activity: "Rehearsal" },
+      {
+        start_time: "13:00",
+        end_time: "14:00",
+        activity: "Slide review",
+        enabled: false,
+      },
+      {
+        start_time: "14:00",
+        end_time: "15:00",
+        activity: "Rehearsal",
+        enabled: false,
+      },
     ],
   },
   {
@@ -105,8 +125,18 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     is_active: false,
     activation: { active_type: "days", recurring: true, days_of_week: [1, 2, 3, 4, 5] },
     schedule_list: [
-      { start_time: "06:00", end_time: "06:15", activity: "Wake up alarm" },
-      { start_time: "06:15", end_time: "06:45", activity: "Workout" },
+      {
+        start_time: "06:00",
+        end_time: "06:15",
+        activity: "Wake up alarm",
+        enabled: false,
+      },
+      {
+        start_time: "06:15",
+        end_time: "06:45",
+        activity: "Workout",
+        enabled: false,
+      },
     ],
   },
   {
@@ -116,17 +146,33 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     is_active: false,
     activation: { active_type: "days", recurring: false, days_of_week: [1, 3, 5] },
     contract: { starts_at: "2026-09-01", ends_at: "2026-09-12" },
-    schedule_list: [{ start_time: "18:00", end_time: "20:00", activity: "Review notes" }],
+    schedule_list: [
+      {
+        start_time: "18:00",
+        end_time: "20:00",
+        activity: "Review notes",
+        enabled: false,
+      },
+    ],
   },
   {
     id: "01J8Z3",
     name: "Doctor Appointment",
     temporary: true,
     is_active: false,
-    activation: { active_type: "date", recurring: false, specific_date: "2026-09-05" },
+    activation: {
+      active_type: "date",
+      recurring: false,
+      specific_date: "2026-09-05",
+    },
     contract: { starts_at: "2026-09-05", ends_at: "2026-09-05" },
     schedule_list: [
-      { start_time: "09:00", end_time: "09:30", activity: "Travel to clinic" },
+      {
+        start_time: "09:00",
+        end_time: "09:30",
+        activity: "Travel to clinic",
+        enabled: false,
+      },
     ],
   },
   {
@@ -135,18 +181,39 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     temporary: false,
     is_active: false,
     activation: { active_type: "days", recurring: true, days_of_week: [0, 6] },
-    schedule_list: [{ start_time: "10:00", end_time: "12:00", activity: "Sleep in" }],
+    schedule_list: [
+      {
+        start_time: "10:00",
+        end_time: "12:00",
+        activity: "Sleep in",
+        enabled: false,
+      },
+    ],
   },
   {
     id: "01J8Z6",
     name: "Flight to Tokyo",
     temporary: true,
     is_active: true,
-    activation: { active_type: "date", recurring: false, specific_date: "2026-10-02" },
+    activation: {
+      active_type: "date",
+      recurring: false,
+      specific_date: "2026-10-02",
+    },
     contract: { starts_at: "2026-10-02", ends_at: "2026-10-02" },
     schedule_list: [
-      { start_time: "04:30", end_time: "05:00", activity: "Wake up" },
-      { start_time: "05:00", end_time: "06:00", activity: "Head to airport" },
+      {
+        start_time: "04:30",
+        end_time: "05:00",
+        activity: "Wake up",
+        enabled: false,
+      },
+      {
+        start_time: "05:00",
+        end_time: "06:00",
+        activity: "Head to airport",
+        enabled: false,
+      },
     ],
   },
   {
@@ -156,7 +223,12 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     is_active: true,
     activation: { active_type: "days", recurring: true, days_of_week: [1, 3, 5] },
     schedule_list: [
-      { start_time: "17:30", end_time: "18:30", activity: "Strength training" },
+      {
+        start_time: "17:30",
+        end_time: "18:30",
+        activity: "Strength training",
+        enabled: false,
+      },
     ],
   },
   {
@@ -164,11 +236,25 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Product Launch Day",
     temporary: true,
     is_active: true,
-    activation: { active_type: "date", recurring: false, specific_date: TODAY },
+    activation: {
+      active_type: "date",
+      recurring: false,
+      specific_date: TODAY,
+    },
     contract: { starts_at: TODAY, ends_at: TODAY },
     schedule_list: [
-      { start_time: "08:00", end_time: "09:00", activity: "Final checklist" },
-      { start_time: "09:00", end_time: "10:00", activity: "Go live" },
+      {
+        start_time: "08:00",
+        end_time: "09:00",
+        activity: "Final checklist",
+        enabled: false,
+      },
+      {
+        start_time: "09:00",
+        end_time: "10:00",
+        activity: "Go live",
+        enabled: false,
+      },
     ],
   },
   {
@@ -176,20 +262,45 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Dentist Visit",
     temporary: true,
     is_active: false,
-    activation: { active_type: "date", recurring: false, specific_date: "2026-09-14" },
+    activation: {
+      active_type: "date",
+      recurring: false,
+      specific_date: "2026-09-14",
+    },
     contract: { starts_at: "2026-09-14", ends_at: "2026-09-14" },
-    schedule_list: [{ start_time: "11:00", end_time: "11:30", activity: "Checkup" }],
+    schedule_list: [
+      {
+        start_time: "11:00",
+        end_time: "11:30",
+        activity: "Checkup",
+        enabled: false,
+      },
+    ],
   },
   {
     id: "01J8ZA",
     name: "New Hire Onboarding",
     temporary: true,
     is_active: false,
-    activation: { active_type: "days", recurring: false, days_of_week: [1, 2, 3, 4, 5] },
+    activation: {
+      active_type: "days",
+      recurring: false,
+      days_of_week: [1, 2, 3, 4, 5],
+    },
     contract: { starts_at: "2026-09-28", ends_at: "2026-10-09" },
     schedule_list: [
-      { start_time: "09:00", end_time: "10:00", activity: "Team intro" },
-      { start_time: "10:00", end_time: "12:00", activity: "Systems training" },
+      {
+        start_time: "09:00",
+        end_time: "10:00",
+        activity: "Team intro",
+        enabled: false,
+      },
+      {
+        start_time: "10:00",
+        end_time: "12:00",
+        activity: "Systems training",
+        enabled: false,
+      },
     ],
   },
   {
@@ -197,9 +308,20 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "",
     temporary: true,
     is_active: true,
-    activation: { active_type: "days", recurring: false, days_of_week: [2, 3] },
+    activation: {
+      active_type: "days",
+      recurring: false,
+      days_of_week: [2, 3],
+    },
     contract: { starts_at: "2026-09-08", ends_at: "2026-09-16" },
-    schedule_list: [{ start_time: "14:00", end_time: "16:00", activity: "Deep work" }],
+    schedule_list: [
+      {
+        start_time: "14:00",
+        end_time: "16:00",
+        activity: "Deep work",
+        enabled: false,
+      },
+    ],
   },
   {
     id: "01J8ZB",
@@ -208,11 +330,15 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     is_active: false,
     activation: { active_type: "days", recurring: true, days_of_week: [0] },
     schedule_list: [
-      { start_time: "16:00", end_time: "18:00", activity: "Cook for the week" },
+      {
+        start_time: "16:00",
+        end_time: "18:00",
+        activity: "Cook for the week",
+        enabled: false,
+      },
     ],
   },
 ];
-
 // ---------------------------------------------------------------------------
 // Search & filter types
 // ---------------------------------------------------------------------------

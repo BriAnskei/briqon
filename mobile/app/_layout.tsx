@@ -5,7 +5,6 @@ import Toast from "react-native-toast-message";
 import SplashScreen from "@/components/SplashScreen";
 import { buildToastConfig } from "@/components/toastConfig";
 import { NewScheduleFormProvider } from "@/context/NewScheduleFormContext";
-import { ScheduleProvider } from "@/context/ScheduleContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { initializeDb } from "@/src/database/init";
 
@@ -13,11 +12,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <ScheduleProvider>
-          <NewScheduleFormProvider>
-            <ScreenStack />
-          </NewScheduleFormProvider>
-        </ScheduleProvider>
+        <NewScheduleFormProvider>
+          <ScreenStack />
+        </NewScheduleFormProvider>
       </ThemeProvider>
       <Toast config={buildToastConfig()} />
     </SafeAreaProvider>
