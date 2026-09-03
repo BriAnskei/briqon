@@ -1,5 +1,5 @@
 import type * as SQLite from "expo-sqlite";
-import type { NonOccuringWindowRange } from "../activation/domain/entity/NonOccuringWindowRange";
+import type { NonOccuringWindowRange } from "../schedule/activation/domain/entity/NonOccuringWindowRange";
 import { BaseRepository } from "./base.repository";
 
 export class NonReccurringRangeRepository extends BaseRepository {

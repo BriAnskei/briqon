@@ -1,5 +1,5 @@
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import type { AddActivationService } from "../activation/AddActivationService";
+import type { AddActivationService } from "../schedule/activation/AddActivationService";
 import type { Schedule, ScheduleItem } from "../models/schedule.model";
 import type { SubSummary } from "../models/sub_summaries.model";
 import type { ScheduleSummary } from "../models/summaries.model";

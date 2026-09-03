@@ -1,5 +1,5 @@
 import type * as SQLite from "expo-sqlite";
-import type { ActiveScheduleDays } from "../activation/domain/entity/ActiveScheduleDays";
+import type { ActiveScheduleDays } from "../schedule/activation/domain/entity/ActiveScheduleDays";
 import { BaseRepository } from "./base.repository";
 
 export class ActiveScheduleDaysRepository extends BaseRepository {

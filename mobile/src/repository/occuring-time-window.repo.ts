@@ -1,5 +1,5 @@
 import type * as SQLite from "expo-sqlite";
-import type { OccuringTimeWindow } from "../activation/domain/entity/OccurinngTimeWindow";
+import type { OccuringTimeWindow } from "../schedule/activation/domain/entity/OccurinngTimeWindow";
 import { BaseRepository } from "./base.repository";
 
 export class OccurringTimeWindowRepository extends BaseRepository {

@@ -98,6 +98,8 @@ export class ScheduleService {
     return await this.repo.findAll();
   }
 
+  
+  // adding name can make the schedule permanently saved.
   async markAsPermanent(payload: { name: string; id: string }) {
     await this.repo.markAsPermanent(payload);
   }

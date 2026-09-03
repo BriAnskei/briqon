@@ -15,7 +15,10 @@ import {
 import { AppHeader, HeaderIconButton } from "@/components/AppHeader";
 import { useTheme } from "@/context/ThemeContext";
 import {
+  type Activation,
+  type ActivationIntent,
   type ActivationScheduleInput,
+  canAddActivation,
   ScheduleActivationModal,
 } from "@/features/schedule/components/ScheduleManagement/modal/ScheduleActivationModal";
 import { WeekActiveSchedulesModal } from "@/features/schedule/components/ScheduleManagement/modal/WeekActiveScheduleModal";
@@ -23,33 +26,28 @@ import type { ScheduleItem } from "@/src/models/schedule.model";
 import { Colors, FontFamily, Radius, Shadow } from "@/type/theme";
 
 // ---------------------------------------------------------------------------
-type ActiveType = "days" | "date";
-
-interface SavedActivation {
-  active_type: ActiveType;
-  recurring: boolean;
-  days_of_week?: number[];
-  specific_date?: string;
-}
-
-interface Contract {
-  starts_at: string;
-  ends_at: string;
-}
-
 interface MockSchedule {
   id?: string; // undefined => unsaved draft
   name: string; // "" allowed for unsaved drafts
   schedule_list: ScheduleItem[];
   temporary: boolean;
+  /**
+   * A schedule-wide, singleton toggle — at most one schedule across the
+   * whole list is active at a time (handleSetActive below flips every
+   * other schedule off when this one turns on). Independent of
+   * `activations`: an active schedule can have zero, one, or several
+   * activations configured; is_active just says "this is the one the
+   * device is currently following."
+   */
   is_active: boolean;
-  /** Present only once configured via the existing SetActiveModal flow
-   * (type/recurring/day-of-week). Absent on an unsaved draft. */
-  activation?: SavedActivation;
-  /** Validity window. Independent of `activation` — any active schedule can
-   * have one, saved or not. Absent when recurring (weekly repeats have no
-   * end date). */
-  contract?: Contract;
+  /**
+   * The windows/patterns that make this schedule apply. At most one
+   * `days`+recurring and one `days`+non-recurring entry are allowed (see
+   * canAddActivation in the modal file); `date` entries are unlimited —
+   * mirrors the iCalendar RRULE (capped, one pattern) + RDATE (unlimited
+   * extra one-off dates) relationship.
+   */
+  activations: Activation[];
 }
 
 const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
@@ -60,7 +58,7 @@ function getWeekday(iso: string): number {
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
-function formatContractRange(contract: Contract): string {
+function formatContractRange(contract: { starts_at: string; ends_at: string }): string {
   if (contract.starts_at === contract.ends_at) return formatDate(contract.starts_at);
   return `${formatDate(contract.starts_at)} – ${formatDate(contract.ends_at)}`;
 }
@@ -69,10 +67,20 @@ const TODAY = new Date().toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------------------
 // Mock data — covers:
-//  1. Unsaved + active draft, with a today-only contract (no type/recurring
-//     badges yet since it hasn't been configured)
-//  2. Saved + active, fully configured, non-recurring -> shows contract
-//  3. Saved + inactive (days/date, recurring/non-recurring)
+//  1. Unsaved + active draft, no activations configured yet
+//  2/3/4. Single days activation (recurring / non-recurring, active/inactive)
+//  5. Doctor Appointment — ACTIVE, THREE date activations (the "+N more"
+//     card treatment)
+//  6. Flight to Tokyo — ACTIVE, single date activation
+//  7. Gym Days — ACTIVE, COMBO: one recurring days pattern *plus* two extra
+//     one-off dates (the richest case — days block(s) + date summary
+//     together on one card)
+//  8. Saved + inactive, non-recurring days with a contract window
+//  9/10. More single-activation variety (unsaved draft, recurring weekly)
+//  Standup Rotation — ACTIVE, fills every slot: recurring days + a
+//    non-recurring days override + a one-off date, all at once
+//  Volunteer Shifts — ACTIVE, five date activations (stress-tests the
+//    "+N more" collapse)
 // ---------------------------------------------------------------------------
 const INITIAL_SCHEDULES: MockSchedule[] = [
   {
@@ -80,7 +88,7 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "",
     temporary: true,
     is_active: true,
-    contract: { starts_at: TODAY, ends_at: TODAY },
+    activations: [],
     schedule_list: [
       {
         start_time: "07:00",
@@ -101,8 +109,15 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Conference Prep",
     temporary: true,
     is_active: true,
-    activation: { active_type: "days", recurring: false, days_of_week: [2, 4] },
-    contract: { starts_at: "2026-09-20", ends_at: "2026-09-25" },
+    activations: [
+      {
+        id: "01J8Z5-a1",
+        active_type: "days",
+        recurring: false,
+        days_of_week: [2, 4],
+        contract: { starts_at: "2026-09-20", ends_at: "2026-09-25" },
+      },
+    ],
     schedule_list: [
       {
         start_time: "13:00",
@@ -110,12 +125,7 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
         activity: "Slide review",
         enabled: false,
       },
-      {
-        start_time: "14:00",
-        end_time: "15:00",
-        activity: "Rehearsal",
-        enabled: false,
-      },
+      { start_time: "14:00", end_time: "15:00", activity: "Rehearsal", enabled: false },
     ],
   },
   {
@@ -123,7 +133,14 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Morning Routine",
     temporary: false,
     is_active: false,
-    activation: { active_type: "days", recurring: true, days_of_week: [1, 2, 3, 4, 5] },
+    activations: [
+      {
+        id: "01J8Z1-a1",
+        active_type: "days",
+        recurring: true,
+        days_of_week: [1, 2, 3, 4, 5],
+      },
+    ],
     schedule_list: [
       {
         start_time: "06:00",
@@ -131,12 +148,7 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
         activity: "Wake up alarm",
         enabled: false,
       },
-      {
-        start_time: "06:15",
-        end_time: "06:45",
-        activity: "Workout",
-        enabled: false,
-      },
+      { start_time: "06:15", end_time: "06:45", activity: "Workout", enabled: false },
     ],
   },
   {
@@ -144,8 +156,15 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Exam Week Study",
     temporary: true,
     is_active: false,
-    activation: { active_type: "days", recurring: false, days_of_week: [1, 3, 5] },
-    contract: { starts_at: "2026-09-01", ends_at: "2026-09-12" },
+    activations: [
+      {
+        id: "01J8Z2-a1",
+        active_type: "days",
+        recurring: false,
+        days_of_week: [1, 3, 5],
+        contract: { starts_at: "2026-09-01", ends_at: "2026-09-12" },
+      },
+    ],
     schedule_list: [
       {
         start_time: "18:00",
@@ -159,13 +178,30 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     id: "01J8Z3",
     name: "Doctor Appointment",
     temporary: true,
-    is_active: false,
-    activation: {
-      active_type: "date",
-      recurring: false,
-      specific_date: "2026-09-05",
-    },
-    contract: { starts_at: "2026-09-05", ends_at: "2026-09-05" },
+    is_active: true,
+    activations: [
+      {
+        id: "01J8Z3-a1",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-05",
+        contract: { starts_at: "2026-09-05", ends_at: "2026-09-05" },
+      },
+      {
+        id: "01J8Z3-a2",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-19",
+        contract: { starts_at: "2026-09-19", ends_at: "2026-09-19" },
+      },
+      {
+        id: "01J8Z3-a3",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-10-03",
+        contract: { starts_at: "2026-10-03", ends_at: "2026-10-03" },
+      },
+    ],
     schedule_list: [
       {
         start_time: "09:00",
@@ -180,14 +216,11 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Weekend Chill",
     temporary: false,
     is_active: false,
-    activation: { active_type: "days", recurring: true, days_of_week: [0, 6] },
+    activations: [
+      { id: "01J8Z4-a1", active_type: "days", recurring: true, days_of_week: [0, 6] },
+    ],
     schedule_list: [
-      {
-        start_time: "10:00",
-        end_time: "12:00",
-        activity: "Sleep in",
-        enabled: false,
-      },
+      { start_time: "10:00", end_time: "12:00", activity: "Sleep in", enabled: false },
     ],
   },
   {
@@ -195,19 +228,17 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Flight to Tokyo",
     temporary: true,
     is_active: true,
-    activation: {
-      active_type: "date",
-      recurring: false,
-      specific_date: "2026-10-02",
-    },
-    contract: { starts_at: "2026-10-02", ends_at: "2026-10-02" },
-    schedule_list: [
+    activations: [
       {
-        start_time: "04:30",
-        end_time: "05:00",
-        activity: "Wake up",
-        enabled: false,
+        id: "01J8Z6-a1",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-10-02",
+        contract: { starts_at: "2026-10-02", ends_at: "2026-10-02" },
       },
+    ],
+    schedule_list: [
+      { start_time: "04:30", end_time: "05:00", activity: "Wake up", enabled: false },
       {
         start_time: "05:00",
         end_time: "06:00",
@@ -221,7 +252,23 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Gym Days",
     temporary: false,
     is_active: true,
-    activation: { active_type: "days", recurring: true, days_of_week: [1, 3, 5] },
+    activations: [
+      { id: "01J8Z7-a1", active_type: "days", recurring: true, days_of_week: [1, 3, 5] },
+      {
+        id: "01J8Z7-a2",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-10",
+        contract: { starts_at: "2026-09-10", ends_at: "2026-09-10" },
+      },
+      {
+        id: "01J8Z7-a3",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-24",
+        contract: { starts_at: "2026-09-24", ends_at: "2026-09-24" },
+      },
+    ],
     schedule_list: [
       {
         start_time: "17:30",
@@ -236,12 +283,15 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Product Launch Day",
     temporary: true,
     is_active: true,
-    activation: {
-      active_type: "date",
-      recurring: false,
-      specific_date: TODAY,
-    },
-    contract: { starts_at: TODAY, ends_at: TODAY },
+    activations: [
+      {
+        id: "01J8Z8-a1",
+        active_type: "date",
+        recurring: false,
+        specific_date: TODAY,
+        contract: { starts_at: TODAY, ends_at: TODAY },
+      },
+    ],
     schedule_list: [
       {
         start_time: "08:00",
@@ -249,12 +299,7 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
         activity: "Final checklist",
         enabled: false,
       },
-      {
-        start_time: "09:00",
-        end_time: "10:00",
-        activity: "Go live",
-        enabled: false,
-      },
+      { start_time: "09:00", end_time: "10:00", activity: "Go live", enabled: false },
     ],
   },
   {
@@ -262,19 +307,17 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Dentist Visit",
     temporary: true,
     is_active: false,
-    activation: {
-      active_type: "date",
-      recurring: false,
-      specific_date: "2026-09-14",
-    },
-    contract: { starts_at: "2026-09-14", ends_at: "2026-09-14" },
-    schedule_list: [
+    activations: [
       {
-        start_time: "11:00",
-        end_time: "11:30",
-        activity: "Checkup",
-        enabled: false,
+        id: "01J8Z9-a1",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-14",
+        contract: { starts_at: "2026-09-14", ends_at: "2026-09-14" },
       },
+    ],
+    schedule_list: [
+      { start_time: "11:00", end_time: "11:30", activity: "Checkup", enabled: false },
     ],
   },
   {
@@ -282,19 +325,17 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "New Hire Onboarding",
     temporary: true,
     is_active: false,
-    activation: {
-      active_type: "days",
-      recurring: false,
-      days_of_week: [1, 2, 3, 4, 5],
-    },
-    contract: { starts_at: "2026-09-28", ends_at: "2026-10-09" },
-    schedule_list: [
+    activations: [
       {
-        start_time: "09:00",
-        end_time: "10:00",
-        activity: "Team intro",
-        enabled: false,
+        id: "01J8ZA-a1",
+        active_type: "days",
+        recurring: false,
+        days_of_week: [1, 2, 3, 4, 5],
+        contract: { starts_at: "2026-09-28", ends_at: "2026-10-09" },
       },
+    ],
+    schedule_list: [
+      { start_time: "09:00", end_time: "10:00", activity: "Team intro", enabled: false },
       {
         start_time: "10:00",
         end_time: "12:00",
@@ -308,19 +349,17 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "",
     temporary: true,
     is_active: true,
-    activation: {
-      active_type: "days",
-      recurring: false,
-      days_of_week: [2, 3],
-    },
-    contract: { starts_at: "2026-09-08", ends_at: "2026-09-16" },
-    schedule_list: [
+    activations: [
       {
-        start_time: "14:00",
-        end_time: "16:00",
-        activity: "Deep work",
-        enabled: false,
+        id: "draft2-a1",
+        active_type: "days",
+        recurring: false,
+        days_of_week: [2, 3],
+        contract: { starts_at: "2026-09-08", ends_at: "2026-09-16" },
       },
+    ],
+    schedule_list: [
+      { start_time: "14:00", end_time: "16:00", activity: "Deep work", enabled: false },
     ],
   },
   {
@@ -328,12 +367,106 @@ const INITIAL_SCHEDULES: MockSchedule[] = [
     name: "Sunday Meal Prep",
     temporary: false,
     is_active: false,
-    activation: { active_type: "days", recurring: true, days_of_week: [0] },
+    activations: [
+      { id: "01J8ZB-a1", active_type: "days", recurring: true, days_of_week: [0] },
+    ],
     schedule_list: [
       {
         start_time: "16:00",
         end_time: "18:00",
         activity: "Cook for the week",
+        enabled: false,
+      },
+    ],
+  },
+  {
+    // Fills every activation slot at once: a recurring weekly pattern, a
+    // temporary non-recurring override window on top of it, AND a one-off
+    // makeup date — the max-capacity case (2 days-type + N dates).
+    id: "01J8ZC",
+    name: "Standup Rotation",
+    temporary: false,
+    is_active: true,
+    activations: [
+      {
+        id: "01J8ZC-a1",
+        active_type: "days",
+        recurring: true,
+        days_of_week: [1, 2, 3, 4, 5],
+      },
+      {
+        id: "01J8ZC-a2",
+        active_type: "days",
+        recurring: false,
+        days_of_week: [2, 4],
+        contract: { starts_at: "2026-09-15", ends_at: "2026-09-19" },
+      },
+      {
+        id: "01J8ZC-a3",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-25",
+        contract: { starts_at: "2026-09-25", ends_at: "2026-09-25" },
+      },
+    ],
+    schedule_list: [
+      {
+        start_time: "09:15",
+        end_time: "09:30",
+        activity: "Daily standup",
+        enabled: false,
+      },
+    ],
+  },
+  {
+    // Five separate date activations, no days-type at all — stress-tests
+    // the "nearest upcoming + N more" collapse on the card.
+    id: "01J8ZD",
+    name: "Volunteer Shifts",
+    temporary: true,
+    is_active: true,
+    activations: [
+      {
+        id: "01J8ZD-a1",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-06",
+        contract: { starts_at: "2026-09-06", ends_at: "2026-09-06" },
+      },
+      {
+        id: "01J8ZD-a2",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-13",
+        contract: { starts_at: "2026-09-13", ends_at: "2026-09-13" },
+      },
+      {
+        id: "01J8ZD-a3",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-20",
+        contract: { starts_at: "2026-09-20", ends_at: "2026-09-20" },
+      },
+      {
+        id: "01J8ZD-a4",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-09-27",
+        contract: { starts_at: "2026-09-27", ends_at: "2026-09-27" },
+      },
+      {
+        id: "01J8ZD-a5",
+        active_type: "date",
+        recurring: false,
+        specific_date: "2026-10-04",
+        contract: { starts_at: "2026-10-04", ends_at: "2026-10-04" },
+      },
+    ],
+    schedule_list: [
+      {
+        start_time: "10:00",
+        end_time: "14:00",
+        activity: "Food bank shift",
         enabled: false,
       },
     ],
@@ -353,23 +486,43 @@ const MORE_FACET_OPTIONS: { key: MoreFacet; label: string }[] = [
   { key: "date_type", label: "Date type" },
 ];
 
+// A schedule can now hold several activations at once, so a facet matches
+// if ANY activation on the schedule satisfies it (e.g. "Recurring" matches
+// a schedule that has a recurring days pattern even if it also has several
+// one-off dates alongside it).
 function matchesMoreFacet(schedule: MockSchedule, facet: MoreFacet): boolean {
   switch (facet) {
     case "unsaved":
       return !schedule.id;
     case "recurring":
-      return schedule.activation?.recurring === true;
+      return schedule.activations.some((a) => a.recurring);
     case "one_time":
-      return schedule.activation?.recurring === false;
+      return schedule.activations.some((a) => !a.recurring);
     case "days_type":
-      return schedule.activation?.active_type === "days";
+      return schedule.activations.some((a) => a.active_type === "days");
     case "date_type":
-      return schedule.activation?.active_type === "date";
+      return schedule.activations.some((a) => a.active_type === "date");
   }
 }
 
 function displayName(schedule: MockSchedule): string {
   return schedule.name.trim() || "Untitled Schedule";
+}
+
+// Picks which date-activation "leads" the card: the nearest upcoming one if
+// there is one, otherwise the earliest overall (e.g. all of them already
+// passed). Everything else just becomes a "+N more" count rather than
+// listing every date inline — with unlimited date activations now allowed,
+// showing them all would make a card's height unbounded.
+function pickLeadDateActivation(
+  dateActivations: Activation[],
+): { lead: Activation; remaining: number } | null {
+  if (dateActivations.length === 0) return null;
+  const sorted = [...dateActivations].sort((a, b) =>
+    (a.specific_date ?? "").localeCompare(b.specific_date ?? ""),
+  );
+  const upcoming = sorted.find((a) => (a.specific_date ?? "") >= TODAY);
+  return { lead: upcoming ?? sorted[0], remaining: sorted.length - 1 };
 }
 
 // ---------------------------------------------------------------------------
@@ -428,13 +581,11 @@ function ScheduleCard({
     );
   }
 
-  const activation = schedule.activation;
-  const activeDays =
-    activation?.active_type === "days"
-      ? (activation.days_of_week ?? [])
-      : activation?.active_type === "date" && activation.specific_date
-        ? [getWeekday(activation.specific_date)]
-        : [];
+  const daysActivations = schedule.activations.filter((a) => a.active_type === "days");
+  const dateActivations = schedule.activations.filter(
+    (a) => a.active_type === "date" && a.specific_date,
+  );
+  const leadDate = pickLeadDateActivation(dateActivations);
 
   return (
     <Pressable
@@ -457,25 +608,45 @@ function ScheduleCard({
         </View>
       </View>
 
-      {activation && (
-        <View style={s.badgeRow}>
-          <View style={s.badge}>
-            <Text style={s.badgeText}>
-              {activation.active_type === "days" ? "Days" : "Date"}
-            </Text>
-          </View>
-          <View style={s.badge}>
-            <Text style={s.badgeText}>
-              {activation.recurring ? "Recurring · Weekly" : "One-time"}
-            </Text>
-          </View>
+      {/* One block per days-type activation — at most 2 (one recurring,
+          one non-recurring), so this never needs collapsing. */}
+      {daysActivations.length > 0 && (
+        <View style={s.activationBlocks}>
+          {daysActivations.map((act) => (
+            <View key={act.id} style={s.activationBlock}>
+              <View style={s.badgeRow}>
+                <View style={s.badge}>
+                  <Text style={s.badgeText}>Days</Text>
+                </View>
+                <View style={s.badge}>
+                  <Text style={s.badgeText}>
+                    {act.recurring ? "Recurring · Weekly" : "One-time"}
+                  </Text>
+                </View>
+              </View>
+              {(act.days_of_week?.length ?? 0) > 0 && (
+                <DayChips activeDays={act.days_of_week ?? []} />
+              )}
+              {act.contract && (
+                <Text style={s.contractText}>{formatContractRange(act.contract)}</Text>
+              )}
+            </View>
+          ))}
         </View>
       )}
 
-      {activeDays.length > 0 && <DayChips activeDays={activeDays} />}
-
-      {schedule.contract && (
-        <Text style={s.contractText}>{formatContractRange(schedule.contract)}</Text>
+      {/* Date-type activations collapse to the nearest upcoming one plus a
+          count, since there can be any number of them. */}
+      {leadDate && (
+        <View style={s.badgeRow}>
+          <View style={s.badge}>
+            <Text style={s.badgeText}>Date</Text>
+          </View>
+          <Text style={s.contractText}>
+            {formatDate(leadDate.lead.specific_date as string)}
+            {leadDate.remaining > 0 ? `  +${leadDate.remaining} more` : ""}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -700,17 +871,66 @@ export default function SchedulesScreen() {
     [selectedIndex],
   );
 
+  // Flips the singleton is_active flag: the selected schedule becomes the
+  // one active schedule, every other schedule turns off. Independent of
+  // activation configuration — a schedule can be set active with zero
+  // activations, then have them added afterward via onConfigureActivation.
   const handleSetActive = useCallback(() => {
     if (selectedIndex === null) return;
     setSchedules((prev) =>
       prev.map((sch, idx) => ({ ...sch, is_active: idx === selectedIndex })),
     );
-    // TODO: hand off to your existing SetActiveModal flow to configure
-    // active_type/recurring/days/dates (and contract) before persisting.
+    // TODO: persist the active-schedule change to backend.
   }, [selectedIndex]);
 
+  // Adding or editing an activation requires the SetActiveModal UI (date
+  // pickers, recurring toggle, etc.) that isn't part of these two files —
+  // wire this up to that flow. On save there, upsert into
+  // schedules[selectedIndex].activations, respecting canAddActivation() for
+  // the "add" case.
+  const handleConfigureActivation = useCallback((_intent: ActivationIntent) => {
+    throw new Error("Function not implemented.");
+  }, []);
+
+  const handleDeleteActivation = useCallback(
+    (activationId: string) => {
+      if (selectedIndex === null) return;
+      setSchedules((prev) =>
+        prev.map((sch, idx) =>
+          idx === selectedIndex
+            ? {
+                ...sch,
+                activations: sch.activations.filter((a) => a.id !== activationId),
+              }
+            : sch,
+        ),
+      );
+    },
+    [selectedIndex],
+  );
+
+  const handleDeleteActivations = useCallback(
+    (activationIds: string[]) => {
+      if (selectedIndex === null) return;
+      const idSet = new Set(activationIds);
+      setSchedules((prev) =>
+        prev.map((sch, idx) =>
+          idx === selectedIndex
+            ? { ...sch, activations: sch.activations.filter((a) => !idSet.has(a.id)) }
+            : sch,
+        ),
+      );
+    },
+    [selectedIndex],
+  );
+
   const activationInput: ActivationScheduleInput | null = selected
-    ? { id: selected.id, name: selected.name, schedule_list: selected.schedule_list }
+    ? {
+        id: selected.id,
+        name: selected.name,
+        schedule_list: selected.schedule_list,
+        activations: selected.activations,
+      }
     : null;
 
   const aiGenerateTest = async () => {};
@@ -802,9 +1022,10 @@ export default function SchedulesScreen() {
         isActive={selected?.is_active ?? false}
         onSave={handleSave}
         onRename={handleRename}
-        onConfigureActivation={(): void => {
-          throw new Error("Function not implemented.");
-        }}
+        onSetActive={handleSetActive}
+        onConfigureActivation={handleConfigureActivation}
+        onDeleteActivation={handleDeleteActivation}
+        onDeleteActivations={handleDeleteActivations}
         onDelete={(): void => {
           throw new Error("Function not implemented.");
         }}
@@ -904,6 +1125,8 @@ function useSStyles() {
           fontWeight: "500",
           color: colors.accent,
         },
+        activationBlocks: { gap: 10 },
+        activationBlock: { gap: 8 },
         badgeRow: { flexDirection: "row", gap: 8 },
         badge: {
           paddingHorizontal: 8,

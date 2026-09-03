@@ -1,6 +1,6 @@
 import type * as SQLite from "expo-sqlite";
 import { toLocalISODate } from "@/utils/TimeFormatter";
-import type { ActiveScheduleDate } from "../activation/domain/entity/ActiveScheduleDate";
+import type { ActiveScheduleDate } from "../schedule/activation/domain/entity/ActiveScheduleDate";
 import { BaseRepository } from "./base.repository";
 
 export class ActiveScheduleDatesRepository extends BaseRepository {

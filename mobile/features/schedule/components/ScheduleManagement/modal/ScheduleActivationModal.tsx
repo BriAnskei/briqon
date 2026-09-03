@@ -1,4 +1,4 @@
-import { Check, Pencil, Trash2, X } from "lucide-react-native";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -20,10 +20,60 @@ import { ComponentSize, FontFamily, Radius } from "@/type/theme";
 import { ScheduleTimeline } from "../../GenerateScheduleScreen/components/ScheduleTimeline";
 import { SummaryCard } from "../../GenerateScheduleScreen/components/SummaryCard";
 
+// ---------------------------------------------------------------------------
+// Activation types
+//
+// Modeled after the iCalendar RRULE/RDATE relationship: a schedule can hold
+// at most one recurring "days" activation and at most one non-recurring
+// "days" activation (each is a single pattern/window, so a second one would
+// just conflict with the first), plus an unbounded list of one-off "date"
+// activations layered on top (each is its own independent instance, the
+// same way RDATE entries stack onto an RRULE without limit).
+// ---------------------------------------------------------------------------
+export type ActiveType = "days" | "date";
+
+export interface Contract {
+  starts_at: string;
+  ends_at: string;
+}
+
+export interface Activation {
+  id: string;
+  active_type: ActiveType;
+  /** Only ever true for active_type === "days" — a "date" activation is
+   * inherently a single, non-recurring instance. */
+  recurring: boolean;
+  days_of_week?: number[]; // active_type === "days"
+  specific_date?: string; // active_type === "date"
+  /** Validity window for this specific activation. Absent when recurring
+   * (a weekly pattern repeats indefinitely, so it has no window). */
+  contract?: Contract;
+}
+
+export type ActivationIntent =
+  | { mode: "add"; active_type: ActiveType; recurring: boolean }
+  | { mode: "edit"; activation: Activation };
+
+/**
+ * Enforces the multiplicity rules described above. "date" activations are
+ * always addable; a "days" activation (recurring or not) can only be added
+ * if one of that same recurring-ness doesn't already exist on the schedule.
+ */
+export function canAddActivation(
+  activations: Activation[],
+  candidate: { active_type: ActiveType; recurring: boolean },
+): boolean {
+  if (candidate.active_type === "date") return true;
+  return !activations.some(
+    (a) => a.active_type === "days" && a.recurring === candidate.recurring,
+  );
+}
+
 export interface ActivationScheduleInput {
   id?: string; // undefined => not saved yet
   name: string; // "" allowed for unsaved drafts
   schedule_list: ScheduleItem[];
+  activations: Activation[];
   /**
    * Indexes into `schedule_list` that are currently turned off. Optional —
    * absent/empty means every item is active. Seeds the edit-mode toggle
@@ -35,6 +85,25 @@ export interface ActivationScheduleInput {
 export interface ScheduleEditPayload {
   name: string;
   disabledItemIndexes: number[];
+}
+
+// ---------------------------------------------------------------------------
+// Small date helpers (kept local/duplicated rather than imported from the
+// screen, since the screen already imports from this file — importing back
+// would create a cycle. Worth hoisting into a shared `utils/schedule.ts` if
+// a third consumer shows up.)
+// ---------------------------------------------------------------------------
+const DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+function getWeekday(iso: string): number {
+  return new Date(iso).getDay();
+}
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function formatContractRange(contract: Contract): string {
+  if (contract.starts_at === contract.ends_at) return formatDate(contract.starts_at);
+  return `${formatDate(contract.starts_at)} – ${formatDate(contract.ends_at)}`;
 }
 
 interface ScheduleActivationModalProps {
@@ -51,18 +120,36 @@ interface ScheduleActivationModalProps {
    */
   onSaveEdits?: (payload: ScheduleEditPayload) => void;
   /**
-   * Opens the activation-configuration flow (SetActiveModal). This is the
-   * single entry point for both "Set as Active" (no prior config) and
-   * "Edit Activation" (reconfiguring an existing one) — the modal itself
-   * decides which copy/seed to show based on whether an activation already
-   * exists, so the caller doesn't need two separate handlers.
+   * Marks this schedule as THE currently active one (a singleton flag —
+   * the caller is expected to flip every other schedule's is_active to
+   * false at the same time). Deliberately separate from
+   * onConfigureActivation: "which schedule is active" and "when an active
+   * schedule's activations fire" are independent concerns.
    */
-  onConfigureActivation: () => void;
+  onSetActive: () => void;
   /**
-   * Permanently removes this schedule (and its activation, if any). Always
-   * rendered regardless of save state or activation configuration — the
-   * confirm step (native destructive Alert) is handled here; the caller
-   * implements the actual deletion.
+   * Opens the activation-configuration flow (SetActiveModal) for either
+   * adding a brand-new activation or editing an existing one — the intent
+   * tells the caller which, and with what to seed the form.
+   */
+  onConfigureActivation: (intent: ActivationIntent) => void;
+  /**
+   * Removes a single activation from this schedule (not the whole
+   * schedule). The confirm step is handled here; the caller implements
+   * the actual removal.
+   */
+  onDeleteActivation: (activationId: string) => void;
+  /**
+   * Removes several activations at once — the long-press multi-select
+   * flow. The confirm step is handled here; the caller implements the
+   * actual removal.
+   */
+  onDeleteActivations: (activationIds: string[]) => void;
+  /**
+   * Permanently removes this schedule (and all of its activations).
+   * Always rendered regardless of save state — the confirm step (native
+   * destructive Alert) is handled here; the caller implements the actual
+   * deletion.
    */
   onDelete: () => void;
 }
@@ -84,6 +171,134 @@ function buildMockSummary(schedule_list: ScheduleItem[]): {
   return { summaries, subSummaries };
 }
 
+// ---------------------------------------------------------------------------
+// Single activation row (inside the Activations section)
+// ---------------------------------------------------------------------------
+function ActivationRow({
+  activation,
+  onEdit,
+  onDelete,
+  selectionMode,
+  isSelected,
+  onToggleSelect,
+  onLongPress,
+}: {
+  activation: Activation;
+  onEdit: () => void;
+  onDelete: () => void;
+  selectionMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: () => void;
+  onLongPress: () => void;
+}) {
+  const s = useSStyles();
+  const { colors } = useTheme();
+
+  const activeDays =
+    activation.active_type === "days" ? (activation.days_of_week ?? []) : [];
+
+  return (
+    <Pressable
+      onLongPress={onLongPress}
+      onPress={selectionMode ? onToggleSelect : undefined}
+      style={[s.activationRow, selectionMode && isSelected && s.activationRowSelected]}
+    >
+      {selectionMode && (
+        <View style={[s.selectCircle, isSelected && s.selectCircleActive]}>
+          {isSelected && <Check size={12} color={colors.white} />}
+        </View>
+      )}
+      <View style={s.activationRowMain}>
+        <View style={s.badgeRow}>
+          <View style={s.typeBadge}>
+            <Text style={s.typeBadgeText}>
+              {activation.active_type === "days" ? "Days" : "Date"}
+            </Text>
+          </View>
+          <View style={s.typeBadge}>
+            <Text style={s.typeBadgeText}>
+              {activation.recurring ? "Recurring · Weekly" : "One-time"}
+            </Text>
+          </View>
+        </View>
+
+        {activation.active_type === "days" && activeDays.length > 0 && (
+          <View style={s.dayChipRow}>
+            {DAY_LETTERS.map((letter, idx) => {
+              const active = activeDays.includes(idx);
+              return (
+                <View
+                  key={idx}
+                  style={[s.dayChip, active ? s.dayChipActive : s.dayChipInactive]}
+                >
+                  <Text
+                    style={[
+                      s.dayChipText,
+                      active ? s.dayChipTextActive : s.dayChipTextInactive,
+                    ]}
+                  >
+                    {letter}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {activation.active_type === "date" && activation.specific_date && (
+          <Text style={s.activationDateText}>{formatDate(activation.specific_date)}</Text>
+        )}
+
+        {activation.contract && (
+          <Text style={s.activationContractText}>
+            {formatContractRange(activation.contract)}
+          </Text>
+        )}
+      </View>
+
+      {!selectionMode && (
+        <View style={s.activationRowActions}>
+          <Pressable onPress={onEdit} hitSlop={8} style={s.activationIconBtn}>
+            <Pencil size={14} color={colors.textSecondary} />
+          </Pressable>
+          <Pressable onPress={onDelete} hitSlop={8} style={s.activationIconBtn}>
+            <Trash2 size={14} color={colors.danger ?? "#E5484D"} />
+          </Pressable>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add-activation button (disabled once its slot is filled, for the
+// days/recurring and days/non-recurring cases)
+// ---------------------------------------------------------------------------
+function AddActivationButton({
+  label,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const s = useSStyles();
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={[s.addActivationBtn, disabled && s.addActivationBtnDisabled]}
+    >
+      <Plus size={13} color={disabled ? colors.textMuted : colors.accent} />
+      <Text style={[s.addActivationBtnText, disabled && s.addActivationBtnTextDisabled]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function ScheduleActivationModal({
   visible,
   onClose,
@@ -92,7 +307,10 @@ export function ScheduleActivationModal({
   onSave,
   onRename,
   onSaveEdits,
+  onSetActive,
   onConfigureActivation,
+  onDeleteActivation,
+  onDeleteActivations,
   onDelete,
 }: ScheduleActivationModalProps) {
   // --- All hooks run unconditionally, every render, regardless of whether
@@ -109,6 +327,15 @@ export function ScheduleActivationModal({
   const [isEditing, setIsEditing] = useState(false);
   const [disabledIndexes, setDisabledIndexes] = useState<Set<number>>(new Set());
 
+  // Multi-select for bulk-deleting activations: long-press a row to enter,
+  // tap others to add/remove, a bottom bar handles Select All / Delete
+  // (the standard Android/Material contextual-action-bar pattern).
+  const [activationSelectionMode, setActivationSelectionMode] = useState(false);
+  const [selectedActivationIds, setSelectedActivationIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [addActivationMenuOpen, setAddActivationMenuOpen] = useState(false);
+
   // Resync local edit state whenever a different schedule is opened
   // (previously this only ran once via useState's initializer, so reopening
   // the modal on a different schedule would show stale text). Also bails
@@ -118,7 +345,20 @@ export function ScheduleActivationModal({
     setNameDraft(schedule?.name ?? "");
     setDisabledIndexes(new Set(schedule?.disabledItemIndexes ?? []));
     setIsEditing(false);
+    setActivationSelectionMode(false);
+    setSelectedActivationIds(new Set());
+    setAddActivationMenuOpen(false);
   }, [schedule?.id, schedule?.name, schedule?.disabledItemIndexes]);
+
+  // Also drop out of activation-selection mode whenever the sheet closes,
+  // so reopening it never resumes mid-selection.
+  useEffect(() => {
+    if (!visible) {
+      setActivationSelectionMode(false);
+      setSelectedActivationIds(new Set());
+      setAddActivationMenuOpen(false);
+    }
+  }, [visible]);
 
   const { summaries, subSummaries } = useMemo(
     () => buildMockSummary(schedule?.schedule_list ?? []),
@@ -135,12 +375,12 @@ export function ScheduleActivationModal({
   const handleDeletePress = () => {
     // Native destructive confirmation — required before any irreversible
     // action, per RN Alert conventions (explicit Cancel, destructive style).
-    // Copy is deliberately the same regardless of save state or whether an
-    // activation exists — deleting always drops both together.
+    // Copy is deliberately the same regardless of save state or how many
+    // activations exist — deleting always drops all of them together.
     Alert.alert(
       "Delete Schedule",
       `"${displayName}" will be permanently deleted${
-        isActive ? ", including its active schedule" : ""
+        isActive ? ", including its activations" : ""
       }. This can't be undone.`,
       [
         { text: "Cancel", style: "cancel" },
@@ -148,6 +388,81 @@ export function ScheduleActivationModal({
           text: "Delete",
           style: "destructive",
           onPress: onDelete, // caller implements the actual deletion
+        },
+      ],
+    );
+  };
+
+  const handleDeleteActivationPress = (activation: Activation) => {
+    const label =
+      activation.active_type === "days"
+        ? activation.recurring
+          ? "the recurring days activation"
+          : "the one-time days activation"
+        : activation.specific_date
+          ? `the ${formatDate(activation.specific_date)} activation`
+          : "this activation";
+
+    Alert.alert("Remove Activation", `Remove ${label}? This can't be undone.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => onDeleteActivation(activation.id),
+      },
+    ]);
+  };
+
+  const handleActivationLongPress = (activation: Activation) => {
+    setActivationSelectionMode(true);
+    setSelectedActivationIds(new Set([activation.id]));
+    setAddActivationMenuOpen(false);
+  };
+
+  const handleToggleActivationSelected = (activationId: string) => {
+    setSelectedActivationIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(activationId)) {
+        next.delete(activationId);
+      } else {
+        next.add(activationId);
+      }
+      // Selecting the last remaining item back out of existence exits
+      // selection mode entirely, matching the CAB convention of
+      // auto-dismissing once nothing is selected.
+      if (next.size === 0) setActivationSelectionMode(false);
+      return next;
+    });
+  };
+
+  const handleSelectAllActivations = () => {
+    if (!schedule) return;
+    const allIds = schedule.activations.map((a) => a.id);
+    const allSelected = selectedActivationIds.size === allIds.length;
+    setSelectedActivationIds(allSelected ? new Set() : new Set(allIds));
+  };
+
+  const handleCancelActivationSelection = () => {
+    setActivationSelectionMode(false);
+    setSelectedActivationIds(new Set());
+  };
+
+  const handleBulkDeleteActivationsPress = () => {
+    const count = selectedActivationIds.size;
+    if (count === 0) return;
+    Alert.alert(
+      "Remove Activations",
+      `Remove ${count} activation${count === 1 ? "" : "s"}? This can't be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            onDeleteActivations(Array.from(selectedActivationIds));
+            setActivationSelectionMode(false);
+            setSelectedActivationIds(new Set());
+          },
         },
       ],
     );
@@ -316,28 +631,169 @@ export function ScheduleActivationModal({
             >
               <SummaryCard summaries={summaries} subSummaries={subSummaries} />
               <ScheduleTimeline schedule={schedule.schedule_list} />
+
+              {/* Activations management — only shown for the schedule that
+                  is currently the active one, mirroring the original gating
+                  on the (now-removed) single "Edit Activation" button. */}
+              {isActive && (
+                <View style={s.activationsSection}>
+                  <View style={s.activationsSectionHeader}>
+                    <Text style={s.editFieldLabel}>Activations</Text>
+                    {schedule.activations.length > 0 && (
+                      <Text style={s.editFieldCount}>{schedule.activations.length}</Text>
+                    )}
+                  </View>
+
+                  {schedule.activations.length === 0 ? (
+                    <Text style={s.activationsEmptyText}>
+                      No activation configured yet — add one below.
+                    </Text>
+                  ) : (
+                    <View style={s.activationsList}>
+                      {schedule.activations.map((act) => (
+                        <ActivationRow
+                          key={act.id}
+                          activation={act}
+                          onEdit={() =>
+                            onConfigureActivation({ mode: "edit", activation: act })
+                          }
+                          onDelete={() => handleDeleteActivationPress(act)}
+                          selectionMode={activationSelectionMode}
+                          isSelected={selectedActivationIds.has(act.id)}
+                          onToggleSelect={() => handleToggleActivationSelected(act.id)}
+                          onLongPress={() => handleActivationLongPress(act)}
+                        />
+                      ))}
+                    </View>
+                  )}
+
+                  {activationSelectionMode ? (
+                    // Contextual action bar — replaces the add-activation
+                    // row while one or more activations are selected for
+                    // bulk removal.
+                    <View style={s.selectionBar}>
+                      <Pressable onPress={handleCancelActivationSelection} hitSlop={8}>
+                        <Text style={s.selectionBarCancel}>Cancel</Text>
+                      </Pressable>
+                      <Text style={s.selectionBarCount}>
+                        {selectedActivationIds.size} selected
+                      </Text>
+                      <View style={s.selectionBarActions}>
+                        <Pressable onPress={handleSelectAllActivations} hitSlop={8}>
+                          <Text style={s.selectionBarAction}>
+                            {selectedActivationIds.size === schedule.activations.length
+                              ? "Deselect All"
+                              : "Select All"}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={handleBulkDeleteActivationsPress}
+                          disabled={selectedActivationIds.size === 0}
+                          hitSlop={8}
+                          style={[
+                            s.selectionBarDeleteBtn,
+                            selectedActivationIds.size === 0 &&
+                              s.selectionBarDeleteBtnDisabled,
+                          ]}
+                        >
+                          <Trash2 size={13} color={colors.white} />
+                          <Text style={s.selectionBarDeleteText}>Delete</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={s.addActivationRow}>
+                      <AddActivationButton
+                        label="Add Activation"
+                        disabled={false}
+                        onPress={() => setAddActivationMenuOpen((v) => !v)}
+                      />
+                    </View>
+                  )}
+
+                  {!activationSelectionMode && addActivationMenuOpen && (
+                    <View style={s.addActivationMenu}>
+                      {(
+                        [
+                          {
+                            label: "Recurring Days",
+                            sub: "Repeats weekly",
+                            active_type: "days" as const,
+                            recurring: true,
+                          },
+                          {
+                            label: "One-time Days",
+                            sub: "A single day-of-week window",
+                            active_type: "days" as const,
+                            recurring: false,
+                          },
+                          {
+                            label: "Specific Date",
+                            sub: "Add another one-off date",
+                            active_type: "date" as const,
+                            recurring: false,
+                          },
+                        ] as const
+                      ).map((opt, idx, arr) => {
+                        const disabled = !canAddActivation(schedule.activations, {
+                          active_type: opt.active_type,
+                          recurring: opt.recurring,
+                        });
+                        const isLast = idx === arr.length - 1;
+                        return (
+                          <Pressable
+                            key={opt.label}
+                            disabled={disabled}
+                            onPress={() => {
+                              setAddActivationMenuOpen(false);
+                              onConfigureActivation({
+                                mode: "add",
+                                active_type: opt.active_type,
+                                recurring: opt.recurring,
+                              });
+                            }}
+                            style={[
+                              s.addActivationMenuItem,
+                              isLast && s.addActivationMenuItemLast,
+                              disabled && s.addActivationMenuItemDisabled,
+                            ]}
+                          >
+                            <View>
+                              <Text
+                                style={[
+                                  s.addActivationMenuItemLabel,
+                                  disabled && s.addActivationMenuItemLabelDisabled,
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                              <Text style={s.addActivationMenuItemSub}>
+                                {disabled ? "Already configured" : opt.sub}
+                              </Text>
+                            </View>
+                            <Plus
+                              size={14}
+                              color={disabled ? colors.textMuted : colors.accent}
+                            />
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              )}
             </ScrollView>
           )}
 
           {/* Manage row and primary actions are hidden while editing — the
               edit session has its own committed Save/Cancel above, and
-              surfacing Delete/Activate alongside an in-progress rename
-              invites tapping the wrong thing. */}
+              surfacing Delete alongside an in-progress rename invites
+              tapping the wrong thing. */}
           {!isEditing && (
             <>
               <View style={s.manageRow}>
-                {isActive && (
-                  <Pressable
-                    style={s.manageBtn}
-                    onPress={onConfigureActivation}
-                    hitSlop={6}
-                  >
-                    <Pencil size={15} color={colors.textSecondary} />
-                    <Text style={s.manageBtnText}>Edit Activation</Text>
-                  </Pressable>
-                )}
                 <Pressable
-                  style={[s.manageBtn, s.deleteBtn, !isActive && s.deleteBtnFull]}
+                  style={[s.manageBtn, s.deleteBtn, s.deleteBtnFull]}
                   onPress={handleDeletePress}
                   hitSlop={6}
                 >
@@ -353,12 +809,9 @@ export function ScheduleActivationModal({
                   </Pressable>
                 )}
                 {!isActive && (
-                  // "Set as Active" opens the same activation-configuration
-                  // modal as "Edit Activation" above — there is no prior
-                  // config to seed from yet, so the modal opens blank.
                   <Pressable
                     style={[s.actionBtn, s.activateBtn, !isSaved && s.actionBtnSecondary]}
-                    onPress={onConfigureActivation}
+                    onPress={onSetActive}
                   >
                     <Text
                       style={[s.activateBtnText, !isSaved && s.activateBtnTextSecondary]}
@@ -489,7 +942,6 @@ function useSStyles() {
           color: colors.textMuted,
           textTransform: "uppercase",
           letterSpacing: 0.4,
-          marginBottom: 8,
         },
         editFieldLabelRow: {
           flexDirection: "row",
@@ -549,7 +1001,198 @@ function useSStyles() {
         editItemTextDisabled: { color: colors.textMuted },
         editItemTextStrike: { textDecorationLine: "line-through" },
 
-        // --- manage row (edit activation / delete) ---
+        // --- activations section ---
+        activationsSection: {
+          gap: 10,
+          paddingTop: 14,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.border,
+        },
+        activationsSectionHeader: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        },
+        activationsEmptyText: {
+          fontSize: 13,
+          fontFamily: FontFamily.body,
+          fontWeight: "400",
+          color: colors.textMuted,
+        },
+        activationsList: { gap: 8 },
+        activationRow: {
+          flexDirection: "row",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 10,
+          padding: 12,
+          borderRadius: Radius.md,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          backgroundColor: colors.bgCard,
+        },
+        activationRowSelected: {
+          borderColor: colors.accent,
+          backgroundColor: colors.accentSoft,
+        },
+        activationRowMain: { flex: 1, gap: 8 },
+        activationRowActions: { flexDirection: "row", gap: 4 },
+        activationIconBtn: { padding: 4 },
+        selectCircle: {
+          width: 20,
+          height: 20,
+          borderRadius: Radius.full,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          backgroundColor: colors.bgElevated,
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 2,
+        },
+        selectCircleActive: {
+          backgroundColor: colors.accent,
+          borderColor: colors.accent,
+        },
+        selectionBar: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          borderRadius: Radius.md,
+          backgroundColor: colors.bgElevated,
+        },
+        selectionBarCancel: {
+          fontSize: 13,
+          fontFamily: FontFamily.body,
+          fontWeight: "400",
+          color: colors.textSecondary,
+        },
+        selectionBarCount: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textMuted,
+        },
+        selectionBarActions: { flexDirection: "row", alignItems: "center", gap: 14 },
+        selectionBarAction: {
+          fontSize: 13,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.accent,
+        },
+        selectionBarDeleteBtn: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 5,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: Radius.full,
+          backgroundColor: colors.danger ?? "#E5484D",
+        },
+        selectionBarDeleteBtnDisabled: { opacity: 0.5 },
+        selectionBarDeleteText: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodySemiBold,
+          fontWeight: "600",
+          color: colors.white,
+        },
+        badgeRow: { flexDirection: "row", gap: 8 },
+        typeBadge: {
+          paddingHorizontal: 8,
+          paddingVertical: 3,
+          borderRadius: Radius.full,
+          backgroundColor: colors.bgElevated,
+        },
+        typeBadgeText: {
+          fontSize: 11,
+          fontFamily: FontFamily.mono,
+          fontWeight: "400",
+          color: colors.textMuted,
+          letterSpacing: 0.2,
+        },
+        dayChipRow: { flexDirection: "row", gap: 6 },
+        dayChip: {
+          width: 20,
+          height: 20,
+          borderRadius: Radius.full,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        dayChipActive: { backgroundColor: colors.accent },
+        dayChipInactive: { backgroundColor: colors.bgElevated },
+        dayChipText: {
+          fontSize: 10,
+          fontFamily: FontFamily.bodySemiBold,
+          fontWeight: "600",
+        },
+        dayChipTextActive: { color: colors.white },
+        dayChipTextInactive: { color: colors.textMuted },
+        activationDateText: {
+          fontSize: 13,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textPrimary,
+        },
+        activationContractText: {
+          fontSize: 12,
+          fontFamily: FontFamily.mono,
+          fontWeight: "400",
+          color: colors.textSecondary,
+        },
+        addActivationRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+        addActivationBtn: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 5,
+          paddingHorizontal: 10,
+          paddingVertical: 7,
+          borderRadius: Radius.full,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.accent,
+        },
+        addActivationBtnDisabled: { borderColor: colors.border },
+        addActivationBtnText: {
+          fontSize: 12,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.accent,
+        },
+        addActivationBtnTextDisabled: { color: colors.textMuted },
+        addActivationMenu: {
+          borderRadius: Radius.md,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          backgroundColor: colors.bgCard,
+          overflow: "hidden",
+        },
+        addActivationMenuItem: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+        },
+        addActivationMenuItemDisabled: { opacity: 0.5 },
+        addActivationMenuItemLast: { borderBottomWidth: 0 },
+        addActivationMenuItemLabel: {
+          fontSize: 13,
+          fontFamily: FontFamily.bodyMedium,
+          fontWeight: "500",
+          color: colors.textPrimary,
+        },
+        addActivationMenuItemLabelDisabled: { color: colors.textMuted },
+        addActivationMenuItemSub: {
+          fontSize: 11,
+          fontFamily: FontFamily.body,
+          fontWeight: "400",
+          color: colors.textMuted,
+          marginTop: 2,
+        },
+
+        // --- manage row (delete) ---
         manageRow: {
           flexDirection: "row",
           gap: 8,
@@ -579,6 +1222,7 @@ function useSStyles() {
         deleteBtn: {
           borderColor: colors.danger ?? "#E5484D",
         },
+        deleteBtnFull: { flex: 1 },
         deleteBtnText: {
           color: colors.danger ?? "#E5484D",
         },

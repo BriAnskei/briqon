@@ -1,9 +1,9 @@
 import type * as SQLite from "expo-sqlite";
 import { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 import { getMinutesOfDay, isSameDay, parseLocalISODate } from "@/utils/TimeFormatter";
-import type { CreateActiveScheduleInput } from "../activation/types/CreateActiveScheduleInput";
-import type { FindNonReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
-import type { FindReccuringActivationConflictInput } from "../activation/types/conflictHandler/FindReccuringActivationConflictInput";
+import type { CreateActiveScheduleInput } from "../schedule/activation/types/CreateActiveScheduleInput";
+import type { FindNonReccuringActivationConflictInput } from "../schedule/activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
+import type { FindReccuringActivationConflictInput } from "../schedule/activation/types/conflictHandler/FindReccuringActivationConflictInput";
 import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
 import type { ActiveSchedule } from "../models/activeSchedule.model";
 import { BaseRepository } from "./base.repository";
