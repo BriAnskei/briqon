@@ -1,9 +1,9 @@
 import type * as SQLite from "expo-sqlite";
-import type { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
-import type { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
-import type { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
-import type { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
-import type { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
+import type { ActiveScheduleDatesRepository } from "@/src/repository/active-schedule-dates.repository";
+import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
+import type { ActiveScheduleDaysRepository } from "@/src/repository/activeScheduleDays.repo";
+import type { NonReccurringRangeRepository } from "@/src/repository/non_reccuring_range.repo";
+import type { OccurringTimeWindowRepository } from "@/src/repository/occuring-time-window.repo";
 import type { ActivationRepository } from "./ActivationRepository";
 import type { Activation } from "./domain/Activation";
 import type { ActiveScheduleDate } from "./domain/entity/ActiveScheduleDate";

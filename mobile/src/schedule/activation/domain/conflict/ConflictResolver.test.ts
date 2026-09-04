@@ -1,9 +1,9 @@
-import type { Activation } from "@/src/activation/domain/Activation";
-import { ActivationFactory } from "@/src/activation/domain/ActivationFactory";
-import { ConflictResolver } from "@/src/activation/domain/conflict/ConflictResolver";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
 import type { ActiveScheduleDaysRepository } from "@/src/repository/activeScheduleDays.repo";
+import type { Activation } from "@/src/schedule/activation/domain/Activation";
+import { ActivationFactory } from "@/src/schedule/activation/domain/ActivationFactory";
+import { ConflictResolver } from "@/src/schedule/activation/domain/conflict/ConflictResolver";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 
 // Fixed date so weekday math is deterministic across runs — we read its

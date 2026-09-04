@@ -1,18 +1,18 @@
 import type * as SQLite from "expo-sqlite";
-import type { Schedule } from "../models/schedule.model";
+import { type ScheduleModel, ScheduleSchema } from "../models/schedule.model";
 import { BaseRepository } from "./base.repository";
 
 export class ScheduleRepository extends BaseRepository {
-  private mapRow(row: any): Schedule {
-    return {
+  private mapRow(row: any): ScheduleModel {
+    return ScheduleSchema.parse({
       id: row.id,
       name: row.name,
       schedule_list: JSON.parse(row.schedule_list),
       temporary: Boolean(row.temporary),
-    };
+    });
   }
 
-  async create(schedule: Schedule, db?: SQLite.SQLiteDatabase) {
+  async create(schedule: ScheduleModel, db?: SQLite.SQLiteDatabase) {
     return await this.run(
       `
     INSERT INTO schedules (
@@ -33,9 +33,9 @@ export class ScheduleRepository extends BaseRepository {
     );
   }
 
-  async findById(id: string): Promise<Schedule | null> {
+  async findById(id: string): Promise<ScheduleModel | null> {
     const row = await this.first<
-      Omit<Schedule, "schedule_list"> & { schedule_list: string } // convert the array into string first since data from DB is a string array
+      Omit<ScheduleModel, "schedule_list"> & { schedule_list: string } // convert the array into string first since data from DB is a string array
     >(
       `
     SELECT * FROM schedules WHERE id = ?
@@ -57,10 +57,14 @@ export class ScheduleRepository extends BaseRepository {
     return !!row;
   }
 
-  async findAll(): Promise<Schedule[]> {
-    const rows = await this.all(`
+  async findAll(db?: SQLite.SQLiteDatabase): Promise<ScheduleModel[]> {
+    const rows = await this.all(
+      `
       SELECT * FROM schedules
-      `);
+      `,
+      [],
+      db,
+    );
 
     return rows.map((r) => this.mapRow(r));
   }

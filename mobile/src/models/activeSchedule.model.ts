@@ -16,7 +16,7 @@ export const CreateActiveScheduleEntitySchema = ActiveScheduleSchema.omit({
   id: true,
 });
 
-export type ActiveSchedule = z.infer<typeof ActiveScheduleSchema>;
+export type ActiveScheduleModel = z.infer<typeof ActiveScheduleSchema>;
 
 export type CreateActiveSchedule = z.infer<typeof CreateActivecheduleSchema>;
 

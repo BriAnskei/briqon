@@ -11,3 +11,5 @@ export const CreateActiveScheduleDatesSchema = ActiveSheduleDatesSchema.omit({
 });
 
 export type CreateActiveScheduleDates = z.infer<typeof CreateActiveScheduleDatesSchema>;
+
+export type ActiveScheduleDatesModel = z.infer<typeof ActiveSheduleDatesSchema>;

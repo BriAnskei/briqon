@@ -4,7 +4,7 @@ import z from "zod";
 export const ActiveScheduleDaysSchema = z.object({
   id: z.string(),
   active_schedule_id: z.string(),
-  weekday: z.number(),
+  weekday: z.number().int().min(0).max(6),
 });
 
 // insertion schema
@@ -13,3 +13,5 @@ export const CreateActiveScheduleDaysSchema = ActiveScheduleDaysSchema.omit({
 });
 
 export type CreateActiveScheduleDays = z.infer<typeof CreateActiveScheduleDaysSchema>;
+
+export type ActiveScheduleDaysModel = z.infer<typeof ActiveScheduleDaysSchema>;

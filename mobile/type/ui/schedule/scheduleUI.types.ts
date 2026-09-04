@@ -1,42 +1,45 @@
-import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
-import type { NonOccuringWindowRange } from "@/src/models/NonOccuringWindowRange.model";
-import type { OccuringTimeWindow } from "@/src/models/OccuringTimeWindow.model";
-import type { Schedule } from "@/src/models/schedule.model";
+import type { ActiveScheduleModel } from "@/src/models/activeSchedule.model";
+import type { NonOccuringWindowRangeModel } from "@/src/models/NonOccuringWindowRange.model";
+import type { OccuringTimeWindowModel } from "@/src/models/OccuringTimeWindow.model";
+import type { ScheduleModel } from "@/src/models/schedule.model";
 
-type DateActivation = {
-  activeSchedule: ActiveSchedule & {
+export type DateActivation = {
+  activeSchedule: Omit<ActiveScheduleModel, "active_type" | "recurring"> & {
     active_type: "date";
     recurring: false;
   };
 
-  date: string;
+  date: Date;
 };
 
-type NonRecurringDaysActivation = {
-  activeSchedule: ActiveSchedule & {
+export type NonRecurringDaysActivation = {
+  activeSchedule: Omit<ActiveScheduleModel, "active_type" | "recurring"> & {
     active_type: "days";
     recurring: false;
   };
 
   days: number[];
-  ranges: NonOccuringWindowRange[];
+  ranges: NonOccuringWindowRangeModel[];
 };
 
-type RecurringDaysActivation = {
-  activeSchedule: ActiveSchedule & {
+export type RecurringDaysActivation = {
+  activeSchedule: Omit<ActiveScheduleModel, "active_type" | "recurring"> & {
     active_type: "days";
     recurring: true;
   };
 
   days: number[];
-  timeWindow: OccuringTimeWindow;
+  timeWindow: OccuringTimeWindowModel;
 };
 
-export type Activation =
-  DateActivation | NonRecurringDaysActivation | RecurringDaysActivation;
+export type ActivationUI =
+  | DateActivation
+  | NonRecurringDaysActivation
+  | RecurringDaysActivation;
 
 export interface ScheduleCard {
-  schedule: Schedule;
-  activation?: Activation;
+  schedule: ScheduleModel;
+  activations?: ActivationUI[];
+  // isActive will detirmine if there is a activation on the schedule
   isActive: boolean;
 }

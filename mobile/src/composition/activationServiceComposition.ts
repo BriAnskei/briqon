@@ -1,3 +1,8 @@
+import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
+import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
+import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
+import { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
+import { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
 import { AddActivationService } from "../schedule/activation/AddActivationService";
 import { ActivationFactory } from "../schedule/activation/domain/ActivationFactory";
 import { ConflictDetector } from "../schedule/activation/domain/conflict/ConflictDetector";
@@ -7,11 +12,6 @@ import { NonRecurringAgainstRecurringHandler } from "../schedule/activation/doma
 import { ReccuringActivationHandler } from "../schedule/activation/domain/conflict/ReccuringActivationHandler";
 import { RecurringAgainstNonRecurringHandler } from "../schedule/activation/domain/conflict/RecurringAgainstNonRecurringHandler";
 import { SQLiteActivationRepository } from "../schedule/activation/SQLiteActivationRepository";
-import { ActiveScheduleDatesRepository } from "../repository/active-schedule-dates.repository";
-import { ActiveScheduleRepository } from "../repository/activeSchedule.repo";
-import { ActiveScheduleDaysRepository } from "../repository/activeScheduleDays.repo";
-import { NonReccurringRangeRepository } from "../repository/non_reccuring_range.repo";
-import { OccurringTimeWindowRepository } from "../repository/occuring-time-window.repo";
 import { scheduleService } from "./scheduleServiceComposition";
 
 const activeScheduleRepository = new ActiveScheduleRepository();

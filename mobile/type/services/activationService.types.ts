@@ -1,10 +1,10 @@
-import type { ActiveSchedule } from "@/src/models/activeSchedule.model";
-import type { Schedule } from "@/src/models/schedule.model";
+import type { ActiveScheduleModel } from "@/src/models/activeSchedule.model";
+import type { ScheduleModel } from "@/src/models/schedule.model";
 
 export type CreationPayload = {
   isScheduleNeedsToSave: boolean;
-  newSchedule?: Schedule;
-  newActiveSchedule: ActiveSchedule;
+  newSchedule?: ScheduleModel;
+  newActiveSchedule: ActiveScheduleModel;
   selectedDays?: number[];
   selectedDate?: Date;
 };

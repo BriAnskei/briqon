@@ -1,6 +1,6 @@
+import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
+import type { ScheduleService } from "@/src/service/schedule.service";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import { ScheduleConflictError } from "../errors/scheduleActivationConflic.error";
-import type { ScheduleService } from "../service/schedule.service";
 import type { ActivationRepository } from "./ActivationRepository";
 import type { ActivationFactory } from "./domain/ActivationFactory";
 import type { ConflictDetector } from "./domain/conflict/ConflictDetector";

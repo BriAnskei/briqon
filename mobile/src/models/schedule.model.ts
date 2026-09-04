@@ -23,6 +23,6 @@ export const CreateScheduleSchema = ScheduleSchema.omit({
   id: true,
 });
 
-export type Schedule = z.infer<typeof ScheduleSchema>;
+export type ScheduleModel = z.infer<typeof ScheduleSchema>;
 
 export type CreateSchedule = z.infer<typeof CreateScheduleSchema>;

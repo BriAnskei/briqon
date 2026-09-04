@@ -1,16 +1,18 @@
-import type { ActivationRepository } from "@/src/activation/ActivationRepository";
-import { AddActivationService } from "@/src/activation/AddActivationService";
-import type { Activation } from "@/src/activation/domain/Activation";
-import { ActivationFactory } from "@/src/activation/domain/ActivationFactory";
-import type { ConflictDetector } from "@/src/activation/domain/conflict/ConflictDetector";
-import type { ConflictResolver } from "@/src/activation/domain/conflict/ConflictResolver";
-import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
-import { ScheduleConflictError } from "@/src/errors/scheduleActivationConflic.error";
+import {
+  type ScheduleConflict,
+  ScheduleConflictError,
+} from "@/src/errors/scheduleActivationConflic.error";
 import type { ScheduleItem } from "@/src/models/schedule.model";
 import type { SubSummary } from "@/src/models/sub_summaries.model";
 import type { ScheduleSummary } from "@/src/models/summaries.model";
+import type { ScheduleService } from "@/src/service/schedule.service";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import type { ScheduleService } from "../service/schedule.service";
+import type { ActivationRepository } from "./ActivationRepository";
+import { AddActivationService } from "./AddActivationService";
+import type { Activation } from "./domain/Activation";
+import { ActivationFactory } from "./domain/ActivationFactory";
+import type { ConflictDetector } from "./domain/conflict/ConflictDetector";
+import type { ConflictResolver } from "./domain/conflict/ConflictResolver";
 
 /** Records the context it was asked to detect conflicts for, returns a
  * pre-configured list. */

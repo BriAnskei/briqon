@@ -11,6 +11,6 @@ export const CreateOccuringTimeWindowSchema = OccuringTimeWindowSchema.omit({
   id: true,
 });
 
-export type OccuringTimeWindow = z.infer<typeof OccuringTimeWindowSchema>;
+export type OccuringTimeWindowModel = z.infer<typeof OccuringTimeWindowSchema>;
 
 export type CreateOccuringTimeWindow = z.infer<typeof CreateOccuringTimeWindowSchema>;

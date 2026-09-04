@@ -2,7 +2,7 @@ import type {
   CreateSchedulePayloadType,
   SaveScheduleInput,
 } from "@/type/services/scheduleService.types";
-import type { Schedule, ScheduleItem } from "../models/schedule.model";
+import type { ScheduleItem, ScheduleModel } from "../models/schedule.model";
 import type { SubSummary } from "../models/sub_summaries.model";
 import type { ScheduleSummary } from "../models/summaries.model";
 import type { ScheduleRepository } from "../repository/schedule.repository";
@@ -43,7 +43,7 @@ export class ScheduleService {
     if (scheduleExists) {
       await this.markAsPermanent({ name: input.name, id: input.id });
     } else {
-      const schedule: Schedule = {
+      const schedule: ScheduleModel = {
         id: input.id,
         name: input.name,
         schedule_list: input.scheduleItems,
@@ -70,7 +70,7 @@ export class ScheduleService {
       throw new Error("Incomplete Data for persisting schedule");
     }
 
-    const schedule: Schedule = {
+    const schedule: ScheduleModel = {
       id: data.id,
       name: "",
       schedule_list: data.items as ScheduleItem[],
@@ -84,21 +84,9 @@ export class ScheduleService {
     });
   }
 
-  async findById(id: string): Promise<Schedule> {
-    const schedule = await this.repo.findById(id);
-    if (!schedule) throw new Error("Schedule does not exist");
-    return schedule;
-  }
-
   async exists(id: string): Promise<boolean> {
     return await this.repo.exists(id);
   }
-
-  async fetchAll(): Promise<Schedule[]> {
-    return await this.repo.findAll();
-  }
-
-  
   // adding name can make the schedule permanently saved.
   async markAsPermanent(payload: { name: string; id: string }) {
     await this.repo.markAsPermanent(payload);

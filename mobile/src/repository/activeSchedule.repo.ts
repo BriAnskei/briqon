@@ -1,11 +1,10 @@
 import type * as SQLite from "expo-sqlite";
-import { CreateActivationInput } from "@/type/ui/schedule/activation.types";
-import { getMinutesOfDay, isSameDay, parseLocalISODate } from "@/utils/TimeFormatter";
+import { getMinutesOfDay, isSameDay } from "@/utils/TimeFormatter";
+import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
+import type { ActiveScheduleModel } from "../models/activeSchedule.model";
 import type { CreateActiveScheduleInput } from "../schedule/activation/types/CreateActiveScheduleInput";
 import type { FindNonReccuringActivationConflictInput } from "../schedule/activation/types/conflictHandler/FindNonOccuringActivationConflictInput";
 import type { FindReccuringActivationConflictInput } from "../schedule/activation/types/conflictHandler/FindReccuringActivationConflictInput";
-import type { ScheduleConflict } from "../errors/scheduleActivationConflic.error";
-import type { ActiveSchedule } from "../models/activeSchedule.model";
 import { BaseRepository } from "./base.repository";
 
 type ConflictRow = {
@@ -13,7 +12,7 @@ type ConflictRow = {
   schedule_id: string;
   schedule_name: string;
 
-  active_type: ActiveSchedule["active_type"];
+  active_type: ActiveScheduleModel["active_type"];
   recurring: number;
 
   starts_at: string | null;
@@ -30,12 +29,12 @@ type ConflictRow = {
 type ActiveScheduleRow = {
   id: string;
   schedule_id: string;
-  active_type: ActiveSchedule["active_type"];
+  active_type: ActiveScheduleModel["active_type"];
   recurring: number; // SQLite stores booleans as 0/1
 };
 
 export class ActiveScheduleRepository extends BaseRepository {
-  private mapRow(row: ActiveScheduleRow): ActiveSchedule {
+  private mapRow(row: ActiveScheduleRow): ActiveScheduleModel {
     return {
       id: row.id,
       schedule_id: row.schedule_id,
@@ -292,7 +291,7 @@ export class ActiveScheduleRepository extends BaseRepository {
     return this.groupConflicts(rows);
   }
 
-  async findById(id: string): Promise<ActiveSchedule | null> {
+  async findById(id: string): Promise<ActiveScheduleModel | null> {
     const row = await this.first<ActiveScheduleRow>(
       `SELECT * FROM active_schedules WHERE id = ?`,
       [id],
@@ -302,17 +301,21 @@ export class ActiveScheduleRepository extends BaseRepository {
     return this.mapRow(row);
   }
 
-  async findAll(): Promise<ActiveSchedule[]> {
-    const rows = await this.all<ActiveScheduleRow>(`SELECT * FROM active_schedules`);
+  async findAll(db?: SQLite.SQLiteDatabase): Promise<ActiveScheduleModel[]> {
+    const rows = await this.all<ActiveScheduleRow>(
+      `SELECT * FROM active_schedules`,
+      [],
+      db,
+    );
 
     return rows.map(this.mapRow);
   }
 
-  async update(id: string, activeSchedule: Partial<ActiveSchedule>) {
+  async update(id: string, activeSchedule: Partial<ActiveScheduleModel>) {
     const existing = await this.findById(id);
     if (!existing) return null;
 
-    const updated: ActiveSchedule = {
+    const updated: ActiveScheduleModel = {
       ...existing,
       ...activeSchedule,
     };

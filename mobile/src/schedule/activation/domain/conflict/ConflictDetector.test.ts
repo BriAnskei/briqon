@@ -1,13 +1,13 @@
-import type { Activation } from "@/src/activation/domain/Activation";
-import { ActivationFactory } from "@/src/activation/domain/ActivationFactory";
-import { ConflictDetector } from "@/src/activation/domain/conflict/ConflictDetector";
-import type { ConflictHandler } from "@/src/activation/domain/conflict/ConflictHandler";
-import { NonReccuringActivationHandler } from "@/src/activation/domain/conflict/NonReccuringActivationHandler";
-import { NonRecurringAgainstRecurringHandler } from "@/src/activation/domain/conflict/NonRecurringAgainstRecurringHandler";
-import { ReccuringActivationHandler } from "@/src/activation/domain/conflict/ReccuringActivationHandler";
-import { RecurringAgainstNonRecurringHandler } from "@/src/activation/domain/conflict/RecurringAgainstNonRecurringHandler";
 import type { ScheduleConflict } from "@/src/errors/scheduleActivationConflic.error";
 import type { ActiveScheduleRepository } from "@/src/repository/activeSchedule.repo";
+import type { Activation } from "@/src/schedule/activation/domain/Activation";
+import { ActivationFactory } from "@/src/schedule/activation/domain/ActivationFactory";
+import { ConflictDetector } from "@/src/schedule/activation/domain/conflict/ConflictDetector";
+import type { ConflictHandler } from "@/src/schedule/activation/domain/conflict/ConflictHandler";
+import { NonReccuringActivationHandler } from "@/src/schedule/activation/domain/conflict/NonReccuringActivationHandler";
+import { NonRecurringAgainstRecurringHandler } from "@/src/schedule/activation/domain/conflict/NonRecurringAgainstRecurringHandler";
+import { ReccuringActivationHandler } from "@/src/schedule/activation/domain/conflict/ReccuringActivationHandler";
+import { RecurringAgainstNonRecurringHandler } from "@/src/schedule/activation/domain/conflict/RecurringAgainstNonRecurringHandler";
 import type { CreateActivationInput } from "@/type/ui/schedule/activation.types";
 
 /**
@@ -444,7 +444,7 @@ describe("ConflictDetector (integration — with real handlers)", () => {
       ];
       expect(repo.findNonOccurringConflictCalls[0]).toEqual(expectedRanges);
 
-      // NonRecurrentAgainstRecurringHandler should have called
+      // NonRecurringAgainstRecurringHandler should have called
       // findRecurringConflictsForNonRecurring with the same ranges.
       expect(repo.findRecurringConflictsForNonRecurringCalls).toHaveLength(1);
       expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(expectedRanges);
@@ -515,7 +515,7 @@ describe("ConflictDetector (integration — with real handlers)", () => {
       ];
       expect(repo.findNonOccurringConflictCalls[0]).toEqual(expectedRange);
 
-      // NonRecurrentAgainstRecurringHandler should have called
+      // NonRecurringAgainstRecurringHandler should have called
       // findRecurringConflictsForNonRecurring with the same single range.
       expect(repo.findRecurringConflictsForNonRecurringCalls).toHaveLength(1);
       expect(repo.findRecurringConflictsForNonRecurringCalls[0]).toEqual(expectedRange);
